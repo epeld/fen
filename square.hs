@@ -23,12 +23,14 @@ square [f,r] = liftM2 Square (file f) (rank r)
 fileOf (Square f _) = f
 rankOf (Square _ r) = r
 
+up1 :: Color -> Int
 up1 c = case c of
     White -> -1
     Black ->  1
 
 down1 = up1 . invert
 
+left1 :: Color -> Int
 left1 c = case c of
     White -> -1
     Black -> 1

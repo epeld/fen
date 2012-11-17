@@ -12,8 +12,18 @@ color = asks $ whoseMove . props
 color' = invert <$> color
 
 
-leftOf :: Square -> GameReader (Maybe Square)
-leftOf sq =  hoffset sq . left1 <$> color
+relCPS :: (Color -> Int) -> GameReader (Cont r Int)
+relCPS f = return <$> f <$> color 
+
+relOf :: (Color -> Int) -> Square -> GameReader (Maybe Square)
+relOf f sq = return runCont `ap` relCPS f `ap` return (hoffset sq)
+
+leftOf = relOf left1
+rightOf = relOf right1
+above = relOf up1
+below = relOf down1
+
+--flip runCont `liftM2` (return $ hoffset sq) (relCPS f)
 
 pieceAt s = asks $ (!! s)
 
