@@ -16,12 +16,24 @@ relCPS :: (Color -> Int) -> GameReader (Cont r Int)
 relCPS f = return <$> f <$> color 
 
 relOf :: (Color -> Int) -> Square -> GameReader (Maybe Square)
-relOf f sq = return runCont `ap` relCPS f `ap` return (hoffset sq)
+relOf f s = return runCont `ap` relCPS f `ap` return (hoffset s)
 
 leftOf = relOf left1
 rightOf = relOf right1
 above = relOf up1
 below = relOf down1
+
+squaresLeftOf :: Square -> GameReader [Maybe Square]
+{--
+squaresLeftOf s = do
+    x <- leftOf s
+     case x of
+        Nothing -> return []
+        Just s2 -> (x:) <$> squaresLeftOf s2
+--}
+--iterate (>>= maybe (return Nothing) leftOf)
+squaresRelOf f s = let iteratee = (>>= maybe (return Nothing) f)
+                   in iterate iteratee $ f s
 
 --flip runCont `liftM2` (return $ hoffset sq) (relCPS f)
 
