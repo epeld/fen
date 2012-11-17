@@ -8,6 +8,7 @@ data File = File Char
 data Rank = Rank Int
 data Square = Square File Rank
 files = "abcdefgh"
+ranks = [1..8]
 
 rank r = let i = read [r]
           in if 1 <= i && i <= 8 
@@ -51,6 +52,8 @@ move xs x i = do
         False -> fail $ "Can't move that far"
         True -> return $ xs !! ix
 
+
+moveRank = move ranks
 moveFile = move files
 
 hoffset :: Square -> Int -> Maybe Square
@@ -59,3 +62,12 @@ hoffset sq i = do
     f2 <-  moveFile f i
     return $ Square (File f2) (rankOf sq)
 
+voffset sq i = do
+    let r = case rankOf sq of Rank r -> r
+    r2 <- moveRank r i
+    return $ Square (fileOf sq) (Rank r)
+
+offset s (h,v) = hoffset s h >>= flip voffset v
+offsets s = map (offset s)
+hoffsets s = offsets s . flip zip [0,0..]
+voffsets s = offsets s . zip [0,0..]
