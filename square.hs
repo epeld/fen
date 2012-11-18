@@ -2,11 +2,12 @@ module Square where
 import Control.Monad
 import Control.Applicative
 import Data.List
+import Data.Maybe
 import Piece
 
-data File = File Char
-data Rank = Rank Int
-data Square = Square File Rank
+data File = File Char deriving (Show, Eq)
+data Rank = Rank Int deriving (Show, Eq)
+data Square = Square File Rank deriving (Show, Eq)
 files = "abcdefgh"
 ranks = [1..8]
 
@@ -47,10 +48,10 @@ absDec x = case x < 0 of
 
 move :: Eq a => [a] -> a -> Int -> Maybe a
 move xs x i = do 
-    ix <- liftM (+i) $ findIndex (==x) xs
+    ix <- (+i) <$> findIndex (==x) xs
     case ix < 0 || ix >= length xs of
-        False -> fail $ "Can't move that far"
-        True -> return $ xs !! ix
+        True -> fail $ "Can't move that far"
+        False -> return $ xs !! ix
 
 
 moveRank = move ranks
@@ -65,9 +66,16 @@ hoffset sq i = do
 voffset sq i = do
     let r = case rankOf sq of Rank r -> r
     r2 <- moveRank r i
-    return $ Square (fileOf sq) (Rank r)
+    return $ Square (fileOf sq) (Rank r2)
 
 offset s (h,v) = hoffset s h >>= flip voffset v
-offsets s = map (offset s)
+offsets s m = let maybes = map (offset s) m
+               in fromJust $ sequence $ takeWhile isJust maybes
+
 hoffsets s = offsets s . flip zip [0,0..]
 voffsets s = offsets s . zip [0,0..]
+
+manyLeftOf s  = hoffsets s [1..]
+manyRightOf s = hoffsets s [-1,-2..]
+manyAbove s = voffsets s [1..]
+manyBelow s = voffsets s [-1,-2..]

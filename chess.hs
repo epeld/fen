@@ -10,12 +10,7 @@ color :: GameReader Color
 color = asks $ whoseMove . props
 color' = invert <$> color
 
-manyLeftOf s  = hoffsets s [1..]
-manyRightOf s = hoffsets s [-1,-2..]
-manyAbove s = voffsets s [1..]
-manyBelow s = voffsets s [-1,-2..]
-
-pieceAt s = asks $ (!! s)
+pieceAt s = asks (!! s)
 
 
 -- Find all candidates able to reach s
