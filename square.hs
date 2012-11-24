@@ -2,12 +2,13 @@ module Square where
 import Control.Monad
 import Control.Applicative
 import Data.List
+import Data.Ix
 import Data.Maybe
 import Piece
 
-data File = File Char deriving (Show, Eq)
-data Rank = Rank Int deriving (Show, Eq)
-data Square = Square File Rank deriving (Show, Eq)
+data File = File Char deriving (Show, Eq, Ix, Ord)
+data Rank = Rank Int deriving (Show, Eq, Ix, Ord)
+data Square = Square File Rank deriving (Show, Eq, Ix, Ord)
 files = "abcdefgh"
 ranks = [1..8]
 

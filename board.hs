@@ -4,3 +4,6 @@ import Piece
 import Square
 
 data Board = Board (Array Square (Maybe Piece))
+
+pieceAt :: Board -> Square -> Maybe Piece
+pieceAt (Board a) s = a ! s

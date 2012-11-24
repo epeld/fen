@@ -11,7 +11,7 @@ color :: GameReader Color
 color = asks $ whoseMove . props
 color' = invert <$> color
 
-pieceAt s = asks (!! s)
+--pieceAt' s = asks (!! s)
 
 data MoveType = Moves | Takes deriving Eq
 
@@ -45,10 +45,18 @@ pieceSquares t s =
         Rook   -> straights s
         Knight -> return <$> knights s
 
+firstNonEmpties :: Game -> [[Square]] -> [Square]
+firstNonEmpties g s =
+    let firstNonEmpty = take 1 . dropWhile (squareIsEmpty g)
+     in concat $ map firstNonEmpty s
 
---candidates t m s =
---    let hasCand s =
---    filter hasCand <$> (squares t m s)
+matchPiece mp p = mp == Just p
+
+candidates t m s = do
+    c <- color
+    g <- ask
+    let hasCand s = pieceAt g s `matchPiece` Piece t c
+     in return $ filter hasCand $ firstNonEmpties g (squares t m s c)
 
 
 -- Find all candidates able to reach s
