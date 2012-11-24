@@ -11,7 +11,7 @@ color :: GameReader Color
 color = asks $ whoseMove . props
 color' = invert <$> color
 
-data MoveType = Moves | Takes deriving Eq
+data MoveType = Moves | Takes deriving (Eq, Show)
 
 
 manyRelBelow s c = squareSeriesV s (down1 c) 
