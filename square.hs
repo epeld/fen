@@ -25,9 +25,10 @@ file f = if f `elem` "abcdefgh"
     else fail $ "Not a file: " ++ [f]
 
 parseSquare s = parse square s s
+
 square' s = case parseSquare s of
     Right s -> s
-    Left _ -> error "square.hs square'"
+    Left _ -> error "can't read square"
 
 fileOf (Square f _) = f
 rankOf (Square _ r) = r
