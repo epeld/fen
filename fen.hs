@@ -18,13 +18,16 @@ pieceChars :: [Char]
 pieceChars = let blacks = nub . takeWhile (/= '/') $ startingPosFen
               in blacks ++ map toUpper blacks ++ "pP"
 
-charToPieceType c = case toLower c of
+charToOfficerType c = case toLower c of
     'r' -> Rook
     'b' -> Bishop
     'k' -> King
     'q' -> Queen
     'n' -> Knight
+    
+charToPieceType c = case toLower c of
     'p' -> Pawn
+    _ -> Officer $ charToOfficerType c
 
 charToColor c = case isUpper c of
     True -> White

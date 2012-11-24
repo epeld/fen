@@ -35,13 +35,13 @@ squares t m s c =
             then let d = down1 c
                   in return $ offsets s [(1,d), (-1,d)]
             else return $ take 2 $ manyRelBelow s c
-        _ -> pieceSquares t s
+        Officer t' -> officerSquares t' s
 
-pieceSquares t s =
+officerSquares t s =
     case t of
         Bishop -> diagonals s
-        Queen  -> pieceSquares Bishop s ++ pieceSquares Rook s
-        King   -> take 1 <$> pieceSquares Queen s
+        Queen  -> officerSquares Bishop s ++ officerSquares Rook s
+        King   -> take 1 <$> officerSquares Queen s
         Rook   -> straights s
         Knight -> return <$> knights s
 
