@@ -1,14 +1,15 @@
 {-#LANGUAGE NoMonomorphismRestriction #-}
 module Pgn where
 
-import Square
+import Square hiding (file, rank)
 import Game
 import Chess
 import Piece
+import Data.Char
 import Text.Parsec
 
 data PGNMove = PawnMove (Maybe Hint) MoveType Square (Maybe OfficerType) |
-               PieceMove PieceType (Maybe Hint) MoveType Square |
+               OfficerMove OfficerType (Maybe Hint) MoveType Square |
                Castles Side deriving (Show)
 
 data Hint = FileHint File | RankHint Rank | SquareHint Square deriving Show
@@ -16,5 +17,47 @@ data Hint = FileHint File | RankHint Rank | SquareHint Square deriving Show
 castlesKingside = string "O-O" >> return (Castles Kingside)
 castlesQueenside = string "O-O-O" >> return (Castles Queenside)
 
---pawnMove = do
---    s <- square
+moveType = option Moves (char 'x' >> return Takes) 
+
+longPawnMove = do
+    h <- pawnHint
+    m <- moveType
+    s <- square
+    p <- optionMaybe promotion
+    return $ PawnMove (Just h) m s p
+
+shortPawnMove = do
+    s <- square
+    p <- optionMaybe promotion
+    return $ PawnMove Nothing Moves s p
+
+promotion = string "=" >> oneOf "RBQN" >>= return . charToOfficerType
+
+squareHint = square >>= return . SquareHint 
+fileHint = file >>= return . FileHint
+rankHint = rank >>= return . RankHint
+file = oneOf ['a'..'h'] >>= return . File
+rank = oneOf ['1'..'8'] >>= return . Rank . digitToInt
+
+officerHint = try rankHint <|> pawnHint
+pawnHint = try squareHint <|> fileHint
+
+pawnMove = choice [try longPawnMove, shortPawnMove]
+
+officerType = oneOf "RKNQB" >>= return . charToOfficerType
+
+officerMove = choice [try longOfficerMove, shortOfficerMove]
+
+shortOfficerMove = do
+    t <- officerType
+    m <- moveType
+    s <- square
+    return $ OfficerMove t Nothing m s
+
+longOfficerMove = do
+    t <- officerType
+    h <- officerHint
+    m <- moveType
+    s <- square
+    return $ OfficerMove t (Just h) m s
+
