@@ -1,10 +1,13 @@
+{-#LANGUAGE NoMonomorphismRestriction #-}
 module Square where 
 import Control.Monad
 import Control.Applicative
 import Data.List
 import Data.Ix
 import Data.Maybe
+import Data.Char
 import Piece
+import Text.Parsec
 
 data File = File Char deriving (Show, Eq, Ix, Ord)
 data Rank = Rank Int deriving (Show, Eq, Ix, Ord)
@@ -21,8 +24,10 @@ file f = if f `elem` "abcdefgh"
     then return $ File f
     else fail $ "Not a file: " ++ [f]
 
-square [f,r] = liftM2 Square (file f) (rank r)
-square' [f,r] = fromJust $ liftM2 Square (file f) (rank r)
+parseSquare s = parse square s s
+square' s = case parseSquare s of
+    Right s -> s
+    Left _ -> error "square.hs square'"
 
 fileOf (Square f _) = f
 rankOf (Square _ r) = r
@@ -88,3 +93,8 @@ tupMul (a,b) i = (i*a, i*b)
 squareSeries s t = offsets s $ map (tupMul t) [1..]
 squareSeriesH s h = squareSeries s (h,0)
 squareSeriesV s v = squareSeries s (0,v)
+
+square = do
+    f <- oneOf ['a'..'h'] 
+    r <- digitToInt <$> oneOf ['1'..'8']
+    return $ Square (File f) (Rank r)

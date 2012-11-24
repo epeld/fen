@@ -64,14 +64,10 @@ white = char 'w' >> return White
 black = char 'b' >> return Black
 omitted = char '-' >> return (fail "-")
 digits = many1 digit >>= return . read
-square = do
-    f <- oneOf ['a'..'h'] 
-    r <- oneOf ['1'..'8']
-    return $ Square.square [f,r]
 
 whoseMove = white <|> black <?> "color"
 castlingRights = many1 castlingRight <|> omitted <?> "castling rights"
-enPassant = Fen.square <|> omitted <?> "passant-square"
+enPassant = fmap Just square <|> omitted <?> "passant-square"
 halfMove = digits <?> "half move number"
 fullMove = digits <?> "move number"
 
