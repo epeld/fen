@@ -68,6 +68,7 @@ voffset sq i = do
     r2 <- moveRank r i
     return $ Square (fileOf sq) (Rank r2)
 
+offset :: Square -> (Int, Int) -> Maybe Square
 offset s (h,v) = hoffset s h >>= flip voffset v
 offsets s m = let maybes = map (offset s) m
                in fromJust $ sequence $ takeWhile isJust maybes
@@ -79,3 +80,9 @@ manyLeftOf s  = hoffsets s [1..]
 manyRightOf s = hoffsets s [-1,-2..]
 manyAbove s = voffsets s [1..]
 manyBelow s = voffsets s [-1,-2..]
+
+tupMul (a,b) i = (i*a, i*b)
+
+squareSeries s t = offsets s $ map (tupMul t) [1..]
+squareSeriesH s h = squareSeries s (h,0)
+squareSeriesV s v = squareSeries s (0,v)
