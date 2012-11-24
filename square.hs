@@ -22,6 +22,7 @@ file f = if f `elem` "abcdefgh"
     else fail $ "Not a file: " ++ [f]
 
 square [f,r] = liftM2 Square (file f) (rank r)
+square' [f,r] = fromJust $ liftM2 Square (file f) (rank r)
 
 fileOf (Square f _) = f
 rankOf (Square _ r) = r

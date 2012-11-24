@@ -4,13 +4,19 @@ import Control.Monad.Trans.Error
 import qualified Board 
 import Piece
 import Data.Maybe
+import Square
+
+data Side = Kingside | Queenside deriving (Show)
+data CastlingRight = CastlingRight Side Color deriving (Show)
 
 data GameProperties = GameProperties {
-    moveNumber :: Int,
+    whoseMove :: Color,
+    castlingRights :: [CastlingRight],
+    enPassantSquare :: Maybe Square,
     halfMoveNumber :: Int,
-    whoseMove :: Color
-    }
-data Game = Game Board.Board GameProperties
+    moveNumber :: Int
+    } deriving (Show)
+data Game = Game Board.Board GameProperties deriving (Show)
 type GameReader = Reader Game
 type GameM e a = ErrorT e GameReader a
 
