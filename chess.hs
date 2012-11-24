@@ -11,8 +11,6 @@ color :: GameReader Color
 color = asks $ whoseMove . props
 color' = invert <$> color
 
---pieceAt' s = asks (!! s)
-
 data MoveType = Moves | Takes deriving Eq
 
 
