@@ -17,6 +17,8 @@ data Hint = FileHint File | RankHint Rank | SquareHint Square deriving Show
 castlesKingside = string "O-O" >> return (Castles Kingside)
 castlesQueenside = string "O-O-O" >> return (Castles Queenside)
 
+castles = try castlesQueenside <|> castlesKingside
+
 moveType = option Moves (char 'x' >> return Takes) 
 
 longPawnMove = do
@@ -61,3 +63,52 @@ longOfficerMove = do
     s <- square
     return $ OfficerMove t (Just h) m s
 
+pgnMove = choice [try pawnMove, try officerMove, castles]
+
+resetHalfMoves p =
+    let c = whoseMove p
+        r = castlingRights p
+        e = enPassantSquare p
+        m = moveNumber p
+    GameProperties $ c r e 0 m
+
+
+doPawnMove g mv@(PawnMove h m s p) =
+    do  src <- candidate Pawn m s h
+        doNaturalPawnMove g src m s p
+
+matchHint h s =
+    case h of
+        FileHint f -> f == file s
+        RankHint r -> r == rank s
+        SquareHint s2 -> s2 == s
+        _ -> True
+
+data CandidateError = NoSuitableCandidates | TooManyCandidates
+candidate g t m s h = 
+    case take 1 $ filter matchHint $ candidates g t m s of
+        [x] -> return x
+        []  -> fail NoSuitableCandidates
+        _   -> fail TooManyCandidates
+
+assertCanDoPawnMove g (PawnMove h m s p) =
+    case m of
+        Takes -> assertCanPawnTake g s
+        Moves -> assertCanPawnMove g s
+
+assertCanPawnTake g s = 
+    case pieceAt g s of
+        Just (Piece p c) -> if c /= whoseMove g
+            then return ()
+            else fail SameColorCapture
+        Nothing -> if passantSquare g == Just s
+            then return ()
+            else fail NothingToCapture
+
+assertCanPawnMove g s =
+    case pieceAt g s of
+        Nothing -> return ()
+        _ -> fail SquareOccupied
+
+whoseMove = Game.whoseMove . props 
+enPassant = enPassantSquare . props

@@ -50,8 +50,78 @@ firstNonEmpties g s =
 
 matchPiece mp p = mp == Just p
 
-candidates t m s = do
-    c <- color
-    g <- ask
-    let hasCand s = pieceAt g s `matchPiece` Piece t c
+candidates g t m s = do
+    let c = whoseMove . props $ g
+        hasCand s = pieceAt g s `matchPiece` Piece t c
      in return $ filter hasCand $ firstNonEmpties g (squares t m s c)
+
+data MoveError = NothingToCapture | SquareOccupied | SameColorCapture
+
+-- do pawn move specified the natural way (without pgn)
+doNaturalPawnMove src m s promo g =
+    do  g' <- possibleEnPassant m s g
+        let b' = board g'
+        let b'' = movePiece src s b'
+        let g'' = Game b'' (propsAfter mv g)
+        possiblePromotion s promo g''
+
+possiblePromotion s promo g = 
+    if isLastRank $ file s 
+        then promote s promo g
+        else return g
+
+possibleEnPassant m s g =
+    if m == Takes && enPassant g == Just s
+        then case pieceAt s g of
+            Nothing -> removeEP s g
+            _ -> fail $ 
+                "Invalid chess position; en passant square not empty"
+        else return g
+
+removeEP s g =
+    let downDir = down1 . whoseMove . props $ g
+        b = board g
+        p = props g
+        remove s' = Game (removePieceAt s' b) p
+     in remove <$> voffset s downDir
+
+promote s promo g =
+     case promo of
+        Just pr -> return $ put g s pr
+        Nothing -> fail "Nothing to promote to"
+
+propsAfter src mv g =
+    let 
+        c = invert $ whoseMove $ props g
+        r = rightsAfter src mv g
+        e = passantSquareAfter src mv g
+        h = halfMoveAfter src mv g
+        m = moveNumber p + 1
+     in GameProperties $ c r e h m
+
+passantSquareAfter src mv g = 
+    let c = whoseMove $ props g
+     in case mv of
+        PawnMove _ Moves d Nothing -> 
+            if isRankNr 4 c (rank d) 
+                then Just $ voffset d (down1 c)
+                else Nothing
+        _ -> Nothing
+
+halfMoveAfter src mv g =
+    let h = halfMoveNumber $ props g
+    in case mv of
+        PawnMove _ _ _ _ -> 0
+        OfficerMove _ _ takes _ -> 0
+        _ -> h + 1
+
+--TODO
+rightsAfter s mv g =
+    let r = castlingRights $ props g
+     in case s of
+        Sqare (file 'e') (rank 1) -> r // "KQ" 
+        Sqare (file 'e') (rank 8) -> r // "kq" 
+        Sqare (file 'a') (rank 1) -> r // "Q" 
+        Sqare (file 'a') (rank 8) -> r // "q" 
+        Sqare (file 'h') (rank 1) -> r // "K" 
+        Sqare (file 'h') (rank 8) -> r // "k" 
