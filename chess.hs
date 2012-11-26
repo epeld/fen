@@ -85,6 +85,12 @@ doNaturalOfficerMove src m s g =
         assertCanOfficer m s g
         assertKingIsSafe $ Game b' p'
 
+doCastles s g =
+    do  let b' = movePiece ks kd . movePiece rk rd $ (board g)
+        let p' = propsAfterCastles g
+        assertCanCastle s g
+        assertKingIsSafe $ Game b' p'
+
 assertCanOfficer Moves s g =
     case pieceAt s g of
         Nothing -> return g
