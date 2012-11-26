@@ -103,13 +103,18 @@ assertCanOfficer Takes s g =
             then return g
             else fail SameColorCapture
 
-assertKingIsSafe g =
+findKing g =
     let p = props g
         c = whoseMove p
         king = Piece (Officer King) c
      in case find ((king ==) . snd) (assocs g) of
         Nothing -> fail NoKing
-        Right (s,_) -> if [] == allCandidates g Takes s
+        Just (s,_) -> return s
+
+assertKingIsSafe g =
+    case findKing g of
+        Nothing -> fail NoKing
+        Just s -> if [] == allCandidates g Takes s
             then return g
             else fail KingInDanger
 
