@@ -155,13 +155,28 @@ promote s promo g =
         Nothing -> fail "Nothing to promote to"
 
 propsAfter src dst g =
-    let 
+    let p = props g
         c = invert $ whoseMove $ props g
         r = rightsAfter src dst g
         e = passantSquareAfter src dst g
         h = halfMoveAfter src dst g
         m = moveNumber p + 1
      in GameProperties $ c r e h m
+
+propsAfterCastles g =
+    let p = props g
+        c = invert $ whoseMove $ props g
+        r = rightsAfterCastles g
+        e = Nothing
+        h = halfMoveNumber p + 1
+        m = moveNumber p + 1
+     in GameProperties $ c r e h m
+
+rightsAfterCastles g =
+    let p = props g
+     in case whoseMove p of
+        White -> castlingRights `intersect` "kq"
+        White -> castlingRights `intersect` "KQ"
 
 passantSquareAfter src dst g = 
     let c = whoseMove $ props g
