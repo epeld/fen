@@ -47,6 +47,14 @@ left1 c = case c of
 
 right1 = left1 . invert
 
+relRankNr i c = case c of
+    White -> i
+    Black -> 8 - i
+
+isRankNr i c (Rank r) =
+    let i' = relRankNr i c
+     in r == i'
+
 --offset s o = flip voffset (snd o) $ hoffset s (fst o)
 
 absDec x = case x < 0 of
