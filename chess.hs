@@ -112,11 +112,10 @@ findKing g =
         Just (s,_) -> return s
 
 assertKingIsSafe g =
-    case findKing g of
-        Nothing -> fail NoKing
-        Just s -> if [] == allCandidates g Takes s
-            then return g
-            else fail KingInDanger
+    do  s <- findKing
+        case allCandidates g Takes s of
+            [] -> return g
+            _  -> fail KingInDanger
 
 assertCanPawn Moves s g = assertCanOfficer Moves s g
 
