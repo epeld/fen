@@ -174,9 +174,10 @@ propsAfterCastles g =
 
 rightsAfterCastles g =
     let p = props g
-     in case whoseMove p of
-        White -> castlingRights `intersect` "kq"
-        White -> castlingRights `intersect` "KQ"
+        toKeep = case whoseMove p of
+            White -> "kq"
+            Black -> "KQ"
+     in castlingRights p `intersect` toKeep
 
 passantSquareAfter src dst g = 
     let c = whoseMove $ props g
