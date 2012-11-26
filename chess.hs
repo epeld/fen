@@ -49,21 +49,75 @@ firstNonEmpties g s =
      in concat $ map firstNonEmpty s
 
 matchPiece mp p = mp == Just p
+matchColor c (Piece _ c2) = c == c2
 
-candidates g t m s = do
+candidates t m s g = do
     let c = whoseMove . props $ g
         hasCand s = pieceAt g s `matchPiece` Piece t c
      in return $ filter hasCand $ firstNonEmpties g (squares t m s c)
 
-data MoveError = NothingToCapture | SquareOccupied | SameColorCapture
+allCandidates m s g = 
+    let types = pawn : officers
+        officers = Officer <$> [Bishop, Knight, Rook, Queen, King]
+     in \t -> candidates t m s g <$> types
+
+data MoveError = 
+    NothingToCapture |
+    SquareOccupied |
+    SameColorCapture |
+    KingInDanger |
+    NoKing deriving (Show, Eq)
 
 -- do pawn move specified the natural way (without pgn)
 doNaturalPawnMove src m s promo g =
     do  g' <- possibleEnPassant m s g
+        let d = destination mv
         let b' = board g'
         let b'' = movePiece src s b'
-        let g'' = Game b'' (propsAfter mv g)
-        possiblePromotion s promo g''
+        let g'' = Game b'' (propsAfter src d g)
+        assertCanPawn m s g
+        possiblePromotion s promo g'' >>= $
+        assertKingIsSafe
+
+doNaturalOfficerMove src m s g =
+    do  let b' = movePiece src s (board g)
+        let p' = propsAfter src (destination mv) g
+        assertCanOfficer m s g
+        assertKingIsSafe $ Game b' p'
+
+assertCanOfficer Moves s g =
+    case pieceAt s g of
+        Nothing -> return g
+        _ -> Just SquareOccupied
+
+assertCanOfficer Takes s g =
+    case pieceAt s g of
+        Nothing -> fail NothingToCapture
+        Just (Piece _ c) -> if c /= whoseMove (props g)
+            then return g
+            else fail SameColorCapture
+
+assertKingIsSafe g =
+    let p = props g
+        c = whoseMove p
+        king = Piece (Officer King) c
+     in case find ((king ==) . snd) (assocs g) of
+        Nothing -> fail NoKing
+        Right (s,_) -> if [] == allCandidates g Takes s
+            then return g
+            else fail KingInDanger
+
+assertCanPawn Moves s g = assertCanOfficer Moves s g
+
+assertCanPawn Takes s g =
+    let p = props g
+    in case pieceAt s g of
+        Nothing -> if s == enPassantSquare p
+            then return g
+            else fail NothingToCapture
+        Just (Piece _ c) -> if c != whoseMove p
+            then return g
+            else fail $ SameColorCapture
 
 possiblePromotion s promo g = 
     if isLastRank $ file s 
@@ -90,38 +144,43 @@ promote s promo g =
         Just pr -> return $ put g s pr
         Nothing -> fail "Nothing to promote to"
 
-propsAfter src mv g =
+propsAfter src dst g =
     let 
         c = invert $ whoseMove $ props g
-        r = rightsAfter src mv g
-        e = passantSquareAfter src mv g
-        h = halfMoveAfter src mv g
+        r = rightsAfter src dst g
+        e = passantSquareAfter src dst g
+        h = halfMoveAfter src dst g
         m = moveNumber p + 1
      in GameProperties $ c r e h m
 
-passantSquareAfter src mv g = 
+passantSquareAfter src dst g = 
     let c = whoseMove $ props g
-     in case mv of
-        PawnMove _ Moves d Nothing -> 
-            if isRankNr 4 c (rank d) 
-                then Just $ voffset d (down1 c)
+     in case pieceAt src g of
+        Just (Piece Pawn _) ->
+            if isRankNr 4 c (rank dst) 
+                then Just $ voffset dst (down1 c)
                 else Nothing
+        Nothing -> error "passantSquareAfter chess.hs"
         _ -> Nothing
 
-halfMoveAfter src mv g =
+halfMoveAfter src dst g =
     let h = halfMoveNumber $ props g
-    in case mv of
-        PawnMove _ _ _ _ -> 0
-        OfficerMove _ _ takes _ -> 0
-        _ -> h + 1
+        c = whoseMove $ props g
+        b = board g
+        isCapture = isJust $ pieceAt dst b -- TODO check for right color?
+        isPawnMove = Just (Piece Pawn c) == pieceAt src b
+     in if isCapture || isPawnMove
+        then 0
+        else h + 1
 
---TODO
-rightsAfter s mv g =
+rightsAfter s d g =
     let r = castlingRights $ props g
-     in case s of
-        Sqare (file 'e') (rank 1) -> r // "KQ" 
-        Sqare (file 'e') (rank 8) -> r // "kq" 
-        Sqare (file 'a') (rank 1) -> r // "Q" 
-        Sqare (file 'a') (rank 8) -> r // "q" 
-        Sqare (file 'h') (rank 1) -> r // "K" 
-        Sqare (file 'h') (rank 8) -> r // "k" 
+        c = whoseMove $ props g
+        dueToSquare s' = case s' of
+            Sqare (file 'e') (rank 1) -> "KQ" 
+            Sqare (file 'e') (rank 8) -> "kq" 
+            Sqare (file 'a') (rank 1) -> "Q" 
+            Sqare (file 'a') (rank 8) -> "q" 
+            Sqare (file 'h') (rank 1) -> "K" 
+            Sqare (file 'h') (rank 8) -> "k" 
+       in r // (dueToSquare s ++ dueToSquare d)

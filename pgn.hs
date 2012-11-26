@@ -65,14 +65,6 @@ longOfficerMove = do
 
 pgnMove = choice [try pawnMove, try officerMove, castles]
 
-resetHalfMoves p =
-    let c = whoseMove p
-        r = castlingRights p
-        e = enPassantSquare p
-        m = moveNumber p
-    GameProperties $ c r e 0 m
-
-
 doPawnMove g mv@(PawnMove h m s p) =
     do  src <- candidate Pawn m s h
         doNaturalPawnMove g src m s p
@@ -91,24 +83,8 @@ candidate g t m s h =
         []  -> fail NoSuitableCandidates
         _   -> fail TooManyCandidates
 
-assertCanDoPawnMove g (PawnMove h m s p) =
-    case m of
-        Takes -> assertCanPawnTake g s
-        Moves -> assertCanPawnMove g s
-
-assertCanPawnTake g s = 
-    case pieceAt g s of
-        Just (Piece p c) -> if c /= whoseMove g
-            then return ()
-            else fail SameColorCapture
-        Nothing -> if passantSquare g == Just s
-            then return ()
-            else fail NothingToCapture
-
-assertCanPawnMove g s =
-    case pieceAt g s of
-        Nothing -> return ()
-        _ -> fail SquareOccupied
-
-whoseMove = Game.whoseMove . props 
-enPassant = enPassantSquare . props
+destination mv =
+    case mv of
+        PawnMove _ _ d _ -> d
+        OfficerMove _ _ _ d -> d
+        _ -> error "destination pgn.hs"

@@ -5,8 +5,8 @@ import Square
 
 data Board = Board (Array Square (Maybe Piece)) deriving Show
 
-pieceAt :: Board -> Square -> Maybe Piece
-pieceAt (Board a) s = a ! s
+pieceAt :: Square -> Board -> Maybe Piece
+pieceAt s (Board a) = a ! s
 
 board :: [(Square, Maybe Piece)] -> Board
 board e = let a1 = square' "a1"
