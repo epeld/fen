@@ -1,90 +1,58 @@
 {-#LANGUAGE NoMonomorphismRestriction #-}
 module Pgn where
 
-import Square hiding (file, rank)
+import Square 
 import Game
-import Chess
 import Piece
 import Data.Char
+import Data.List
 import Text.Parsec
+import Control.Monad
 
-data PGNMove = PawnMove (Maybe Hint) MoveType Square (Maybe OfficerType) |
-               OfficerMove OfficerType (Maybe Hint) MoveType Square |
-               Castles Side deriving (Show)
+data MoveType = Takes | Moves deriving (Show, Eq)
 
-data Hint = FileHint File | RankHint Rank | SquareHint Square deriving Show
+data PGNMoveEssentials = PGNMoveEssentials {
+    hint :: (Maybe Hint),
+    moveType :: MoveType,
+    destination :: Square
+    } deriving (Show, Eq)
 
-castlesKingside = string "O-O" >> return (Castles Kingside)
-castlesQueenside = string "O-O-O" >> return (Castles Queenside)
+data PGNMove = PawnMove {
+    essentials :: PGNMoveEssentials,
+    promotion :: (Maybe OfficerType)
+    } |
+    OfficerMove {
+        officerType :: OfficerType,
+        essentials :: PGNMoveEssentials
+    } |
+    Castles Side deriving (Show)
 
-castles = try castlesQueenside <|> castlesKingside
+data Hint = FileHint File | RankHint Rank | SquareHint Square deriving (Show, Eq)
 
-moveType = option Moves (char 'x' >> return Takes) 
+hintFromMove m = hint . essentials $ m
 
-longPawnMove = do
-    h <- pawnHint
-    m <- moveType
-    s <- square
-    p <- optionMaybe promotion
-    return $ PawnMove (Just h) m s p
+fand = liftM2 (&&)
 
-shortPawnMove = do
-    s <- square
-    p <- optionMaybe promotion
-    return $ PawnMove Nothing Moves s p
+candidates :: Game -> PGNMove -> [Int]
+candidates g mv =
+    let 
+        h  = maybe (return False) matchHintX (hintFromMove mv)
+        pt p = Pgn.pieceType mv == Piece.pieceType p
+        c p = whoseMove (properties g) == color p
+        m = maybe False (c `fand` pt)
+     in 
+        filter h $ findIndices m (board g)
 
-promotion = string "=" >> oneOf "RBQN" >>= return . charToOfficerType
-
-squareHint = square >>= return . SquareHint 
-fileHint = file >>= return . FileHint
-rankHint = rank >>= return . RankHint
-file = oneOf ['a'..'h'] >>= return . File
-rank = oneOf ['1'..'8'] >>= return . Rank . digitToInt
-
-officerHint = try rankHint <|> pawnHint
-pawnHint = try squareHint <|> fileHint
-
-pawnMove = choice [try longPawnMove, shortPawnMove]
-
-officerType = oneOf "RKNQB" >>= return . charToOfficerType
-
-officerMove = choice [try longOfficerMove, shortOfficerMove]
-
-shortOfficerMove = do
-    t <- officerType
-    m <- moveType
-    s <- square
-    return $ OfficerMove t Nothing m s
-
-longOfficerMove = do
-    t <- officerType
-    h <- officerHint
-    m <- moveType
-    s <- square
-    return $ OfficerMove t (Just h) m s
-
-pgnMove = choice [try pawnMove, try officerMove, castles]
-
-doPawnMove g mv@(PawnMove h m s p) =
-    do  src <- candidate Pawn m s h
-        doNaturalPawnMove g src m s p
-
+matchHint :: Hint -> Square -> Bool
 matchHint h s =
     case h of
         FileHint f -> f == file s
         RankHint r -> r == rank s
         SquareHint s2 -> s2 == s
-        _ -> True
 
-data CandidateError = NoSuitableCandidates | TooManyCandidates
-candidate g t m s h = 
-    case take 1 $ filter matchHint $ candidates g t m s of
-        [x] -> return x
-        []  -> fail NoSuitableCandidates
-        _   -> fail TooManyCandidates
+matchHintX h i = matchHint h (allSquares !! i)
 
-destination mv =
+pieceType mv =
     case mv of
-        PawnMove _ _ d _ -> d
-        OfficerMove _ _ _ d -> d
-        _ -> error "destination pgn.hs"
+        PawnMove _ _ -> Pawn
+        OfficerMove t _ -> Officer t

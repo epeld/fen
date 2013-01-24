@@ -9,20 +9,28 @@ import Data.Char
 import Piece
 import Text.Parsec
 
+instance Enum (File) where
+    toEnum i = let i' = fromEnum 'a' + i 
+                in File (toEnum i')
+    fromEnum (File c) = fromEnum c - fromEnum 'a'
+instance Enum (Rank) where
+    toEnum i = let i' = i + 1
+                in Rank (toEnum i')
+    fromEnum (Rank c) = fromEnum c - 1
+instance Enum (Square) where
+    toEnum i = Square (toEnum $ mod i 8 ) (toEnum $ div i 8)
+    fromEnum (Square f r) = 8 * (fromEnum r) + fromEnum f
+
 data File = File Char deriving (Show, Eq, Ix, Ord)
 data Rank = Rank Int deriving (Show, Eq, Ix, Ord)
-data Square = Square File Rank deriving (Show, Eq, Ix, Ord)
+data Square = Square {
+    file :: File,
+    rank :: Rank
+    } deriving (Show, Eq, Ix, Ord)
 files = "abcdefgh"
 ranks = [1..8]
 
-rank r = let i = read [r]
-          in if 1 <= i && i <= 8 
-              then return $ Rank i
-              else fail $ "Not a rank: " ++ [r]
-
-file f = if f `elem` "abcdefgh" 
-    then return $ File f
-    else fail $ "Not a file: " ++ [f]
+allSquares = []
 
 parseSquare s = parse square s s
 

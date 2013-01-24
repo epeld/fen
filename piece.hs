@@ -6,7 +6,10 @@ import Data.Char
 data PieceType = Pawn | Officer OfficerType deriving (Show, Eq)
 data OfficerType = Bishop | Knight | Rook | Queen | King deriving (Show, Eq)
 data Color = Black | White deriving (Show, Eq)
-data Piece = Piece PieceType Color deriving (Show, Eq)
+data Piece = Piece {
+    pieceType :: PieceType,
+    color :: Color
+    } deriving (Show, Eq)
 
 invert c = case c of
     White -> Black

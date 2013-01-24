@@ -16,6 +16,9 @@ data GameProperties = GameProperties {
     halfMoveNumber :: Int,
     moveNumber :: Int
     } deriving (Show)
-data Game = Game Board.Board GameProperties deriving (Show)
+data Game = Game {
+    board :: Board.Board,
+    properties :: GameProperties
+    } deriving (Show)
 type GameReader = Reader Game
 type GameM e a = ErrorT e GameReader a
