@@ -39,9 +39,9 @@ candidates g mv =
         h  = maybe (return False) matchHintX (hintFromMove mv)
         pt p = Pgn.pieceType mv == Piece.pieceType p
         c p = whoseMove (properties g) == color p
-        m = maybe False (c `fand` pt)
+        match = maybe False (c `fand` pt)
      in 
-        filter h $ findIndices m (board g)
+        filter h $ findIndices match (board g)
 
 matchHint :: Hint -> Square -> Bool
 matchHint h s =

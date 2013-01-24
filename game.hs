@@ -22,3 +22,12 @@ data Game = Game {
     } deriving (Show)
 type GameReader = Reader Game
 type GameM e a = ErrorT e GameReader a
+
+replace i e l = 
+    let start = take i l
+        end = drop (i+1) l
+     in start ++ e : end
+
+move s d b = replace s Nothing . replace d (b !! s)
+
+updateBoard s d g = Game.move s d (board g)

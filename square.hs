@@ -1,6 +1,7 @@
 {-#LANGUAGE NoMonomorphismRestriction #-}
 module Square where 
 import Control.Monad
+import Control.Monad.Trans.Reader
 import Control.Applicative
 import Data.List
 import Data.Ix
@@ -30,7 +31,10 @@ data Square = Square {
 files = "abcdefgh"
 ranks = [1..8]
 
-allSquares = []
+allSquares :: [Square]
+allSquares = map toEnum [0..63]
+
+up i = ReaderT ((+i) . return)
 
 parseSquare s = parse square s s
 
