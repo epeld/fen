@@ -57,11 +57,6 @@ isRankNr i c (Rank r) =
 
 --offset s o = flip voffset (snd o) $ hoffset s (fst o)
 
-absDec x = case x < 0 of
-    True -> x + 1
-    False -> x - 1
-
-
 move :: Eq a => [a] -> a -> Int -> Maybe a
 move xs x i = do 
     ix <- (+i) <$> findIndex (==x) xs
