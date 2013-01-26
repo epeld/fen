@@ -31,3 +31,6 @@ replace i e l =
 move s d b = replace s Nothing . replace d (b !! s)
 
 updateBoard s d g = Game.move s d (board g)
+
+isPassantSquare d (Game _ p) =
+    Just d == enPassantSquare p

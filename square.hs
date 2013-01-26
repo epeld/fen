@@ -59,7 +59,14 @@ down v = up (-v)
 right h = offset (0,h)
 left h = left (-h)
 
-squareSequence s c =
-    let f s = runCont (c s) id
+fromSquare s c = runCont (c s) id
+
+sequence s c =
+    let f = flip fromSquare c
      in
         takeWhile validSquare (iterate f s)
+
+relUp v c =
+    case c of
+        White -> up v
+        Black -> down v
