@@ -16,6 +16,7 @@ castles = try castlesQueenside <|> castlesKingside
 
 moveType = option Moves (char 'x' >> return Takes) 
 
+-- "exd4"
 longPawnMove = do
     h <- pawnHint
     m <- moveType
@@ -24,6 +25,7 @@ longPawnMove = do
     let e = PGNMoveEssentials (Just h) m s
     return $ PawnMove e p
 
+-- "e4=D"
 shortPawnMove = do
     s <- square
     p <- optionMaybe promotion
