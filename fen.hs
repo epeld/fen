@@ -28,6 +28,7 @@ charToColor c = case isUpper c of
 
 charToPiece c = Piece (charToPieceType c) (charToColor c)
 
+-- pieceChars = "NBRKQ"
 piece = oneOf pieceChars >>= return . Just . charToPiece
 pieces = many1 piece <?> "piece char"
 
