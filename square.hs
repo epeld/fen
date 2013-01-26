@@ -67,6 +67,8 @@ sequence s c =
      in
         takeWhile validSquare (iterate f s)
 
+sequence' s c = drop 1 $ sequence s c
+
 relUp v c =
     case c of
         White -> up v

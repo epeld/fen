@@ -33,10 +33,19 @@ isReachable' s d Pawn g@(Game _ p) =
      in
         if isTakableByPawn d g then
             d `elem` pawnTakables s g else
-            d `elem` pawnMovables s g
+            leadsTo d (pawnMovables s g) g
 
 isReachable' s d (Officer t) g =
-    False
+    leadsTo d (officerMovables s t) g
+
+officerMovables s Bishop =
+    sequence' s <$> [up 1 >=> right 1, up 1 >=> left 1,
+                      down 1 >=> right 1, down 1 >=> left 1]
+
+officerMovables s Rook = sequence' s <$> [up 1, left 1, down 1, right 1]
+officerMovables s Queen = concat $ officerMovables s <$> [Rook, Bishop]
+officerMovables s King = map (take 1) (officerMovables s Queen)
+--officerMovables s Knight = fromSquare s <$> [up 1 >=> left 2
 
 isTakable d (Game b p) =
     let pc = b !!! d
