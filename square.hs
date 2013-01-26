@@ -21,6 +21,7 @@ instance Enum (Rank) where
 instance Enum (Square) where
     toEnum i = Square (toEnum $ mod i 8 ) (toEnum $ div i 8)
     fromEnum (Square f r) = 8 * (fromEnum r) + fromEnum f
+m !!! s = m !! fromEnum s
 
 data File = File Char deriving (Show, Eq, Ix, Ord)
 data Rank = Rank Int deriving (Show, Eq, Ix, Ord)
@@ -70,3 +71,4 @@ relUp v c =
     case c of
         White -> up v
         Black -> down v
+

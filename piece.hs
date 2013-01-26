@@ -22,4 +22,4 @@ charToOfficerType c = case toLower c of
     'q' -> Queen
     'n' -> Knight
 
-isOfColor (Piece _ c) c' = c == c'
+isOfColor c (Piece _ c')  = c == c'

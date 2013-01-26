@@ -4,6 +4,7 @@ module Pgn where
 import Square 
 import Game
 import Piece
+import MonadOps
 import Data.Char
 import Data.List
 import Text.Parsec
@@ -31,15 +32,13 @@ data Hint = FileHint File | RankHint Rank | SquareHint Square deriving (Show, Eq
 
 hintFromMove m = hint . essentials $ m
 
-fand = liftM2 (&&)
-
 candidates :: Game -> PGNMove -> [Int]
 candidates g mv =
     let 
         h  = maybe (return False) matchHintX (hintFromMove mv)
         pt p = Pgn.pieceType mv == Piece.pieceType p
         c p = whoseMove (properties g) == color p
-        match = maybe False (c `fand` pt)
+        match = maybe False (c `mAnd` pt)
      in 
         filter h $ findIndices match (board g)
 
