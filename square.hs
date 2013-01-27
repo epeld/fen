@@ -58,7 +58,7 @@ offset (v,h) (Square f r) =
 up v = offset (v,0)
 down v = up (-v)
 right h = offset (0,h)
-left h = left (-h)
+left h = right (-h)
 
 fromSquare s c = runCont (c s) id
 
@@ -67,7 +67,7 @@ sequence s c =
      in
         takeWhile validSquare (iterate f s)
 
-sequence' s c = drop 1 $ sequence s c
+sequence' s c = drop 1 $ Square.sequence s c
 
 relUp v c =
     case c of
