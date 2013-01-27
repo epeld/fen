@@ -1,6 +1,7 @@
 module Chess where
 import Control.Applicative
 import Control.Monad
+import Control.Arrow hiding (left,right)
 import Data.Maybe
 import Square
 import Game
@@ -9,13 +10,27 @@ import MonadOps
 
 --TODO REMEMBER PROMOTIONS!
 
-{-
-makeMove g s d = 
-    let b = updateBoard s d g
-        p = updateProperties s d g
-     in 
-       Game g s d
+cantReach d s g@(Game b p) =
+    let pc = b !!! s
+        ss = squareToString s
+        dd = squareToString d
+     in
+        case pc of
+            Nothing -> fail $ "There is no piece at " ++ ss ++ "!"
+            Just (Piece t _) -> fail $ (pieceTypeToString t) ++ " at " ++ ss ++
+                " can't reach " ++ dd ++ "!"
 
+gameAfterMove d s g =
+    let b' = board g
+        p' = properties g
+     in
+        return $ Game b' p'
+
+makeMove d s g = 
+    if isReachable s d g then
+        gameAfterMove d s g else
+        cantReach d s g
+{-
 isValidMove g s d =
     let g' = makeMove g s d
      in
@@ -29,23 +44,45 @@ isReachable s d g@(Game b _) =
         Just p  -> isReachable' s d (pieceType p) g
         
 isReachable' s d Pawn g@(Game _ p) =
-    let c   = whoseMove p
+    let c = whoseMove p
      in
         if isTakableByPawn d g then
             d `elem` pawnTakables s g else
             leadsTo d (pawnMovables s g) g
 
 isReachable' s d (Officer t) g =
-    leadsTo d (officerMovables s t) g
+    let reaches sq = leadsTo d sq g
+     in
+        any id $ map reaches (officerMovables s t)
 
+officerMovables :: Square -> OfficerType -> [[Square]]
 officerMovables s Bishop =
-    sequence' s <$> [up 1 >=> right 1, up 1 >=> left 1,
-                      down 1 >=> right 1, down 1 >=> left 1]
+    let upright = up 1 >=> right 1
+        upleft  = up 1 >=> left 1
+        downright = down 1 >=> right 1
+        downleft  = down 1 >=> left 1
+     in
+        sequence' s <$> [upright, upleft, downright, downleft]
 
-officerMovables s Rook = sequence' s <$> [up 1, left 1, down 1, right 1]
-officerMovables s Queen = concat $ officerMovables s <$> [Rook, Bishop]
-officerMovables s King = map (take 1) (officerMovables s Queen)
---officerMovables s Knight = fromSquare s <$> [up 1 >=> left 2
+officerMovables s Rook   = sequence' s <$> [up 1, left 1, down 1, right 1]
+officerMovables s Queen  = concat $ officerMovables s <$> [Rook, Bishop]
+officerMovables s King   = take 1 <$> officerMovables s Queen
+officerMovables s Knight = return <$> fromSquare s <$> knightJumps
+
+knightJumps = 
+    let long = [up, right] <*> [2,-2]
+        short = [right, up] <*> [1,-1]
+     in
+        zipWith (>=>) long short
+
+{-
+knightJumps =
+    let steps = (,) <$> [2,-2] <*> [1,-1]
+        longShort = up *** right
+        shortLong = right *** up 
+     in
+        concat $ [longShort, shortLong] <*> steps
+-}
 
 isTakable d (Game b p) =
     let pc = b !!! d
@@ -73,6 +110,7 @@ pawnMovables s g@(Game _ p) =
      in 
         fromSquare s <$> [up1, up1 >=> up1]
 
+leadsTo :: Square -> [Square] -> Game -> Bool
 leadsTo d sq (Game b _) = 
     let nothingAt = isNothing . (b !!!)
         isntDest = (d /=)
