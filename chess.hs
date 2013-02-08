@@ -2,6 +2,7 @@ module Chess where
 import Control.Applicative
 import Control.Monad
 import Control.Arrow hiding (left,right)
+import Data.List
 import Data.Maybe
 import Square
 import Game
@@ -19,10 +20,57 @@ cantReach d s g@(Game b p) =
             Nothing -> fail $ "There is no piece at " ++ ss ++ "!"
             Just (Piece t _) -> fail $ (pieceTypeToString t) ++ " at " ++ ss ++
                 " can't reach " ++ dd ++ "!"
+                
+colorAfterMove _ _ (Game _ p) = otherColor (whoseMove p)
+rightsAfterMove d s (Game _ p) =
+    let oldRights = castlingRights p
+        square f r = Square (File f) (Rank r)
+        associations  = [
+                (square 'e' 1, whitesRights),
+                (square 'h' 1, return $ whitesRight Kingside),
+                (square 'a' 1, return $ whitesRight Queenside),
+                (square 'e' 8, blacksRights),
+                (square 'h' 8, return $ blacksRight Kingside),
+                (square 'a' 8, return $ blacksRight Queenside)
+                ]
+        rightsToRemove s = case lookup s associations of
+            Just x -> x
+            Nothing -> []
+     in
+        (oldRights \\ rightsToRemove s) \\ rightsToRemove d
 
-gameAfterMove d s g =
-    let b' = board g
-        p' = properties g
+enPassantAfterMove d s g@(Game _ p) =
+    let up1 = Chess.relUp g
+        rank' = fromEnum . rank
+     in
+        if file d == file s && abs (rank' s - rank' d) == 2 then
+            Just (fromSquare s up1) else
+            Nothing
+
+halfMovesAfterMove d s g@(Game b p) =
+    let isCapture = Nothing /= b !!! d
+        isPawn p = pieceType p == Pawn
+        isPawnMove = maybe False isPawn (b !!! s)
+     in
+        case isCapture || isPawnMove of
+            True -> 0
+            False -> halfMoveNumber p + 1
+
+moveNumberAfterMove _ _ (Game _ p) = moveNumber p + 1
+
+propertiesAfterMove d s g@(Game _ p) =
+    GameProperties {
+        whoseMove      = colorAfterMove d s g,
+        castlingRights = rightsAfterMove d s g,
+        enPassantSquare = enPassantAfterMove d s g,
+        halfMoveNumber = halfMovesAfterMove d s g,
+        moveNumber = moveNumberAfterMove d s g
+        }
+
+
+gameAfterMove d s g@(Game b _) =
+    let b' = move' s d b
+        p' = propertiesAfterMove d s g
      in
         return $ Game b' p'
 
@@ -38,12 +86,12 @@ isValidMove g s d =
 -}
 
 pieceAt s b = case b !!! s of
-    Nothing -> error "Nothing at " ++ squareToString s
+    Nothing -> error $ "Nothing at " ++ squareToString s
     Just p  -> p
 
 -- TODO check if piece at d!
 isReachable s d g@(Game b p) = 
-    let t = pieceType p in isReachable' s d t g
+    let t = pieceType (pieceAt s b) in isReachable' s d t g
         
 isReachable' s d Pawn g@(Game _ p) =
     let c = whoseMove p
@@ -52,9 +100,10 @@ isReachable' s d Pawn g@(Game _ p) =
             d `elem` pawnTakables s g else
             leadsTo d (pawnMovables s g) g
 
-isReachable' s d (Officer t) g =
+isReachable' s d (Officer t) g@(Game b p) =
     let reaches sq = leadsTo d sq g
-        sameColors = maybe False (whoseMove p ==) (color $ b !!! d)
+        isSameColors pc = whoseMove p == color pc
+        sameColors = maybe False isSameColors (b !!! d)
      in
         if sameColors then False else
             or (reaches <$> officerMovables s t)

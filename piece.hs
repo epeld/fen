@@ -11,6 +11,7 @@ data Piece = Piece {
     color :: Color
     } deriving (Show, Eq)
 
+otherColor = invert
 invert c = case c of
     White -> Black
     Black -> White
