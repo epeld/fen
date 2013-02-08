@@ -37,6 +37,8 @@ replace i e l =
         end = drop (i+1) l
      in start ++ e : end
 
+replace' s mp b = replace (fromEnum s) mp b
+
 move :: Int -> Int -> [Maybe Piece] -> [Maybe Piece]
 move s d b = replace s Nothing . replace d (b !! s) $ b
 move' s d b =

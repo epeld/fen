@@ -74,3 +74,6 @@ relUp v c =
         White -> up v
         Black -> down v
 
+lastRank c = case c of
+    White -> Rank 8
+    Black -> Rank 1

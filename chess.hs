@@ -9,8 +9,6 @@ import Game
 import Piece
 import MonadOps
 
---TODO REMEMBER PROMOTIONS!
-
 cantReach d s g@(Game b p) =
     let pc = b !!! s
         ss = squareToString s
@@ -47,9 +45,10 @@ enPassantAfterMove d s g@(Game _ p) =
             Just (fromSquare s up1) else
             Nothing
 
+isPawn p = pieceType p == Pawn
+
 halfMovesAfterMove d s g@(Game b p) =
     let isCapture = Nothing /= b !!! d
-        isPawn p = pieceType p == Pawn
         isPawnMove = maybe False isPawn (b !!! s)
      in
         case isCapture || isPawnMove of
@@ -67,9 +66,22 @@ propertiesAfterMove d s g@(Game _ p) =
         moveNumber = moveNumberAfterMove d s g
         }
 
+isPromotionMove d s (Game b p) =
+    let isPawnMove = maybe False isPawn (b !!! s)
+        c = whoseMove p
+     in
+        isPawnMove && rank d == lastRank c
 
-gameAfterMove d s g@(Game b _) =
-    let b' = move' s d b
+boardAfterMove d s g@(Game b p) promo = 
+    let sansPromo = move' s d b
+        newPiece = Piece (Officer promo) (whoseMove p)
+     in
+        if isPromotionMove d s g then
+            replace' d (Just newPiece) sansPromo else
+            sansPromo
+
+gameAfterMove d s g@(Game b _) promo =
+    let b' = boardAfterMove d s g promo 
         p' = propertiesAfterMove d s g
      in
         return $ Game b' p'
