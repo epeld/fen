@@ -37,11 +37,13 @@ isValidMove g s d =
         isValidPosition g' && isReachable s d g
 -}
 
+pieceAt s b = case b !!! s of
+    Nothing -> error "Nothing at " ++ squareToString s
+    Just p  -> p
 
-isReachable s d g@(Game b _) = 
-    case b !!! s of
-        Nothing -> error "isReachable evaluated with Nothing"
-        Just p  -> isReachable' s d (pieceType p) g
+-- TODO check if piece at d!
+isReachable s d g@(Game b p) = 
+    let t = pieceType p in isReachable' s d t g
         
 isReachable' s d Pawn g@(Game _ p) =
     let c = whoseMove p
@@ -52,8 +54,10 @@ isReachable' s d Pawn g@(Game _ p) =
 
 isReachable' s d (Officer t) g =
     let reaches sq = leadsTo d sq g
+        sameColors = maybe False (whoseMove p ==) (color $ b !!! d)
      in
-        any id $ map reaches (officerMovables s t)
+        if sameColors then False else
+            or (reaches <$> officerMovables s t)
 
 officerMovables :: Square -> OfficerType -> [[Square]]
 officerMovables s Bishop =
