@@ -147,10 +147,18 @@ knightJumps =
         zipWith (>=>) long short
 
 isTakable d (Game b p) =
-    let pc = b !!! d
-        c  = whoseMove p
+    let 
+        hasOppositeColor = (/= whoseMove p) . color
      in
-        maybe False (not . isOfColor c) pc
+        maybe False hasOppositeColor (b !!! d)
+
+isEPTakable d (Game b p) = 
+    case enPassantSquare p of
+        Nothing -> False
+        Just s  -> Nothing == b !!! d && d == s
+
+isMovable d (Game b p) =
+    Nothing == b !!! d
 
 relUp (Game _ p) = Square.relUp 1 (whoseMove p)
 
