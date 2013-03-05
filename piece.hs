@@ -25,3 +25,6 @@ charToOfficerType c = case toLower c of
 
 pieceTypeToString Pawn = "Pawn"
 pieceTypeToString (Officer t) = show t
+
+enemyKing (Game _ p) =
+    Piece (Officer King) (otherColor . whoseMove $ p)
