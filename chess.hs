@@ -10,14 +10,11 @@ import Piece
 import MonadOps
 
 cantReach d s g@(Game b p) =
-    let pc = b !!! s
-        ss = squareToString s
-        dd = squareToString d
-     in
-        case pc of
-            Nothing -> fail $ "There is no piece at " ++ ss ++ "!"
-            Just (Piece t _) -> fail $ (pieceTypeToString t) ++ " at " ++ ss ++
-                " can't reach " ++ dd ++ "!"
+    maybe (noPieceStr s) (pieceCantReach d) (b !!! s)
+
+noPieceStr s = "No piece at " ++ squareToString s
+pieceCantReach d (Piece t _) = 
+    pieceTypeToString t ++ " can't reach" ++ squareToString d
                 
 colorAfterMove _ _ (Game _ p) = otherColor (whoseMove p)
 rightsAfterMove d s (Game _ p) =
@@ -51,9 +48,11 @@ halfMovesAfterMove d s g@(Game b p) =
     let isCapture = Nothing /= b !!! d
         isPawnMove = maybe False isPawn (b !!! s)
      in
-        case isCapture || isPawnMove of
-            True -> 0
-            False -> halfMoveNumber p + 1
+        if isCapture || isPawnMove
+        then
+            0
+        else
+            halfMoveNumber p + 1
 
 moveNumberAfterMove _ _ (Game _ p) = moveNumber p + 1
 
@@ -76,9 +75,11 @@ boardAfterMove d s g@(Game b p) promo =
     let sansPromo = move' s d b
         newPiece = Piece (Officer promo) (whoseMove p)
      in
-        if isPromotionMove d s g then
-            replace' d (Just newPiece) sansPromo else
-            sansPromo
+        if isPromotionMove d s g
+            then
+                replace' d (Just newPiece) sansPromo
+            else
+                sansPromo
 
 gameAfterMove d s g@(Game b _) promo =
     let b' = boardAfterMove d s g promo 
@@ -86,39 +87,44 @@ gameAfterMove d s g@(Game b _) promo =
      in
         return $ Game b' p'
 
-makeMove d s g = 
-    if isReachable s d g then
-        gameAfterMove d s g else
-        cantReach d s g
-{-
-isValidMove g s d =
-    let g' = makeMove g s d
+coloredPieces (Game b p) c =
+    let isRightColoredPiece (Piece t c') = c == c'
      in
-        isValidPosition g' && isReachable s d g
+        findIndices (maybe False isRightColoredPiece) b
+
+-- todo move to utils
+--capitalize s = toUpper (take 1 s) : map toLower (drop 1 s)
+
+{-
+kingSquare (Game b p) = 
+    let isRightKing (Piece t c) = whoseMove p == c && t == Officer King
+     in
+        case findIndex (maybe False isRightKing) b of
+            Just i -> return $ toEnum i
+            Nothing -> fail $ (capitalize $ show $ whoseMove p) ++ " has no king!"
+
+-- TODO this should check for the OTHER king's safety
+verifyLegal (Game b p) = do
+    kingSq <- kingSquare g
+    let isThreat s = isReachable s kingS g
+    let c = whoseMove p
+    let c' = otherColor c
+    let enemyPieces = coloredPieces g c'
+    let msg = capitalize (show c) ++ "'s king is in danger!"
+    when (any isThreat $ coloredPieces g c') (fail msg)
+
+isLegal g = verifyLegal g /= Nothing
+
+makeMove d s g = do
+    unless (isReachable s d g) (fail $ cantReach d s g)
+    let g' = gameAfterMove d s g
+    unless (isLegal g') (fail $ cantReach d s g)
+    return g'
 -}
 
 pieceAt s b = case b !!! s of
     Nothing -> error $ "Nothing at " ++ squareToString s
     Just p  -> p
-
--- TODO check if piece at d!
-isReachable s d g@(Game b p) = 
-    let t = pieceType (pieceAt s b) in isReachable' s d t g
-        
-isReachable' s d Pawn g@(Game _ p) =
-    let c = whoseMove p
-     in
-        if isTakableByPawn d g then
-            d `elem` pawnTakables s g else
-            leadsTo d (pawnMovables s g) g
-
-isReachable' s d (Officer t) g@(Game b p) =
-    let reaches sq = leadsTo d sq g
-        isSameColors pc = whoseMove p == color pc
-        sameColors = maybe False isSameColors (b !!! d)
-     in
-        if sameColors then False else
-            or (reaches <$> officerMovables s t)
 
 officerMovables :: Square -> OfficerType -> [[Square]]
 officerMovables s Bishop =
@@ -140,28 +146,13 @@ knightJumps =
      in
         zipWith (>=>) long short
 
-{-
-knightJumps =
-    let steps = (,) <$> [2,-2] <*> [1,-1]
-        longShort = up *** right
-        shortLong = right *** up 
-     in
-        concat $ [longShort, shortLong] <*> steps
--}
-
 isTakable d (Game b p) =
     let pc = b !!! d
         c  = whoseMove p
      in
         maybe False (not . isOfColor c) pc
 
-isTakableByPawn d g@(Game b p) =
-    isTakable d g || isNothing (b !!! d) && isPassantSquare d g
-
-relUp (Game _ p) =
-    let c = whoseMove p
-     in
-        Square.relUp 1 c
+relUp (Game _ p) = Square.relUp 1 (whoseMove p)
 
 pawnTakables s g@(Game _ p) =
     let up1 = Chess.relUp g
@@ -174,14 +165,3 @@ pawnMovables s g@(Game _ p) =
     let up1 = Chess.relUp g 
      in 
         fromSquare s <$> [up1, up1 >=> up1]
-
-leadsTo :: Square -> [Square] -> Game -> Bool
-leadsTo d sq (Game b _) = 
-    let nothingAt = isNothing . (b !!!)
-        isntDest = (d /=)
-        squares = takeWhile validSquare sq
-     in
-        case dropWhile (nothingAt `mAnd` isntDest ) squares of
-            x : _ -> x == d
-            _ -> False
-
