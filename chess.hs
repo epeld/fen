@@ -132,23 +132,29 @@ isEPTakable d (Game b p) =
 isMovable d (Game b _) =
     Nothing == b !!! d
 
+maybeToM :: Monad m => String -> Maybe a -> m a
+maybeToM s = maybe (fail s) return
 tryMove s d g@(Game b _) =
     maybe (fail $ noPieceStr s) (tryMove' s d g . pieceType) (b !!! s)
+
 
 tryMove' s d g Pawn = fail $ "No."
 tryMove' s d g (Officer t) = do
     let seqs = officerMovables s t
-    let defaultFail = fail $ pieceTypeCantReach d (Officer t)
-    seq <- find (elem d) seqs
+    let defaultErrorMsg = pieceTypeCantReach d (Officer t)
+    let defaultFail = fail defaultErrorMsg
+    seq <- maybeToM defaultErrorMsg $ find (elem d) seqs
     unless (isTakable d g || isMovable d g) (fail $ friendlyAt d)
     let before = takeWhile (/= d) seq
     unless (all (flip isMovable g) before) defaultFail
-    let new = gameAfterMove s d g
+    new <- gameAfterMove s d g Queen --TODO fix Queen
     unless (isLegal new) defaultFail
     return new
 
+isLegal :: Game -> Bool
 isLegal g@(Game b p) = True
 {-
+-
     enemyKingSquare <- findPieceSquare (enemyKing g)
     let friendlySquares = findIndices (not . isTakable) b
 -}
