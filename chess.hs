@@ -13,8 +13,10 @@ cantReach d s g@(Game b p) =
     maybe (noPieceStr s) (pieceCantReach d) (b !!! s)
 
 noPieceStr s = "No piece at " ++ squareToString s
-pieceCantReach d (Piece t _) = 
+pieceTypeCantReach d t =
     pieceTypeToString t ++ " can't reach" ++ squareToString d
+pieceCantReach d (Piece t _) = 
+    pieceTypeCantReach d t
                 
 colorAfterMove _ _ (Game _ p) = otherColor (whoseMove p)
 rightsAfterMove d s (Game _ p) =
@@ -92,36 +94,6 @@ coloredPieces (Game b p) c =
      in
         findIndices (maybe False isRightColoredPiece) b
 
--- todo move to utils
---capitalize s = toUpper (take 1 s) : map toLower (drop 1 s)
-
-{-
-kingSquare (Game b p) = 
-    let isRightKing (Piece t c) = whoseMove p == c && t == Officer King
-     in
-        case findIndex (maybe False isRightKing) b of
-            Just i -> return $ toEnum i
-            Nothing -> fail $ (capitalize $ show $ whoseMove p) ++ " has no king!"
-
--- TODO this should check for the OTHER king's safety
-verifyLegal (Game b p) = do
-    kingSq <- kingSquare g
-    let isThreat s = isReachable s kingS g
-    let c = whoseMove p
-    let c' = otherColor c
-    let enemyPieces = coloredPieces g c'
-    let msg = capitalize (show c) ++ "'s king is in danger!"
-    when (any isThreat $ coloredPieces g c') (fail msg)
-
-isLegal g = verifyLegal g /= Nothing
-
-makeMove d s g = do
-    unless (isReachable s d g) (fail $ cantReach d s g)
-    let g' = gameAfterMove d s g
-    unless (isLegal g') (fail $ cantReach d s g)
-    return g'
--}
-
 pieceAt s b = case b !!! s of
     Nothing -> error $ "Nothing at " ++ squareToString s
     Just p  -> p
@@ -157,8 +129,34 @@ isEPTakable d (Game b p) =
         Nothing -> False
         Just s  -> Nothing == b !!! d && d == s
 
-isMovable d (Game b p) =
+isMovable d (Game b _) =
     Nothing == b !!! d
+
+tryMove s d g@(Game b _) =
+    maybe (fail $ noPieceStr s) (tryMove' s d g . pieceType) (b !!! s)
+
+tryMove' s d g Pawn = fail $ "No."
+tryMove' s d g (Officer t) = do
+    let seqs = officerMovables s t
+    let defaultFail = fail $ pieceTypeCantReach d (Officer t)
+    seq <- find (elem d) seqs
+    unless (isTakable d g || isMovable d g) (fail $ friendlyAt d)
+    let before = takeWhile (/= d) seq
+    unless (all (flip isMovable g) before) defaultFail
+    let new = gameAfterMove s d g
+    unless (isLegal new) defaultFail
+    return new
+
+isLegal g@(Game b p) = True
+{-
+    enemyKingSquare <- findPieceSquare (enemyKing g)
+    let friendlySquares = findIndices (not . isTakable) b
+-}
+
+friendlyAt d =
+    "Can't move to " ++
+    squareToString d ++ 
+    ". Square occupied by friendly piece!"
 
 relUp (Game _ p) = Square.relUp 1 (whoseMove p)
 
