@@ -23,7 +23,5 @@ charToOfficerType c = case toLower c of
     'q' -> Queen
     'n' -> Knight
 
-isOfColor c (Piece _ c')  = c == c'
-
 pieceTypeToString Pawn = "Pawn"
 pieceTypeToString (Officer t) = show t
