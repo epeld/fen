@@ -205,7 +205,7 @@ pawnTakables s g@(Game _ p) =
         left1 = left 1
         right1 = right 1
      in
-        return <$> fromSquare s <$> [up1 >=> left1, up1 >=> right1]
+        return . fromSquare s <$> [up1 >=> left1, up1 >=> right1]
 
 pawnMovables s g@(Game _ p) = 
     let up1 = Chess.relUp g 
