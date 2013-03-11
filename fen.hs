@@ -34,11 +34,12 @@ pieces = many1 piece <?> "piece char"
 
 invalidFenLength l = "Invalid FEN row: not all squares specified " ++ show l
 
+veryifyLength8 = unless (len == 8) (fail $ invalidFen len)
+
 rleSpace = digit >>= return . flip replicate Nothing . digitToInt
 row = do
     all <- concat <$> many1 (pieces <|> rleSpace)
-    let len = length all
-    unless (len == 8) (fail $ invalidFen len)
+    verifyLength8 (length all)
     return all
 
 fenSquares = [Square (File f) (Rank r) | r <- [8,7..1], f <- ['a'..'h']]
