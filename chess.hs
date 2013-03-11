@@ -1,6 +1,7 @@
 module Chess where
 import Control.Applicative
 import Control.Monad
+import Control.Monad.Trans.Cont
 import Control.Arrow hiding (left,right)
 import Data.List
 import Data.Maybe
@@ -76,16 +77,29 @@ isPromotionMove d s (Game b p) =
      in
         isPawnMove && rank d == lastRank c
 
--- TODO UGLYY
+noPromotion p =
+    if p /= Nothing
+    then
+        error $ "Can't promote"
+    else
+        id
+
+promoteTo Nothing d (Game _ ps) = error $ "Missing promotion"
+
+promoteTo (Just pt) d (Game _ ps) = 
+    let p = Piece (Officer pt) (whoseMove ps)
+    in  replace' d (Just p) 
+
+promoCont d s g promo =
+    if isPromotionMove d s g
+        then
+            promoteTo promo d g
+        else
+            noPromotion promo
+
 boardAfterMove d s g@(Game b p) promo = 
-    let sansPromo = move' s d b
-        newPiece = Piece (Officer promo) (whoseMove p)
-     in
-        if isPromotionMove d s g
-            then
-                replace' d (Just newPiece) sansPromo
-            else
-                sansPromo
+    let b' = move' s d b
+     in runCont (return b') (promoCont d s g promo)
 
 canMove d s g promo = isLegal (gameAfterMove d s g promo)
 
