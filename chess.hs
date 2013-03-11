@@ -76,6 +76,7 @@ isPromotionMove d s (Game b p) =
      in
         isPawnMove && rank d == lastRank c
 
+-- TODO UGLYY
 boardAfterMove d s g@(Game b p) promo = 
     let sansPromo = move' s d b
         newPiece = Piece (Officer promo) (whoseMove p)
