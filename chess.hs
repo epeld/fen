@@ -19,22 +19,23 @@ pieceTypeCantReach d t =
 
 pieceCantReach d (Piece t _) = 
     pieceTypeCantReach d t
+
+castlingAssociations = 
+    let square f r = Square (File f) (Rank r)
+     in [
+        (square 'e' 1, whitesRights),
+        (square 'h' 1, whitesRight' Kingside),
+        (square 'a' 1, whitesRight' Queenside),
+        (square 'e' 8, blacksRights),
+        (square 'h' 8, blacksRight' Kingside),
+        (square 'a' 8, blacksRight' Queenside)
+        ]
                 
 colorAfterMove _ _ (Game _ p) = otherColor (whoseMove p)
 rightsAfterMove d s (Game _ p) =
     let oldRights = castlingRights p
-        square f r = Square (File f) (Rank r)
-        associations  = [
-                (square 'e' 1, whitesRights),
-                (square 'h' 1, return $ whitesRight Kingside),
-                (square 'a' 1, return $ whitesRight Queenside),
-                (square 'e' 8, blacksRights),
-                (square 'h' 8, return $ blacksRight Kingside),
-                (square 'a' 8, return $ blacksRight Queenside)
-                ]
-        rightsToRemove s = case lookup s associations of
-            Just x -> x
-            Nothing -> []
+        associations  = castlingAssociations
+        rightsToRemove s = maybe [] id (lookup s associations)
      in
         (oldRights \\ rightsToRemove s) \\ rightsToRemove d
 

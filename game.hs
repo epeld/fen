@@ -12,8 +12,12 @@ data CastlingRight = CastlingRight Side Color deriving (Show, Eq)
 
 sides = [Queenside, Kingside]
 colorsRight = flip CastlingRight
+whitesRight' :: Side -> [CastlingRight]
+blacksRight' :: Side -> [CastlingRight]
 whitesRight = colorsRight White
+whitesRight' s = return $ whitesRight s
 blacksRight = colorsRight Black
+blacksRight' s = return $ colorsRight Black s
 blacksRights = blacksRight <$> sides
 whitesRights = whitesRight <$> sides
 
