@@ -32,12 +32,14 @@ charToPiece c = Piece (charToPieceType c) (charToColor c)
 piece = oneOf pieceChars >>= return . Just . charToPiece
 pieces = many1 piece <?> "piece char"
 
+invalidFenLength l = "Invalid FEN row: not all squares specified " ++ show l
+
 rleSpace = digit >>= return . flip replicate Nothing . digitToInt
 row = do
     all <- concat <$> many1 (pieces <|> rleSpace)
-    case length all of
-        8 -> return all
-        _ -> fail $ "Invalid FEN row: not all squares specified " ++ show (length all)
+    let len = length all
+    unless (len == 8) (fail $ invalidFen len)
+    return all
 
 fenSquares = [Square (File f) (Rank r) | r <- [8,7..1], f <- ['a'..'h']]
 
