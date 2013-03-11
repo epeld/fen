@@ -104,22 +104,26 @@ findFriendlies g@(Game b p) =
 isLegal :: Game -> Bool
 isLegal g = Nothing /= enemyKingSquare g && kingIsSafe g
 
-isPiece p = (== p)
+enemyKingPiece (Game _ p) = Piece (Officer King) (whoIsNotMoving p)
 
 enemyKingSquare :: Game -> Maybe Square
 enemyKingSquare g@(Game b p) =
     let rightPiece :: Maybe Piece -> Bool
         rightPiece =
-            maybe False (isPiece (Piece (Officer King) (whoIsNotMoving p)))
+            maybe False (== enemyKingPiece g)
      in toEnum <$> findIndex rightPiece b
 
 takableFromSquare :: Square -> Game -> [Square]
 takableFromSquare s g = 
-    let moveOK = flip canMoveTo g
+    let 
         takeOK = flip canTake g
         takables = pieceTakables s g
      in 
-        filter takeOK <$> concat $ take 1 . dropWhile moveOK <$> takables
+        filter takeOK . concat $ firstNonMovable g <$> takables
+
+firstNonMovable g = 
+    let moveOK = flip canMoveTo g 
+    in  take 1 . dropWhile moveOK
 
 pieceTakables :: Square -> Game -> [[Square]]
 pieceTakables s g@(Game b _) =
