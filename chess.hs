@@ -168,9 +168,9 @@ officerMovables s Bishop =
         sequence' s <$> [upright, upleft, downright, downleft]
 
 officerMovables s Rook   = sequence' s <$> [up 1, left 1, down 1, right 1]
-officerMovables s Queen  = concat $ officerMovables s <$> [Rook, Bishop]
+officerMovables s Queen  = concat . officerMovables s <$> [Rook, Bishop]
 officerMovables s King   = take 1 <$> officerMovables s Queen
-officerMovables s Knight = return <$> fromSquare s <$> knightJumps
+officerMovables s Knight = fromSquare' s <$> knightJumps
 
 knightJumps = 
     let long = [up, right] <*> [2,-2]
@@ -208,7 +208,7 @@ pawnTakables s g@(Game _ p) =
         left1 = left 1
         right1 = right 1
      in
-        return . fromSquare s <$> [up1 >=> left1, up1 >=> right1]
+        fromSquare' s <$> [up1 >=> left1, up1 >=> right1]
 
 pawnMovables s g@(Game _ p) = 
     let up1 = Chess.relUp g 

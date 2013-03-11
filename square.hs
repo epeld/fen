@@ -61,6 +61,7 @@ right h = offset (0,h)
 left h = right (-h)
 
 fromSquare s c = runCont (c s) id
+fromSquare' s c = return $ fromSquare s c
 
 sequence s c =
     let f = flip fromSquare c
