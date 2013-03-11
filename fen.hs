@@ -6,6 +6,7 @@ import Data.Char
 import Data.List
 import Piece
 import Control.Applicative hiding ((<|>))
+import Control.Monad
 import Data.Maybe
 import Data.Array.IArray
 import Board
@@ -34,7 +35,7 @@ pieces = many1 piece <?> "piece char"
 
 invalidFenLength l = "Invalid FEN row: not all squares specified " ++ show l
 
-veryifyLength8 = unless (len == 8) (fail $ invalidFen len)
+verifyLength8 l = unless (l == 8) (fail $ invalidFenLength l)
 
 rleSpace = digit >>= return . flip replicate Nothing . digitToInt
 row = do
