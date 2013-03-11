@@ -41,7 +41,7 @@ row = do
 
 fenSquares = [Square (File f) (Rank r) | r <- [8,7..1], f <- ['a'..'h']]
 
-board = fmap (Board.board . zip fenSquares) $ concat <$> sepBy1 row (char '/')
+board = concat <$> reverse <$> sepBy1 row (char '/')
 props = do
     m <- whoseMove
     space
@@ -69,6 +69,7 @@ castlingSide c =
     case toLower c of
         'k' -> Game.Kingside
         'q' -> Game.Queenside
+
 castlingRight = do
     c <- oneOf "KkQq"
     return $ Game.CastlingRight (castlingSide c) (charToColor c)
