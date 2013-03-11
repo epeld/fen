@@ -194,10 +194,12 @@ canMoveTo :: Square -> Game -> Bool
 canMoveTo d (Game b _) =
     Nothing == b !!! d
 
-friendlyAt d =
-    "Can't move to " ++
-    squareToString d ++ 
-    ". Square occupied by friendly piece!"
+friendlyAt d = 
+    concat [
+        "Can't move to ",
+        squareToString d,
+        ". Square occupied by friendly piece!"
+    ]
 
 relUp (Game _ p) = Square.relUp 1 (whoseMove p)
 
