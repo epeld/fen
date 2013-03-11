@@ -31,6 +31,9 @@ data Game = Game {
 type GameReader = Reader Game
 type GameM e a = ErrorT e GameReader a
 
+whoIsNotMoving = invert . whoseMove
+
+
 replace :: Int -> a -> [a] -> [a]
 replace i e l = 
     let start = take i l

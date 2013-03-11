@@ -13,8 +13,10 @@ cantReach d s g@(Game b p) =
     maybe (noPieceStr s) (pieceCantReach d) (b !!! s)
 
 noPieceStr s = "No piece at " ++ squareToString s
+
 pieceTypeCantReach d t =
     pieceTypeToString t ++ " can't reach" ++ squareToString d
+
 pieceCantReach d (Piece t _) = 
     pieceTypeCantReach d t
                 
@@ -83,19 +85,76 @@ boardAfterMove d s g@(Game b p) promo =
             else
                 sansPromo
 
+canMove d s g promo = isLegal (gameAfterMove d s g promo)
+
+isFriendlyColor (Game _ p) = (whoseMove p ==)
+isFriendlyPiece :: Game -> Piece -> Bool
+isFriendlyPiece g = isFriendlyColor g . color
+isFriendlyPieceAt :: Square -> Game -> Bool
+isFriendlyPieceAt s g@(Game b _) = 
+    maybe False (isFriendlyPiece g) (b !!! s)
+
+findFriendlies g@(Game b p) = 
+    let isFriendly :: Maybe Piece -> Bool
+        isFriendly = maybe False (isFriendlyPiece g)
+     in
+        map toEnum (findIndices isFriendly b)
+
+isLegal :: Game -> Bool
+isLegal g = Nothing /= enemyKingSquare g && kingIsSafe g
+
+isPiece p = (== p)
+
+enemyKingSquare :: Game -> Maybe Square
+enemyKingSquare g@(Game b p) =
+    let rightPiece :: Maybe Piece -> Bool
+        rightPiece =
+            maybe False (isPiece (Piece (Officer King) (whoIsNotMoving p)))
+     in toEnum <$> findIndex rightPiece b
+
+takableFromSquare :: Square -> Game -> [Square]
+takableFromSquare s g = 
+    let moveOK = flip canMoveTo g
+        takeOK = flip canTake g
+        takables = pieceTakables s g
+     in 
+        filter takeOK <$> concat $ take 1 . dropWhile moveOK <$> takables
+
+pieceTakables :: Square -> Game -> [[Square]]
+pieceTakables s g@(Game b _) =
+    case b !!! s of
+        Nothing -> error $ nothingAt s
+        Just p -> pieceTakables' p s g 
+
+pieceTakables' :: Piece -> Square -> Game -> [[Square]]
+pieceTakables' p s g@(Game b _) =
+    case p of
+        Piece Pawn _ -> pawnTakables s g
+        Piece (Officer o) _ -> officerMovables s o
+
+kingIsSafe g@(Game b p) = 
+    let threatens d s = d `elem` takableFromSquare s g
+        kingSquare = fromJust $ enemyKingSquare g
+        friendlies = findFriendlies g
+     in
+        threatens kingSquare `any` friendlies
+
 gameAfterMove d s g@(Game b _) promo =
     let b' = boardAfterMove d s g promo 
         p' = propertiesAfterMove d s g
      in
-        return $ Game b' p'
+        Game b' p'
 
 coloredPieces (Game b p) c =
     let isRightColoredPiece (Piece t c') = c == c'
      in
         findIndices (maybe False isRightColoredPiece) b
 
+nothingAt :: Square -> String
+nothingAt s = "Nothing at " ++ squareToString s
+
 pieceAt s b = case b !!! s of
-    Nothing -> error $ "Nothing at " ++ squareToString s
+    Nothing -> error $ nothingAt s 
     Just p  -> p
 
 officerMovables :: Square -> OfficerType -> [[Square]]
@@ -118,18 +177,20 @@ knightJumps =
      in
         zipWith (>=>) long short
 
-isTakable d (Game b p) =
+canTake :: Square -> Game -> Bool
+canTake d (Game b p) =
     let 
         hasOppositeColor = (/= whoseMove p) . color
      in
         maybe False hasOppositeColor (b !!! d)
 
-isEPTakable d (Game b p) = 
+canTakeEP d (Game b p) = 
     case enPassantSquare p of
         Nothing -> False
         Just s  -> Nothing == b !!! d && d == s
 
-isMovable d (Game b _) =
+canMoveTo :: Square -> Game -> Bool
+canMoveTo d (Game b _) =
     Nothing == b !!! d
 
 friendlyAt d =
@@ -144,7 +205,7 @@ pawnTakables s g@(Game _ p) =
         left1 = left 1
         right1 = right 1
      in
-        fromSquare s <$> [up1 >=> left1, up1 >=> right1]
+        return <$> fromSquare s <$> [up1 >=> left1, up1 >=> right1]
 
 pawnMovables s g@(Game _ p) = 
     let up1 = Chess.relUp g 
