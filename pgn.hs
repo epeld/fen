@@ -1,6 +1,7 @@
 {-#LANGUAGE NoMonomorphismRestriction #-}
 module Pgn where
 
+import Chess
 import Square 
 import Game
 import Piece
@@ -32,6 +33,7 @@ data PGNMove = PawnMove {
 data Hint = FileHint File | RankHint Rank | SquareHint Square deriving (Show, Eq)
 
 hintFromMove = hint . essentials
+destinationFromMove = destination . essentials
 
 pieceTypeFromMove (PawnMove _ _) = Pawn
 pieceTypeFromMove (OfficerMove t _) = Officer t
@@ -58,8 +60,16 @@ maybeMatchRightPiece mv p = maybeMatchPiece $ rightPiece mv p
 pieceSquares mv (Game b p) = findIndices (maybeMatchRightPiece mv p) b
 pieceIndices mv g = toEnum <$> pieceSquares mv g
 
+piecesMatchingHintAndType mv mh g = filter (matchMaybeHint mh) (pieceIndices mv g)
+
 candidates' :: PGNMove -> (Maybe Hint) -> Game -> [Square]
-candidates' mv mh g = filter (matchMaybeHint mh) (pieceIndices mv g)
+candidates' mv mh g = filter (moveIsLegal g d) rightPieceSquares
+    where rightPieceSquares = piecesMatchingHintAndType mv mh g
+          d = destinationFromMove mv
+
+-- TODO deal with promotion appropriately
+moveIsLegal g d s = canMove d s g Nothing
+
 
 matchHint :: Hint -> Square -> Bool
 matchHint (FileHint f) s = f == file s
