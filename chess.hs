@@ -114,7 +114,13 @@ findFriendlies g@(Game b p) =
         map toEnum (findIndices isFriendly b)
 
 isLegal :: Game -> Bool
-isLegal g = Nothing /= enemyKingSquare g && kingIsSafe g
+isLegal g = Nothing /= enemyKingSquare g && kingIsSafe g && noPawnAtLastRank g
+
+noPawnAtLastRank g@(Game b _) = not $ any pawnAt lastRanks
+    where
+        pawnAt s = maybe False ((Pawn ==) . pieceType) (b !!! s)
+        lastRanks = [Square (File 'a') (Rank 1)..Square (File 'h') (Rank 1)] ++ 
+            [Square (File 'a') (Rank 8)..Square (File 'h') (Rank 8)]
 
 enemyKingPiece (Game _ p) = Piece (Officer King) (whoIsNotMoving p)
 
