@@ -35,8 +35,7 @@ castlingAssociations =
 colorAfterMove _ _ (Game _ p) = otherColor (whoseMove p)
 rightsAfterMove d s (Game _ p) =
     let oldRights = castlingRights p
-        associations  = castlingAssociations
-        rightsToRemove s = maybe [] id (lookup s associations)
+        rightsToRemove s = maybe [] id (lookup s castlingAssociations)
      in
         (oldRights \\ rightsToRemove s) \\ rightsToRemove d
 
@@ -80,15 +79,15 @@ isPromotionMove d s (Game b p) =
 noPromotion p =
     if p /= Nothing
     then
-        error $ "Can't promote"
+        fail "Can't promote"
     else
-        id
+        return
 
-promoteTo Nothing d (Game _ ps) = error $ "Missing promotion"
+promoteTo Nothing d (Game _ ps) = fail "Missing promotion"
 
 promoteTo (Just pt) d (Game _ ps) = 
     let p = Piece (Officer pt) (whoseMove ps)
-    in  replace' d (Just p) 
+    in  return . replace' d (Just p) 
 
 promoCont d s g promo =
     if isPromotionMove d s g
@@ -97,9 +96,7 @@ promoCont d s g promo =
         else
             noPromotion promo
 
-boardAfterMove d s g@(Game b p) promo = 
-    let b' = move' s d b
-     in runCont (return b') (promoCont d s g promo)
+boardAfterMove d s g@(Game b _) = move' s d b 
 
 canMove d s g promo = isLegal (gameAfterMove d s g promo)
 
@@ -159,11 +156,16 @@ kingIsSafe g@(Game b p) =
      in
         threatens kingSquare `any` friendlies
 
-gameAfterMove d s g@(Game b _) promo =
-    let b' = boardAfterMove d s g promo 
+-- Tries to perform the move WITHOUT validating
+gameAfterMove d s g@(Game b _) Nothing =
+    Game b' p'
+    where
+        b' = boardAfterMove d s g
         p' = propertiesAfterMove d s g
-     in
-        Game b' p'
+
+gameAfterMove d s g@(Game b _) mp =
+    let Game b' p' = gameAfterMove d s g Nothing
+     in Game (replace' d mp b') p'
 
 coloredPieces (Game b p) c =
     let isRightColoredPiece (Piece t c') = c == c'
