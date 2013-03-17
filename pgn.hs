@@ -37,6 +37,11 @@ pieceTypeFromMove (PawnMove _ _) = Pawn
 pieceTypeFromMove (OfficerMove t _) = Officer t
 pieceTypeFromMove _ = error "Move has no piece type"
 
+candidate mv g = 
+    case take 1 (candidates mv g) of
+        [x] -> Just x
+        _ -> Nothing
+
 candidates :: PGNMove -> Game -> [Square]
 candidates (Castles _) g = error "Castling moves lack candidates"
 candidates mv g = candidates' mv (hintFromMove mv) g
