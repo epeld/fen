@@ -9,6 +9,7 @@ import Data.Char
 import Data.List
 import Text.Parsec
 import Control.Monad
+import Control.Applicative
 
 data MoveType = Takes | Moves deriving (Show, Eq)
 
@@ -30,28 +31,35 @@ data PGNMove = PawnMove {
 
 data Hint = FileHint File | RankHint Rank | SquareHint Square deriving (Show, Eq)
 
-hintFromMove m = hint . essentials $ m
+hintFromMove = hint . essentials
 
-candidates :: Game -> PGNMove -> [Int]
-candidates g mv =
-    let 
-        h  = maybe (return False) matchHintX (hintFromMove mv)
-        pt p = Pgn.pieceType mv == Piece.pieceType p
-        c p = whoseMove (properties g) == color p
-        match = maybe False (c `mAnd` pt)
-     in 
-        filter h $ findIndices match (board g)
+pieceTypeFromMove (PawnMove _ _) = Pawn
+pieceTypeFromMove (OfficerMove t _) = Officer t
+pieceTypeFromMove _ = error "Move has no piece type"
+
+candidates :: PGNMove -> Game -> [Square]
+candidates (Castles _) g = error "Castling moves lack candidates"
+candidates mv g = candidates' mv (hintFromMove mv) g
+
+rightPiece mv p = Piece pt c
+    where pt = pieceTypeFromMove mv
+          c = whoseMove p
+
+matchPiece p = (p==)
+maybeMatchPiece p = maybe False (matchPiece p)
+
+maybeMatchRightPiece mv p = maybeMatchPiece $ rightPiece mv p
+
+pieceSquares mv (Game b p) = findIndices (maybeMatchRightPiece mv p) b
+pieceIndices mv g = toEnum <$> pieceSquares mv g
+
+candidates' :: PGNMove -> (Maybe Hint) -> Game -> [Square]
+candidates' mv mh g = filter (matchMaybeHint mh) (pieceIndices mv g)
 
 matchHint :: Hint -> Square -> Bool
-matchHint h s =
-    case h of
-        FileHint f -> f == file s
-        RankHint r -> r == rank s
-        SquareHint s2 -> s2 == s
+matchHint (FileHint f) s = f == file s
+matchHint (RankHint r) s = r == rank s
+matchHint (SquareHint s) s2 = s == s2
 
-matchHintX h i = matchHint h (allSquares !! i)
-
-pieceType mv =
-    case mv of
-        PawnMove _ _ -> Pawn
-        OfficerMove t _ -> Officer t
+matchMaybeHint :: Maybe Hint -> Square -> Bool
+matchMaybeHint mh s = maybe True (flip matchHint s) mh
