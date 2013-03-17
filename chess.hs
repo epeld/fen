@@ -114,7 +114,19 @@ findFriendlies g@(Game b p) =
         map toEnum (findIndices isFriendly b)
 
 isLegal :: Game -> Bool
-isLegal g = Nothing /= enemyKingSquare g && kingIsSafe g && noPawnAtLastRank g
+isLegal g = case legalize g of
+    Left _ -> False
+    _ -> True
+
+data ChessError = MissingKing | KingNotSafe | PawnsOnLastRank
+chessErrorToString MissingKing = "Enemy king is missing!"
+chessErrorToString KingNotSafe = "Enemy king can be captured!"
+chessErrorToString PawnsOnLastRank = "There are pawns on the last rank!"
+
+legalize g = do
+    unless (Nothing /= enemyKingSquare g) (Left MissingKing)
+    unless (kingIsSafe g) (Left KingNotSafe)
+    unless (noPawnAtLastRank g) (Left PawnsOnLastRank)
 
 noPawnAtLastRank g@(Game b _) = not $ any pawnAt lastRanks
     where
