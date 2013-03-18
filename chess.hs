@@ -23,8 +23,9 @@ makeMove (Game b p) (Move s d) = do
     ix <- findIndex (d ==) dir
     let isOccupied = not. isNothing
     hit <- maybe (length dir) (findIndex isOccupied) dir
-    --TODO check for same-colored piece
-    unless (ix <= hit) $ fail "Cannot reach destination"
+    when (ix > hit) $ fail "Cannot reach destination"
+    when (ix == hit &&
+        c == (color. fromJust  $ b !! ix)) $ fail "Can't capture same color"
     --TODO replace
 
 reachableSquaresByOfficerAt Rook s  = sequence' s <$> [up 1, left 1, down 1, right 1]
