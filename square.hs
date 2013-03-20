@@ -1,5 +1,13 @@
 {-#LANGUAGE NoMonomorphismRestriction #-}
-module Square(Square) where 
+module Square(
+    Square,
+    square,
+    file,
+    rank,
+    fileLetters,
+    rankNumbers,
+    files,
+    ranks) where 
 import Control.Applicative
 import Control.Monad
 import Data.List
