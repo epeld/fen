@@ -6,6 +6,8 @@ module Square(
     rank,
     fileLetters,
     rankNumbers,
+    getRankNumber,
+    getFileLetter,
     files,
     ranks) where 
 import Control.Applicative
@@ -43,3 +45,10 @@ ranks = Rank <$> rankNumbers
 file f = File <$> find (f==) fileLetters
 rank r = Rank <$> find (r==) rankNumbers
 square f r = liftM2 Square (file f) (rank r)
+
+getRank (Square _ r) = r
+getFile (Square f _) = f
+getRankNumber s = getNumber (getRank s)
+getFileLetter s = getLetter (getFile s)
+getNumber (Rank r) = r
+getLetter (File f) = f
