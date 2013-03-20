@@ -11,20 +11,16 @@ data Piece = Piece {
     color :: Color
     } deriving (Show, Eq)
 
-otherColor = invert
 invert c = case c of
     White -> Black
     Black -> White
 
-charToOfficerType c = case toLower c of
-    'r' -> Rook
-    'b' -> Bishop
-    'k' -> King
-    'q' -> Queen
-    'n' -> Knight
+charToOfficerType c = lowerCharToOfficerType (toLower c)
+lowerCharToOfficerType 'r' = Rook
+lowerCharToOfficerType 'b' = Bishop
+lowerCharToOfficerType 'k' = King
+lowerCharToOfficerType 'q' = Queen
+lowerCharToOfficerType 'n' = Knight
 
 pieceTypeToString Pawn = "Pawn"
 pieceTypeToString (Officer t) = show t
-
---enemyKing (Game _ p) =
---    Piece (Officer King) (otherColor . whoseMove $ p)
