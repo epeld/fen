@@ -1,8 +1,9 @@
 {-#LANGUAGE NoMonomorphismRestriction #-}
-module Square where 
+module Square(Square) where 
 import Control.Applicative
 import Control.Monad
 import Data.List
+import Data.Ix
 import Data.Maybe
 import Data.Char
 
@@ -24,10 +25,7 @@ m !!! s = m !! fromEnum s
 
 data File = File Char deriving (Show, Eq, Ix, Ord)
 data Rank = Rank Int deriving (Show, Eq, Ix, Ord)
-data Square = Square {
-    file :: File,
-    rank :: Rank
-    } deriving (Show, Eq, Ix, Ord)
+data Square = Square File Rank deriving (Show, Eq, Ix, Ord)
 
 fileLetters = ['a'..'h']
 rankNumbers = [1..8]
