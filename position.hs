@@ -1,8 +1,7 @@
 module Position where
 
 import Piece
-
-data LegalPosition = LegalPosition deriving Show
+import Internals
 
 whoseTurn _ = White
 readSquare p s = Nothing

@@ -2,22 +2,13 @@ module Move(Move, move) where
 
 import Square
 import Piece
+import Internals
 import Position
 
 import Data.Maybe
 import Control.Monad
 import Control.Applicative
 
--- Define special errors to facilitate changing of error mechanism later on
-data MoveErrors = LastRankPromote | NoPieceToMove | NoPromotion | ColorsMismatch
-raiseError _ = Nothing
-
-type Promotion = OfficerType
-data MovingPiece = PieceFromPosition {
-    getPosition::LegalPosition, getSquare::Square
-    } deriving (Show)
-data Move = Move MovingPiece Square (Maybe Promotion)
-data ClassifiedMove = Standard Move | Capturing Move
 
 getPiece mp = fromJust $ getPosition mp `readSquare` getSquare mp
 onPiece f = f . getPiece
