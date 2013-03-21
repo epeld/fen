@@ -6,6 +6,7 @@ import Position
 
 import Data.Maybe
 import Control.Monad
+import Control.Applicative
 
 -- Define special errors to facilitate changing of error mechanism later on
 data MoveErrors = LastRankPromote | NoPieceToMove | NoPromotion | ColorsMismatch
@@ -16,6 +17,7 @@ data MovingPiece = PieceFromPosition {
     getPosition::LegalPosition, getSquare::Square
     } deriving (Show)
 data Move = Move MovingPiece Square (Maybe Promotion)
+data ClassifiedMove = Standard Move | Capturing Move
 
 getPiece mp = fromJust $ getPosition mp `readSquare` getSquare mp
 onPiece f = f . getPiece
@@ -23,7 +25,9 @@ whosePiece = onPiece color
 whichPiece = onPiece pieceType
 
 move :: LegalPosition -> Square -> Square -> Maybe Promotion -> Maybe Move
-move p s d pr = movingPiece p s >>= \x -> move' x d pr
+move p s d pr = do
+    mp <- movingPiece p s
+    move' mp d pr
 
 move' :: MovingPiece -> Square -> Maybe Promotion -> Maybe Move
 move' mp d pr = do
@@ -46,3 +50,5 @@ movingPiece p s = do
     verifyHasColor c x
     return (PieceFromPosition p s)
 
+--classifyMove :: Move -> Maybe ClassifiedMove
+--range :: MovingPiece -> PieceRange
