@@ -6,6 +6,7 @@ module Square(
     rank,
     fileLetters,
     rankNumbers,
+    SquareSeries
     ) where 
 import Control.Applicative
 import Control.Monad
@@ -35,3 +36,11 @@ findFile f = find (==f) fileLetters
 findRank r = find (==r) rankNumbers
 
 square f r = liftM2 Square (findFile f) (findRank r)
+
+type SquareSeries = [Square]
+
+--offset f r s = return $ square (offsetFile f s) (offsetRank r s)
+above s = square (file $ s) (succ . rank $ s)
+below s = square (file $ s) (pred . rank $ s)
+leftOf s = square (pred $ file $ s) (rank s)
+rightOf s = square (succ$ file $ s) (rank s)
