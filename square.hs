@@ -39,7 +39,6 @@ square f r = liftM2 Square (findFile f) (findRank r)
 
 type SquareSeries = [Square]
 
---offset f r s = return $ square (offsetFile f s) (offsetRank r s)
 above s = square (file $ s) (succ . rank $ s)
 below s = square (file $ s) (pred . rank $ s)
 leftOf s = square (pred $ file $ s) (rank s)

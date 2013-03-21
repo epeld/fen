@@ -9,7 +9,6 @@ import Data.Maybe
 import Control.Monad
 import Control.Applicative
 
-
 getPiece mp = fromJust $ getPosition mp `readSquare` getSquare mp
 onPiece f = f . getPiece
 whosePiece = onPiece color
