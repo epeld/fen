@@ -31,7 +31,7 @@ move p s d pr = do
 
 move' :: MovingPiece -> Square -> Maybe Promotion -> Maybe Move
 move' mp d pr = do
-    verifyPromotion (getRankNumber d) (whosePiece mp) (whichPiece mp) pr
+    verifyPromotion (rank d) (whosePiece mp) (whichPiece mp) pr
     return (Move mp d pr)
 
 verifyPromotion 8 White Pawn Nothing = raiseError LastRankPromote
