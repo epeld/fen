@@ -6,10 +6,7 @@ module Square(
     rank,
     fileLetters,
     rankNumbers,
-    getRankNumber,
-    getFileLetter,
-    files,
-    ranks) where 
+    ) where 
 import Control.Applicative
 import Control.Monad
 import Data.List
@@ -17,38 +14,24 @@ import Data.Ix
 import Data.Maybe
 import Data.Char
 
-instance Enum (File) where
-    toEnum i = let i' = fromEnum 'a' + i 
-                in File (toEnum i')
-    fromEnum (File c) = fromEnum c - fromEnum 'a'
-
-instance Enum (Rank) where
-    toEnum i = let i' = i + 1
-                in Rank (toEnum i')
-    fromEnum (Rank c) = fromEnum c - 1
-
 instance Enum (Square) where
-    toEnum i = Square (toEnum $ mod i 8 ) (toEnum $ div i 8)
-    fromEnum (Square f r) = 8 * (fromEnum r) + fromEnum f
+    toEnum i = maybe (error "Bad argument") id (square f r)
+        where f = toEnum $ fromEnum 'a' + (i `mod` 8)
+              r = 1 + i `div` 8
+            
+    fromEnum (Square f r) = 8 * (fromEnum r - 1) + fromEnum f - fromEnum 'a'
 
 m !!! s = m !! fromEnum s
 
-data File = File Char deriving (Show, Eq, Ix, Ord)
-data Rank = Rank Int deriving (Show, Eq, Ix, Ord)
-data Square = Square File Rank deriving (Show, Eq, Ix, Ord)
+data Square = Square {
+    file :: Char,
+    rank :: Int
+} deriving (Show, Eq, Ix, Ord)
 
 fileLetters = ['a'..'h']
 rankNumbers = [1..8]
-files = File <$> fileLetters
-ranks = Rank <$> rankNumbers
 
-file f = File <$> find (f==) fileLetters
-rank r = Rank <$> find (r==) rankNumbers
-square f r = liftM2 Square (file f) (rank r)
+findFile f = find (==f) fileLetters
+findRank r = find (==r) rankNumbers
 
-getRank (Square _ r) = r
-getFile (Square f _) = f
-getRankNumber s = getNumber (getRank s)
-getFileLetter s = getLetter (getFile s)
-getNumber (Rank r) = r
-getLetter (File f) = f
+square f r = liftM2 Square (findFile f) (findRank r)
