@@ -17,3 +17,5 @@ type Promotion = OfficerType
 
 data CastlingRight = Castle Side Color deriving (Show, Eq)
 data Side = Kinside | Queenside deriving (Show, Eq)
+
+readSquare p s = Board.readSquare (board p) s

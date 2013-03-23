@@ -1,15 +1,22 @@
 module Range (Range, range) where
-import MovingPiece (MovingPiece)
-import Square (SquareSeries, above, below, leftOf, rightOf)
+import Internals (readSquare, LegalPosition)
+import MovingPiece (MovingPiece, position, square)
+import Square (Square, SquareSeries, above, below, leftOf, rightOf)
 import Piece
 
 import Control.Monad
 
 type Range = [SquareSeries]
 
-range mp = []
+range :: MovingPiece -> Range
+range mp = rangeOfPiece (p `readSquare` s) s
+    where p = position mp
+          s = square mp
+          rangeOfPiece Nothing = error "Invalid MovingPiece in range"
+          rangeOfPiece (Just pc) = range' p (pieceType pc) (color pc)
 
-range' Pawn White s = []
+range' :: LegalPosition -> PieceType -> Color -> Square -> Range
+range' p Pawn White s = []
 
 data RangeType = Takes | Moves
 pawnRange c s Moves = []
