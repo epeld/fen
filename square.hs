@@ -1,12 +1,10 @@
 {-#LANGUAGE NoMonomorphismRestriction #-}
 module Square(
-    Square,
-    square,
-    file,
-    rank,
-    fileLetters,
-    rankNumbers,
-    SquareSeries
+    Square, square,
+    file, rank,
+    fileLetters, rankNumbers,
+    SquareSeries,
+    above, below, leftOf, rightOf
     ) where 
 import Control.Applicative
 import Control.Monad
