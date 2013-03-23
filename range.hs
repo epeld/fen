@@ -31,16 +31,19 @@ range mp = rangeOfPiece (p `readSquare` s) s
           rangeOfPiece (Just pc) = range' p (pieceType pc) (color pc)
 
 range' :: LegalPosition -> PieceType -> Color -> Square -> Range
-range' p Pawn c s = concat $ pawnRange c s <$> [Moves, Takes]
+range' p Pawn c s = []
 
 isJustSquare = not. isNothing
 
-pawnRange :: Color -> Square -> MoveType -> Range
-pawnRange c s Moves = return $ squareSequence $
-    pawnSquares c Moves s
+pawnSquares :: Color -> Square -> MoveType -> Range
+pawnSquares c s Moves = return $ squareSequence $
+    pawnSquares' c s Moves
 
-pawnRange c s takes = return <$> squareSet $
-    pawnSquares c Takes s
+pawnSquares c s takes = return <$> squareSet $
+    pawnSquares' c s Takes 
+
+pawnSquares' :: Color -> Square -> MoveType -> [Maybe Square]
+pawnSquares' c s mt = pawnMoves c (rank s) mt <*> [s]
 
 type Reducer = (Maybe Square -> Bool) -> [Maybe Square] -> [Maybe Square]
 
@@ -52,9 +55,6 @@ squareSet = toSeries takeWhile
 
 squareSequence :: [Maybe Square] -> SquareSeries
 squareSequence = toSeries filter
-
-pawnSquares :: Color -> MoveType -> Square -> [Maybe Square]
-pawnSquares c mt s = pawnMoves c (rank s) mt <*> [s]
 
 pawnMoves White 2 Moves = [above, above >=> above]
 pawnMoves White _ Moves = [above]
