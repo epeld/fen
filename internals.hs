@@ -4,9 +4,6 @@ import Piece
 
 data LegalPosition = LegalPosition deriving Show
 
-data MoveErrors = LastRankPromote | NoPieceToMove | NoPromotion | ColorsMismatch
-raiseError _ = Nothing
-
 type Promotion = OfficerType
 data MovingPiece = PieceFromPosition {
     getPosition::LegalPosition, getSquare::Square
