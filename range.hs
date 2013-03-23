@@ -1,7 +1,9 @@
 module Range (Range, range) where
 import Internals (MovingPiece)
-import Square (SquareSeries)
+import Square (SquareSeries, above, below, leftOf, rightOf)
 import Piece
+
+import Control.Monad
 
 type Range = [SquareSeries]
 
