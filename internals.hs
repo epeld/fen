@@ -14,11 +14,6 @@ data LegalPosition = Position {
     } deriving Show
 
 type Promotion = OfficerType
-data MovingPiece = PieceFromPosition {
-    getPosition::LegalPosition, getSquare::Square
-    } deriving (Show)
-data Move = Move MovingPiece Square (Maybe Promotion)
-data ClassifiedMove = Standard Move | Capturing Move
 
 data CastlingRight = Castle Side Color deriving (Show, Eq)
 data Side = Kinside | Queenside deriving (Show, Eq)

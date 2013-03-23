@@ -1,5 +1,5 @@
 module Range (Range, range) where
-import Internals (MovingPiece)
+import MovingPiece (MovingPiece)
 import Square (SquareSeries, above, below, leftOf, rightOf)
 import Piece
 

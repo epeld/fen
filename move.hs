@@ -1,14 +1,18 @@
 module Move (Move, move) where
 
-import Square
+import Square 
 import Piece
 import Internals
+import MovingPiece
 import Position
 
 import Data.Maybe
 import Control.Monad
 import Control.Monad.Error 
 import Control.Applicative
+
+data Move = Move MovingPiece Square (Maybe Promotion)
+data ClassifiedMove = Standard Move | Capturing Move
 
 data Reason = LastRankPromote | NoPieceToMove | NoPromotion | ColorsMismatch
 
@@ -18,7 +22,7 @@ strMsg s = "strMsg called"
 
 type ErrorMonad = Either Reason
 
-getPiece mp = fromJust $ getPosition mp `readSquare` getSquare mp
+getPiece mp = fromJust $ position mp `readSquare` MovingPiece.square mp
 onPiece f = f . getPiece
 whosePiece = onPiece color
 whichPiece = onPiece pieceType
@@ -51,7 +55,7 @@ movingPiece p s = do
     maybe (throwError NoPieceToMove) (verifyHasColor c) x
     return (PieceFromPosition p s)
 
-{-
+
 --classifyMove :: Move -> Maybe ClassifiedMove
 --range :: MovingPiece -> PieceRange
--}
+
