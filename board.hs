@@ -6,3 +6,4 @@ import Data.List(find)
 
 type Board = [Maybe Piece] 
 
+readSquare b s = b !!! s

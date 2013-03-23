@@ -4,7 +4,8 @@ module Square(
     file, rank,
     fileLetters, rankNumbers,
     SquareSeries,
-    above, below, leftOf, rightOf
+    above, below, leftOf, rightOf,
+    (!!!)
     ) where 
 import Control.Applicative
 import Control.Monad

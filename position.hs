@@ -1,7 +1,7 @@
 module Position where
 
 import Piece
+import Board
 import Internals
 
-whoseTurn _ = White
-readSquare p s = Nothing
+readSquare p s = Board.readSquare (board p) s
