@@ -36,6 +36,7 @@ move' mp d pr = do
 verifyPromotion 8 White Pawn Nothing = throwError LastRankPromote
 verifyPromotion 1 Black Pawn Nothing = throwError LastRankPromote
 verifyPromotion _ _ _ (Just _) = throwError NoPromotion
+verifyPromotion _ _ _ _ = return ()
 
 verifyHasColor :: Color -> Piece -> ErrorMonad ()
 verifyHasColor c p = verifyColorsMatch c (color p)
