@@ -1,4 +1,8 @@
-module Range (Range, range, pieceType, square, squares) where
+module Range (
+    Range, range, range',
+    pieceType,
+    square, squares
+    ) where
 import Internals (
     MoveType
         (Takes, Moves)
@@ -39,6 +43,11 @@ data Range = Range {
 range :: Color -> PieceType -> Square -> MoveType -> Range
 range _ (Officer ot) s _ = officerRange ot s
 range c Pawn s mt = pawnRange c s mt
+
+range' c Pawn s = Range Pawn s (rangeMT Moves ++ rangeMT Takes)
+    where rangeMT mt = squares (range c Pawn s mt)
+
+range' c pt s = range c pt s Takes -- Takes or Moves, doesn't matter
 
 officerRange :: OfficerType -> Square -> Range
 officerRange ot s = Range (Officer ot) s $ officerSquares ot s
