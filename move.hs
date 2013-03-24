@@ -1,6 +1,8 @@
 module Move (Move, move) where
 
-import Square (Square, rank)
+import Square (
+    Square, rank
+    )
 import Piece (
     Color(..), color,
     Piece,
@@ -19,8 +21,12 @@ import MovingPiece (
     position, square
     )
 
-import Data.Maybe (fromJust)
-import Control.Monad.Error (throwError)
+import Data.Maybe (
+    fromJust
+    )
+import Control.Monad.Error (
+    throwError
+    )
 
 data Move = Move MovingPiece Square (Maybe Promotion)
 data ClassifiedMove = Standard Move | Capturing Move
