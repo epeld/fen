@@ -1,11 +1,8 @@
-module Range (Range) where
+module Range (Range, range, pieceType, square, squares) where
 import Internals (
-    readSquare,
-    LegalPosition,
     MoveType
         (Takes, Moves)
     )
-import MovingPiece (MovingPiece, position, square)
 import Square (
     Square,
     SquareSeries,
@@ -21,7 +18,10 @@ import Piece (
     Color(..)
     )
 
-import Data.Maybe (isNothing, fromJust)
+import Data.Maybe (
+    isNothing,
+    fromJust
+    )
 import Control.Monad (
     (>=>),
     liftM
@@ -34,17 +34,9 @@ data Range = Range {
     squares :: [SquareSeries]
 } deriving (Show)
 
-{-
-range :: MovingPiece -> Range
-range mp = rangeOfPiece (p `readSquare` s) s
-    where p = position mp
-          s = square mp
-          rangeOfPiece Nothing = error "Invalid MovingPiece in range"
-          rangeOfPiece (Just pc) = range' p (pieceType pc) (color pc)
-
-range' :: LegalPosition -> PieceType -> Color -> Square -> Range
-range' p Pawn c s = Range Pawn
--}
+range :: Color -> PieceType -> Square -> MoveType -> Range
+range _ (Officer ot) s _ = officerRange ot s
+range c Pawn s mt = pawnRange c s mt
 
 officerRange :: OfficerType -> Square -> Range
 officerRange ot s = Range (Officer ot) s $ officerSquares ot s
