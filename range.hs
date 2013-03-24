@@ -45,13 +45,13 @@ pawnRange :: Color -> Square -> MoveType -> Range
 pawnRange c s mt = Range Pawn s $ pawnSquares c s mt
 
 pawnSquares c s Moves = return. squareSequence $
-    pawnRange' c s Moves
+    pawnSquares' c s Moves
 
 pawnSquares c s Takes = return <$> squareSet $
-    pawnRange' c s Takes 
+    pawnSquares' c s Takes 
 
-pawnRange' :: Color -> Square -> MoveType -> [Maybe Square]
-pawnRange' c s mt = pawnMoves c (rank s) mt <*> [s]
+pawnSquares' :: Color -> Square -> MoveType -> [Maybe Square]
+pawnSquares' c s mt = pawnMoves c (rank s) mt <*> [s]
 
 type Reducer = (Maybe Square -> Bool) -> [Maybe Square] -> [Maybe Square]
 
