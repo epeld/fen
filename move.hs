@@ -1,7 +1,12 @@
 module Move (Move, move) where
 
 import Square 
-import Piece
+import Piece (
+    Color(..), color,
+    Piece,
+    PieceType(..), pieceType,
+    OfficerType
+    )
 import Internals (
     ErrorMonad,
     LegalPosition,
