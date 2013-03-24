@@ -26,7 +26,9 @@ import Control.Monad (
     (>=>),
     liftM
     )
-import Control.Applicative ((<*>), (<$>))
+import Control.Applicative (
+    (<*>), (<$>)
+    )
 
 data Range = Range {
     pieceType :: PieceType,
