@@ -4,7 +4,10 @@ module Square(
     file, rank,
     fileLetters, rankNumbers,
     SquareSeries,
-    above, below, leftOf, rightOf,
+    above, below, left, right,
+    up, down,
+    upLeft, downLeft, upRight, downRight,
+    twice,
     (!!!)
     ) where 
 import Control.Applicative
@@ -40,5 +43,14 @@ type SquareSeries = [Square]
 
 above s = square (file $ s) (succ . rank $ s)
 below s = square (file $ s) (pred . rank $ s)
-leftOf s = square (pred $ file $ s) (rank s)
-rightOf s = square (succ$ file $ s) (rank s)
+left s = square (pred $ file $ s) (rank s)
+right s = square (succ$ file $ s) (rank s)
+up = above
+down = below
+
+upLeft = above >=> left
+upRight = above >=> right
+downLeft = below >=> left
+downRight = below >=> right
+
+twice m = m >=> m

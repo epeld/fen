@@ -9,16 +9,23 @@ import MovingPiece (MovingPiece, position, square)
 import Square (
     Square,
     SquareSeries,
-    above,
-    below,
-    leftOf,
-    rightOf,
+    up, down, left, right,
+    upLeft, upRight, downLeft, downRight,
+    twice,
     rank
     )
-import Piece
+import Piece (
+    OfficerType(..),
+    Piece,
+    PieceType(..),
+    Color(..)
+    )
 
 import Data.Maybe (isNothing, fromJust)
-import Control.Monad ((>=>))
+import Control.Monad (
+    (>=>),
+    liftM
+    )
 import Control.Applicative ((<*>), (<$>))
 
 data Range = Range {
@@ -39,6 +46,9 @@ range' :: LegalPosition -> PieceType -> Color -> Square -> Range
 range' p Pawn c s = Range Pawn
 -}
 
+officerRange :: OfficerType -> Square -> Range
+officerRange ot s = Range (Officer ot) s $ officerSquares ot s
+
 isJustSquare = not. isNothing
 
 pawnRange :: Color -> Square -> MoveType -> Range
@@ -53,6 +63,9 @@ pawnSquares c s Takes = return <$> squareSet $
 pawnSquares' :: Color -> Square -> MoveType -> [Maybe Square]
 pawnSquares' c s mt = pawnMoves c (rank s) mt <*> [s]
 
+officerSquares :: OfficerType -> Square -> [SquareSeries]
+officerSquares ot s = squareSequence <$> officerSquaresM ot s
+
 type Reducer = (Maybe Square -> Bool) -> [Maybe Square] -> [Maybe Square]
 
 toSeries :: Reducer -> [Maybe Square] -> SquareSeries
@@ -64,9 +77,27 @@ squareSet = toSeries takeWhile
 squareSequence :: [Maybe Square] -> SquareSeries
 squareSequence = toSeries filter
 
-pawnMoves White 2 Moves = [above, above >=> above]
-pawnMoves White _ Moves = [above]
-pawnMoves Black 7 Moves = [below, below >=> below]
-pawnMoves Black _ Moves = [below]
-pawnMoves White _ Takes = [above >=> leftOf, above >=> rightOf]
-pawnMoves Black _ Takes = [below >=> leftOf, below >=> rightOf]
+iterateMove :: (Square -> Maybe Square) -> Square -> [Maybe Square]
+iterateMove m = iterate (>>= m) . return
+
+pawnMoves :: Color -> Int -> MoveType -> [Square -> Maybe Square]
+pawnMoves White 2 Moves = [up, twice up]
+pawnMoves White _ Moves = [up]
+pawnMoves Black 7 Moves = [down, twice down]
+pawnMoves Black _ Moves = [down]
+pawnMoves White _ Takes = [upLeft, upRight]
+pawnMoves Black _ Takes = [downLeft, downRight]
+
+onceTwice m m' = m' >=> twice m
+knightMoves = onceTwice <$> [up, down] <*> [left, right]
+
+officerDirections Bishop = [upLeft, upRight, downLeft, downRight]
+officerDirections Rook = [up, down, left, right]
+officerDirections Queen = concat $
+    map officerDirections [Rook, Bishop]
+
+officerSquaresM :: OfficerType -> Square -> [[Maybe Square]]
+officerSquaresM King s = take 1 <$> officerSquaresM Queen s
+officerSquaresM Knight s = liftM return (knightMoves <*> [s])
+officerSquaresM ot s = flip iterateMove s <$> officerDirections ot
+    
