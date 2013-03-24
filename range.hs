@@ -72,10 +72,10 @@ toSeries :: Reducer -> [Maybe Square] -> SquareSeries
 toSeries r sqs = fromJust <$> r isJustSquare sqs
 
 squareSet :: [Maybe Square] -> SquareSeries
-squareSet = toSeries takeWhile
+squareSet = toSeries filter
 
 squareSequence :: [Maybe Square] -> SquareSeries
-squareSequence = toSeries filter
+squareSequence = toSeries takeWhile
 
 iterateMove :: (Square -> Maybe Square) -> Square -> [Maybe Square]
 iterateMove m = iterate (>>= m) . return
@@ -100,5 +100,5 @@ officerDirections Queen = concat $
 officerSquaresM :: OfficerType -> Square -> [[Maybe Square]]
 officerSquaresM King s = take 1 <$> officerSquaresM Queen s
 officerSquaresM Knight s = liftM return (knightMoves <*> [s])
-officerSquaresM ot s = flip iterateMove s <$> officerDirections ot
+officerSquaresM ot s = drop 1. flip iterateMove s <$> officerDirections ot
     

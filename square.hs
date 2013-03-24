@@ -8,6 +8,7 @@ module Square(
     up, down,
     upLeft, downLeft, upRight, downRight,
     twice,
+    string,
     (!!!)
     ) where 
 import Control.Applicative
@@ -38,6 +39,7 @@ findFile f = find (==f) fileLetters
 findRank r = find (==r) rankNumbers
 
 square f r = liftM2 Square (findFile f) (findRank r)
+string (Square f r) = f : show r
 
 type SquareSeries = [Square]
 
