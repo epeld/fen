@@ -88,7 +88,8 @@ pawnMoves Black _ Moves = [down]
 pawnMoves White _ Takes = [upLeft, upRight]
 pawnMoves Black _ Takes = [downLeft, downRight]
 
-knightMoves = onceTwice <$> [up, down] <*> [left, right]
+knightMoves = 
+    [onceTwice, flip onceTwice] <*> [up, down] <*> [left, right]
     where onceTwice m m' = m' >=> twice m
 
 officerDirections Bishop = [upLeft, upRight, downLeft, downRight]
