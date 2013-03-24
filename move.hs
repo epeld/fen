@@ -3,24 +3,19 @@ module Move (Move, move) where
 import Square 
 import Piece
 import Internals
-import MovingPiece
+import MovingPiece (
+    MovingPiece, movingPiece,
+    position, square
+    )
 import Position
 
 import Data.Maybe
 import Control.Monad
-import Control.Monad.Error 
+import Control.Monad.Error (throwError)
 import Control.Applicative
 
 data Move = Move MovingPiece Square (Maybe Promotion)
 data ClassifiedMove = Standard Move | Capturing Move
-
-data Reason = LastRankPromote | NoPieceToMove | NoPromotion | ColorsMismatch
-
-instance Error Reason where
-noMsg = error "noMsg called"
-strMsg s = "strMsg called"
-
-type ErrorMonad = Either Reason
 
 getPiece mp = fromJust $ position mp `readSquare` MovingPiece.square mp
 onPiece f = f . getPiece
@@ -41,21 +36,3 @@ verifyPromotion 8 White Pawn Nothing = throwError LastRankPromote
 verifyPromotion 1 Black Pawn Nothing = throwError LastRankPromote
 verifyPromotion _ _ _ (Just _) = throwError NoPromotion
 verifyPromotion _ _ _ _ = return ()
-
-verifyHasColor :: Color -> Piece -> ErrorMonad ()
-verifyHasColor c p = verifyColorsMatch c (color p)
-verifyColorsMatch White White = return ()
-verifyColorsMatch Black Black = return ()
-verifyColorsMatch _ _ = throwError ColorsMismatch
-
-movingPiece :: LegalPosition -> Square -> ErrorMonad MovingPiece
-movingPiece p s = do
-    let c = whoseTurn p
-    let x = p `readSquare` s
-    maybe (throwError NoPieceToMove) (verifyHasColor c) x
-    return (PieceFromPosition p s)
-
-
---classifyMove :: Move -> Maybe ClassifiedMove
---range :: MovingPiece -> PieceRange
-
