@@ -1,4 +1,4 @@
-module Range (Range, range) where
+module Range (Range) where
 import Internals (
     readSquare,
     LegalPosition,
@@ -21,8 +21,13 @@ import Data.Maybe (isNothing, fromJust)
 import Control.Monad ((>=>))
 import Control.Applicative ((<*>), (<$>))
 
-type Range = [SquareSeries]
+data Range = Range {
+    pieceType :: PieceType,
+    square :: Square,
+    squares :: [SquareSeries]
+} deriving (Show)
 
+{-
 range :: MovingPiece -> Range
 range mp = rangeOfPiece (p `readSquare` s) s
     where p = position mp
@@ -31,15 +36,18 @@ range mp = rangeOfPiece (p `readSquare` s) s
           rangeOfPiece (Just pc) = range' p (pieceType pc) (color pc)
 
 range' :: LegalPosition -> PieceType -> Color -> Square -> Range
-range' p Pawn c s = []
+range' p Pawn c s = Range Pawn
+-}
 
 isJustSquare = not. isNothing
 
 pawnRange :: Color -> Square -> MoveType -> Range
-pawnRange c s Moves = return $ squareSequence $
+pawnRange c s mt = Range Pawn s $ pawnSquares c s mt
+
+pawnSquares c s Moves = return. squareSequence $
     pawnRange' c s Moves
 
-pawnRange c s takes = return <$> squareSet $
+pawnSquares c s Takes = return <$> squareSet $
     pawnRange' c s Takes 
 
 pawnRange' :: Color -> Square -> MoveType -> [Maybe Square]
