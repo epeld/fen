@@ -1,6 +1,6 @@
 module Move (Move, move) where
 
-import Square 
+import Square (Square, rank)
 import Piece (
     Color(..), color,
     Piece,
