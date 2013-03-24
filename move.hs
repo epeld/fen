@@ -2,17 +2,20 @@ module Move (Move, move) where
 
 import Square 
 import Piece
-import Internals
+import Internals (
+    ErrorMonad,
+    LegalPosition,
+    Reason(..),
+    readSquare,
+    Promotion
+    )
 import MovingPiece (
     MovingPiece, movingPiece,
     position, square
     )
-import Position
 
-import Data.Maybe
-import Control.Monad
+import Data.Maybe (fromJust)
 import Control.Monad.Error (throwError)
-import Control.Applicative
 
 data Move = Move MovingPiece Square (Maybe Promotion)
 data ClassifiedMove = Standard Move | Capturing Move
