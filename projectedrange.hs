@@ -3,7 +3,6 @@ import Control.Monad (liftM)
 import Control.Applicative ((<$>))
 import Data.Maybe (isNothing)
 import Data.List (findIndex)
-import Prelude hiding ( min)
 
 import qualified MovingPiece (
     MovingPiece,
@@ -58,11 +57,11 @@ projectSeries p Moves ss = takeWhile (isNothing . readSquare p) ss
 projectSeries p Takes ss = take stop ss
     where stop = maybe (length ss) id (firstStop p ss)
 
-min mi mi2 = max (liftM negate mi) (liftM negate mi2)
+min' mi mi2 = max (liftM negate mi) (liftM negate mi2)
 
 firstStop :: Position -> SquareSeries -> Maybe Int
 firstStop p ss = 
-    min (firstFriendlyIndex c p ss) (succ <$> firstEnemyIndex c p ss)
+    min' (firstFriendlyIndex c p ss) (succ <$> firstEnemyIndex c p ss)
     where c = whoseTurn p
 
 findColoredPieceIndex :: Color -> Position -> SquareSeries -> Maybe Int
