@@ -3,9 +3,13 @@ module Range (
     pieceType,
     square, squares
     ) where
-import Internals (
-    MoveType
-        (Takes, Moves)
+
+import Data.Maybe (isNothing, fromJust)
+import Control.Monad ((>=>), liftM)
+import Control.Applicative ((<*>), (<$>))
+
+import MoveType (
+    MoveType (Takes, Moves)
     )
 import Square (
     Square,
@@ -19,19 +23,9 @@ import Piece (
     OfficerType(..),
     Piece,
     PieceType(..),
-    Color(..)
     )
-
-import Data.Maybe (
-    isNothing,
-    fromJust
-    )
-import Control.Monad (
-    (>=>),
-    liftM
-    )
-import Control.Applicative (
-    (<*>), (<$>)
+import Color ( 
+    Color(..),
     )
 
 data Range = Range {
