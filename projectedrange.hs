@@ -2,10 +2,8 @@ module ProjectedRange where
 import Control.Monad (liftM)
 import Control.Applicative ((<$>))
 import Data.Maybe (isNothing)
-import Data.List (find)
-import Prelude hiding (
-    min
-    )
+import Data.List (findIndex)
+import Prelude hiding ( min)
 
 import qualified MovingPiece (
     MovingPiece,
@@ -29,7 +27,10 @@ import MoveType (
     MoveType(..)
     )
 import Piece (hasColor)
-import Color (invert)
+import Color (
+    Color,
+    invert
+    )
 
 data ProjectedRange = Projected {
     range :: Range.Range,
@@ -60,9 +61,11 @@ projectSeries p Takes ss = take stop ss
 min mi mi2 = max (liftM negate mi) (liftM negate mi2)
 
 firstStop :: Position -> SquareSeries -> Maybe Int
-firstStop p ss = firstStop' (whoseTurn p) ss
-firstStop' c ss = min (firstFriendly c ss) (succ <$> firstEnemy c ss)
+firstStop p ss = 
+    min (firstFriendlyIndex c p ss) (succ <$> firstEnemyIndex c p ss)
+    where c = whoseTurn p
 
-findColoredPiece c = find $ maybe False (hasColor c)
-firstFriendly = findColoredPiece
-firstEnemy c ss = findColoredPiece . invert
+findColoredPiece :: Color -> Position -> SquareSeries -> Maybe Int
+findColoredPiece c p = findIndex $ maybe False (hasColor c) . readSquare p
+firstFriendlyIndex = findColoredPiece
+firstEnemyIndex = findColoredPiece . invert
