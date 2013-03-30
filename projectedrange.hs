@@ -54,19 +54,13 @@ elem s pr = any (Prelude.elem s) (squares pr)
 
 projectSeries :: Position -> MoveType -> SquareSeries -> SquareSeries
 projectSeries p Moves ss = takeWhile (isNothing . readSquare p) ss
-projectSeries p Takes ss = take stop ss
-    where stop = maybe (length ss) id (firstStop p ss)
+projectSeries p Takes ss = maybe [] (takeOnly' ss) enemyIx
+    where enemyIx = firstEnemyIndex p ss
 
-min' mi mi2 = neg $ max (neg mi) (neg mi2)
-    where neg = liftM negate
+takeOnly i = drop (i-1) . take 1
+takeOnly' = flip takeOnly
 
-firstStop :: Position -> SquareSeries -> Maybe Int
-firstStop p ss = 
-    min' friendlyIx (liftM succ enemyIx)
-    where friendlyIx = firstFriendlyIndex p ss
-          enemyIx = firstEnemyIndex p ss
-
-firstFriendlyIndex p = findColoredPieceIndex (whoseTurn p) p
+firstEnemyIndex :: Position -> SquareSeries -> Maybe Int
 firstEnemyIndex p = findColoredPieceIndex (invert $ whoseTurn p) p
 
 findColoredPieceIndex :: Color -> Position -> SquareSeries -> Maybe Int
