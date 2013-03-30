@@ -65,7 +65,7 @@ firstStop p ss =
     min (firstFriendlyIndex c p ss) (succ <$> firstEnemyIndex c p ss)
     where c = whoseTurn p
 
-findColoredPiece :: Color -> Position -> SquareSeries -> Maybe Int
-findColoredPiece c p = findIndex $ maybe False (hasColor c) . readSquare p
-firstFriendlyIndex = findColoredPiece
-firstEnemyIndex = findColoredPiece . invert
+findColoredPieceIndex :: Color -> Position -> SquareSeries -> Maybe Int
+findColoredPieceIndex c p = findIndex $ maybe False (hasColor c) . readSquare p
+firstFriendlyIndex = findColoredPieceIndex
+firstEnemyIndex = findColoredPieceIndex . invert
