@@ -57,7 +57,8 @@ projectSeries p Moves ss = takeWhile (isNothing . readSquare p) ss
 projectSeries p Takes ss = take stop ss
     where stop = maybe (length ss) id (firstStop p ss)
 
-min' mi mi2 = liftM negate $ max (liftM negate mi) (liftM negate mi2)
+min' mi mi2 = neg $ max (neg mi) (neg mi2)
+    where neg = liftM negate
 
 firstStop :: Position -> SquareSeries -> Maybe Int
 firstStop p ss = 
