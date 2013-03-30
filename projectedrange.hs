@@ -7,7 +7,7 @@ module ProjectedRange (
     project,
     range,
     position,
-    )where
+    ) where
 import Control.Monad (liftM)
 import Control.Applicative ((<$>))
 import Data.Maybe (isNothing)
