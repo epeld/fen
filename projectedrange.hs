@@ -1,4 +1,13 @@
-module ProjectedRange where
+module ProjectedRange (
+    ProjectedRange,
+    SquareSeries,
+    ProjectedRange.elem,
+    projectedRange,
+    squares,
+    project,
+    range,
+    position,
+    )where
 import Control.Monad (liftM)
 import Control.Applicative ((<$>))
 import Data.Maybe (isNothing)
@@ -31,6 +40,8 @@ import Color (
     invert
     )
 
+type SquareSeries = Range.SquareSeries
+
 data ProjectedRange = Projected {
     range :: Range.Range,
     position :: Position
@@ -42,7 +53,6 @@ projectedRange mp mt =
 
 project r p = Projected r p
 
-type SquareSeries = Range.SquareSeries
 squares :: ProjectedRange -> [SquareSeries]
 squares pr = projectSeries p (Range.moveType r) <$> Range.squares r
     where p = position pr
