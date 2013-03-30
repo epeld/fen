@@ -62,10 +62,12 @@ min' mi mi2 = neg $ max (neg mi) (neg mi2)
 
 firstStop :: Position -> SquareSeries -> Maybe Int
 firstStop p ss = 
-    min' (firstFriendlyIndex c p ss) (succ <$> firstEnemyIndex c p ss)
-    where c = whoseTurn p
+    min' friendlyIx (liftM succ enemyIx)
+    where friendlyIx = firstFriendlyIndex p ss
+          enemyIx = firstEnemyIndex p ss
+
+firstFriendlyIndex p = findColoredPieceIndex (whoseTurn p) p
+firstEnemyIndex p = findColoredPieceIndex (invert $ whoseTurn p) p
 
 findColoredPieceIndex :: Color -> Position -> SquareSeries -> Maybe Int
 findColoredPieceIndex c p = findIndex $ maybe False (hasColor c) . readSquare p
-firstFriendlyIndex = findColoredPieceIndex
-firstEnemyIndex = findColoredPieceIndex . invert
