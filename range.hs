@@ -1,5 +1,5 @@
 module Range (
-    Range, range, range',
+    Range, range,
     pieceType,
     square, squares
     ) where
@@ -30,26 +30,22 @@ import Color (
 
 data Range = Range {
     pieceType :: PieceType,
+    moveType :: MoveType,
     square :: Square,
     squares :: [SquareSeries]
 } deriving (Show)
 
 range :: Color -> PieceType -> Square -> MoveType -> Range
-range _ (Officer ot) s _ = officerRange ot s
+range _ (Officer ot) s mt = officerRange ot s mt
 range c Pawn s mt = pawnRange c s mt
 
-range' c Pawn s = Range Pawn s (rangeMT Moves ++ rangeMT Takes)
-    where rangeMT mt = squares (range c Pawn s mt)
-
-range' c pt s = range c pt s Takes -- Takes or Moves, doesn't matter
-
-officerRange :: OfficerType -> Square -> Range
-officerRange ot s = Range (Officer ot) s $ officerSquares ot s
+officerRange :: OfficerType -> Square -> MoveType -> Range
+officerRange ot s mt = Range (Officer ot) mt s $ officerSquares ot s
 
 isJustSquare = not. isNothing
 
 pawnRange :: Color -> Square -> MoveType -> Range
-pawnRange c s mt = Range Pawn s $ pawnSquares c s mt
+pawnRange c s mt = Range Pawn mt s $ pawnSquares c s mt
 
 pawnSquares c s Moves = return. squareSequence $
     pawnSquares' c s Moves

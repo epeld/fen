@@ -1,14 +1,23 @@
 module ProjectedRange where
-import MovingPiece (MovingPiece)
-import Range (Range)
-import Internals (LegalPosition)
+import qualified MovingPiece (
+    MovingPiece,
+    range,
+    position,
+    pieceType,
+    )
+import Range (
+    Range,
+    )
+import Position (Position)
+import MoveType (MoveType)
 
 data ProjectedRange = Projected {
     range :: Range,
-    position :: LegalPosition
+    position :: Position
     } deriving (Show)
 
-range mp = Range.range (color mp) (pieceType mp) (square mp)
+projectedRange :: MovingPiece.MovingPiece -> MoveType -> ProjectedRange
+projectedRange mp mt =
+    MovingPiece.range mp mt `project` MovingPiece.position mp
 
-projectedRange :: MovingPiece -> ProjectedRange
-projectedRange mp = pieceType mp 
+project r p = Projected r p
