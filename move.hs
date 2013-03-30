@@ -4,17 +4,22 @@ import Square (
     Square, rank
     )
 import Piece (
-    Color(..), color,
+    color,
     Piece,
     PieceType(..), pieceType,
-    OfficerType
+    OfficerType,
     )
-import Internals (
+import Color (
+    Color(..)
+    )
+import ErrorMonad (
     ErrorMonad,
-    LegalPosition,
-    Reason(..),
+    Reason(NoPromotion, LastRankPromote),
+    )
+import Position (
+    Position,
     readSquare,
-    Promotion
+    Promotion,
     )
 import MovingPiece (
     MovingPiece, movingPiece,
@@ -36,7 +41,7 @@ onPiece f = f . getPiece
 whosePiece = onPiece color
 whichPiece = onPiece pieceType
 
-move :: LegalPosition -> Square -> Square -> Maybe Promotion -> ErrorMonad Move
+move :: Position -> Square -> Square -> Maybe Promotion -> ErrorMonad Move
 move p s d pr = do
     mp <- movingPiece p s
     move' mp d pr
