@@ -49,7 +49,4 @@ color = Piece.color . piece
 pieceType = Piece.pieceType . piece
 
 range :: MovingPiece -> MoveType -> Range
-range mp = Range.range 
-    (color mp)
-    (pieceType mp)
-    (square mp)
+range mp = Range.range (color mp) (pieceType mp) (square mp)
