@@ -4,8 +4,9 @@ module Piece (
     Piece(..),
     charToOfficerType,
     pieceTypeToString,
-    verifyHasColor
-    )where
+    verifyHasColor,
+    hasColor,
+    ) where
 
 import Data.Char
 import Control.Monad.Error
@@ -37,8 +38,6 @@ pieceTypeToString Pawn = "Pawn"
 pieceTypeToString (Officer t) = show t
 
 verifyHasColor :: Color -> Piece -> ErrorMonad ()
-verifyHasColor c p = verifyColorsMatch c (color p)
-verifyColorsMatch White White = return ()
-verifyColorsMatch Black Black = return ()
-verifyColorsMatch _ _ = throwError ColorsMismatch
+verifyHasColor c p = unless (hasColor c p) (throwError ColorsMismatch)
 
+hasColor c p = color p == c

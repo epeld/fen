@@ -1,7 +1,9 @@
 module Range (
     Range, range,
     pieceType,
-    square, squares
+    square, squares,
+    SquareSeries,
+    moveType,
     ) where
 
 import Data.Maybe (isNothing, fromJust)

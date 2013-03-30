@@ -1,9 +1,8 @@
 module Board where
-import Data.Array.IArray
-import Piece
-import Square
-import Data.List(find)
+import Square ((!!!), Square)
+import Piece (Piece)
 
 type Board = [Maybe Piece] 
 
-readSquare b s = b !!! s
+readSquare :: Board -> Square -> Maybe Piece
+readSquare = (!!!)

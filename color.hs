@@ -1,5 +1,6 @@
 module Color (
     Color(..),
+    invert,
     ) where
 
 data Color = Black | White deriving (Show, Eq)
