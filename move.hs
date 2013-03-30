@@ -4,9 +4,7 @@ import Square (
     Square, rank
     )
 import Piece (
-    color,
-    Piece,
-    PieceType(..), pieceType,
+    PieceType(..), 
     OfficerType,
     )
 import Color (
@@ -23,23 +21,15 @@ import Position (
     )
 import MovingPiece (
     MovingPiece, movingPiece,
-    position, square
+    position, square,
+    color, pieceType,
     )
 
-import Data.Maybe (
-    fromJust
-    )
-import Control.Monad.Error (
-    throwError
-    )
+import Data.Maybe ( fromJust)
+import Control.Monad.Error ( throwError)
 
 data Move = Move MovingPiece Square (Maybe Promotion)
 data ClassifiedMove = Standard Move | Capturing Move
-
-getPiece mp = fromJust $ position mp `readSquare` MovingPiece.square mp
-onPiece f = f . getPiece
-whosePiece = onPiece color
-whichPiece = onPiece pieceType
 
 move :: Position -> Square -> Square -> Maybe Promotion -> ErrorMonad Move
 move p s d pr = do
@@ -48,7 +38,7 @@ move p s d pr = do
 
 move' :: MovingPiece -> Square -> Maybe Promotion -> ErrorMonad Move
 move' mp d pr = do
-    verifyPromotion (rank d) (whosePiece mp) (whichPiece mp) pr
+    verifyPromotion (rank d) (color mp) (pieceType mp) pr
     return (Move mp d pr)
 
 verifyPromotion 8 White Pawn Nothing = throwError LastRankPromote
