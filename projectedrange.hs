@@ -54,16 +54,18 @@ projectedRange mp mt =
 project r p = Projected r p
 
 squares :: ProjectedRange -> [SquareSeries]
-squares pr = projectSeries p (Range.moveType r) <$> Range.squares r
+squares pr = projectSeries p r <$> Range.squares r
     where p = position pr
           r = range pr
 
 elem :: Square -> ProjectedRange -> Bool
 elem s pr = any (Prelude.elem s) (squares pr)
 
-projectSeries :: Position -> MoveType -> SquareSeries -> SquareSeries
-projectSeries p Moves ss = takeWhile (isNothing . readSquare p) ss
-projectSeries p Takes ss = maybe [] (takeOnly' ss) enemyIx
+projectSeries p r ss = projectSeries' p (Range.moveType r) ss
+
+projectSeries' :: Position -> MoveType -> SquareSeries -> SquareSeries
+projectSeries' p Moves ss = takeWhile (isNothing . readSquare p) ss
+projectSeries' p Takes ss = maybe [] (takeOnly' ss) enemyIx
     where enemyIx = firstEnemyIndex p ss
 
 takeOnly i = drop (i-1) . take 1
