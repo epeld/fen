@@ -45,8 +45,7 @@ project r p = Projected r p
 type SquareSeries = Range.SquareSeries
 squares :: ProjectedRange -> [SquareSeries]
 squares pr = projectSeries p (Range.moveType r) <$> Range.squares r
-    where accept = True
-          p = position pr
+    where p = position pr
           r = range pr
 
 elem :: Square -> ProjectedRange -> Bool
