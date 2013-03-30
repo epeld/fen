@@ -5,7 +5,8 @@ module ErrorMonad (
 
 import Control.Monad.Error 
 
-data Reason = LastRankPromote | NoPieceToMove | NoPromotion | ColorsMismatch
+data Reason = 
+    LastRankPromote | NoPieceToMove | NoPromotion | ColorsMismatch | NotInRange
 
 instance Error Reason where
 noMsg = error "noMsg called"
