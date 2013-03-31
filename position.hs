@@ -2,13 +2,18 @@ module Position(
     Position(..),
     Position.readSquare,
     Promotion,
+    friendlyColor,
+    enemyColor,
     ) where
 import Square (Square)
 import Piece (
     Piece,
     OfficerType,
     )
-import Color (Color)
+import Color (
+    Color,
+    invert,
+    )
 import Board (
     Board,
     readSquare,
@@ -27,3 +32,6 @@ data Position = Position {
 type Promotion = OfficerType
 
 readSquare p s = Board.readSquare (board p) s
+
+enemyColor = invert . whoseTurn
+friendlyColor = whoseTurn

@@ -26,18 +26,24 @@ import qualified Range (
     SquareSeries,
     moveType,
     squares,
+    pieceType,
     )
 import Square (Square)
 import Position (
     Position, 
     readSquare,
     whoseTurn,
+    enemyColor,
+    enPassant,
     )
 import MoveType (
     MoveType(..),
     movetypes
     )
-import Piece (hasColor)
+import Piece (
+    hasColor,
+    PieceType(Pawn),
+    )
 import Color (
     Color,
     invert
@@ -69,18 +75,29 @@ squares pr = projectSeries p r <$> Range.squares r
 elem :: Square -> ProjectedRange -> Bool
 elem s pr = any (Prelude.elem s) (squares pr)
 
-projectSeries p r ss = projectSeries' p (Range.moveType r) ss
+projectSeries p r ss =
+    projectSeries' p (Range.moveType r) (Range.pieceType r) ss
 
-projectSeries' :: Position -> MoveType -> SquareSeries -> SquareSeries
-projectSeries' p Moves ss = takeWhile (isNothing . readSquare p) ss
-projectSeries' p Takes ss = maybe [] (takeOnly' ss) enemyIx
-    where enemyIx = firstEnemyIndex p ss
+projectSeries' :: Position -> MoveType -> PieceType -> SquareSeries
+    -> SquareSeries
+projectSeries' p Moves pt ss = takeWhile (isNothing . readSquare p) ss
+projectSeries' p Takes pt ss = maybe [] (takeOnly' ss) enemyIx
+    where enemyIx = firstEnemyIndex pt p ss
 
 takeOnly i = drop (i-1) . take 1
 takeOnly' = flip takeOnly
 
-firstEnemyIndex :: Position -> SquareSeries -> Maybe Int
-firstEnemyIndex p = findColoredPieceIndex (invert $ whoseTurn p) p
+firstEnemyIndex :: PieceType -> Position -> SquareSeries -> Maybe Int
+firstEnemyIndex Pawn p [s] = 
+    if Just s == enPassant p || maybeIsEnemy p s
+        then Just 0
+        else Nothing
+firstEnemyIndex Pawn p [] = Nothing
+firstEnemyIndex Pawn p _ = error "firstEnemyIndex: something is wrong"
+firstEnemyIndex _ p ss = findColoredPieceIndex (invert $ whoseTurn p) p ss
 
 findColoredPieceIndex :: Color -> Position -> SquareSeries -> Maybe Int
-findColoredPieceIndex c p = findIndex $ maybe False (hasColor c) . readSquare p
+findColoredPieceIndex c p = findIndex (maybeHasColor c p)
+
+maybeHasColor c p = maybe False (hasColor c) . readSquare p
+maybeIsEnemy p = maybeHasColor (enemyColor p) p
