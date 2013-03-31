@@ -92,11 +92,11 @@ firstEnemyIndex Pawn = firstEnemyIndexPawn
 firstEnemyIndex _ = firstEnemyIndexOfficer
 
 firstEnemyIndexOfficer p = findColoredPieceIndex (invert $ whoseTurn p) p
+firstEnemyIndexPawn p [] = Nothing
 firstEnemyIndexPawn p [s] = 
     if Just s == enPassant p || maybeIsEnemy p s
         then Just 0
         else Nothing
-firstEnemyIndexPawn p [] = Nothing
 firstEnemyIndexPawn p _ = error "firstEnemyIndexPawn: something is wrong"
 
 findColoredPieceIndex :: Color -> Position -> SquareSeries -> Maybe Int
