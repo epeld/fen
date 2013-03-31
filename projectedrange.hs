@@ -7,11 +7,13 @@ module ProjectedRange (
     project,
     range,
     position,
+    whichMoveType,
+    reaches, reachesBy,
     ) where
 import Control.Monad (liftM)
 import Control.Applicative ((<$>))
-import Data.Maybe (isNothing)
-import Data.List (findIndex)
+import Data.Maybe (isNothing, isJust)
+import Data.List (findIndex, find)
 
 import qualified MovingPiece (
     MovingPiece,
@@ -32,7 +34,8 @@ import Position (
     whoseTurn,
     )
 import MoveType (
-    MoveType(..)
+    MoveType(..),
+    movetypes
     )
 import Piece (hasColor)
 import Color (
@@ -52,6 +55,11 @@ projectedRange mp mt =
     MovingPiece.range mp mt `project` MovingPiece.position mp
 
 project r p = Projected r p
+
+reaches mp = isJust . whichMoveType mp
+whichMoveType mp d = find (mp `reachesBy` d) movetypes
+
+reachesBy mp d = ProjectedRange.elem d. projectedRange mp
 
 squares :: ProjectedRange -> [SquareSeries]
 squares pr = projectSeries p r <$> Range.squares r
