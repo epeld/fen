@@ -20,7 +20,7 @@ data Position = Position {
     whoseTurn :: Color,
     enPassant :: Maybe Square,
     castlingRights :: [Right],
-    fullMove :: Int,
+    fullMoves :: Int,
     halfMoves :: Int
     } deriving Show
 
