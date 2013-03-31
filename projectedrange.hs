@@ -88,13 +88,16 @@ takeOnly i = drop (i-1) . take 1
 takeOnly' = flip takeOnly
 
 firstEnemyIndex :: PieceType -> Position -> SquareSeries -> Maybe Int
-firstEnemyIndex Pawn p [s] = 
+firstEnemyIndex Pawn = firstEnemyIndexPawn
+firstEnemyIndex _ = firstEnemyIndexOfficer
+
+firstEnemyIndexOfficer p = findColoredPieceIndex (invert $ whoseTurn p) p
+firstEnemyIndexPawn p [s] = 
     if Just s == enPassant p || maybeIsEnemy p s
         then Just 0
         else Nothing
-firstEnemyIndex Pawn p [] = Nothing
-firstEnemyIndex Pawn p _ = error "firstEnemyIndex: something is wrong"
-firstEnemyIndex _ p ss = findColoredPieceIndex (invert $ whoseTurn p) p ss
+firstEnemyIndexPawn p [] = Nothing
+firstEnemyIndexPawn p _ = error "firstEnemyIndexPawn: something is wrong"
 
 findColoredPieceIndex :: Color -> Position -> SquareSeries -> Maybe Int
 findColoredPieceIndex c p = findIndex (maybeHasColor c p)
