@@ -9,7 +9,8 @@ module Square(
     upLeft, downLeft, upRight, downRight,
     twice,
     string,
-    (!!!)
+    (!!!),
+    Stepper, compose
     ) where 
 import Control.Applicative
 import Control.Monad
@@ -17,6 +18,10 @@ import Data.List
 import Data.Ix
 import Data.Maybe
 import Data.Char
+
+type Stepper = Square -> Maybe Square
+compose :: Stepper -> Stepper -> Stepper
+compose = (>=>)
 
 instance Enum (Square) where
     toEnum i = maybe (error "Bad argument") id (square f r)
