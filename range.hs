@@ -1,4 +1,5 @@
-module Range ( series, Range, movingPiece, moveType, range) where
+module Range ( series, Range, movingPiece, moveType, 
+               range, Range.position,) where
 
 import Data.Maybe (isNothing, fromJust, isJust)
 import Control.Monad ((>=>), liftM)
@@ -7,7 +8,7 @@ import Control.Applicative ((<*>), (<$>))
 import PawnRange( pawnSeriesM)
 import OfficerRange( officerSeriesM)
 import MoveType ( MoveType (Takes, Moves))
-import MovingPiece ( MovingPiece, pieceType,)
+import MovingPiece ( MovingPiece, pieceType, position)
 import Square ( Square, SquareSeries,)
 import Piece ( PieceType(..),)
 
@@ -32,3 +33,5 @@ seriesM r | isPawn = pawnSeriesM mp mt
     where isPawn = pieceType mp == Pawn
           mp = movingPiece r
           mt = moveType r
+
+position = MovingPiece.position. movingPiece

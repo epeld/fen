@@ -1,22 +1,14 @@
 module ProjectedRange (
     ProjectedRange,
-    SquareSeries,
-    ProjectedRange.elem,
-    projectedRange,
-    squares,
     project,
-    range,
-    position,
-    whichMoveType,
-    reaches, reachesBy,
     ) where
 import Control.Monad (liftM)
 import Control.Applicative ((<$>))
 import Data.Maybe (isNothing, isJust)
 import Data.List (findIndex, find)
 
-import MovingPiece ( MovingPiece, position,)
-import qualified Range ( series,)
+import MovingPiece ( MovingPiece, )
+import qualified Range ( series, position)
 import Square (Square, SquareSeries)
 import Range ( Range,)
 import Position ( Position, enemyColor, friendlyColor, enPassant,)
@@ -36,11 +28,13 @@ data ProjectedRange = ProjectedRange { series :: [SquareSeries] }
 
 project :: Range -> ProjectedRange
 project r = ProjectedRange $ project' r
-project' r = map (projectSeries $ position r) (Range.series r)
+
+project' :: Range -> [SquareSeries]
+project' r = map (projectSeries $ Range.position r) (Range.series r)
 
 projectSeries :: Position -> SquareSeries -> SquareSeries
-projectSeries p s = take ixFirstStop
-    where ixFirstStop = maybe (length s) (findFirstStop p s)
+projectSeries p s = take ixFirstStop s
+    where ixFirstStop = maybe (length s) id (findFirstStop p s)
 
 findFirstStop p s = min' enemyIx friendlyIx
     where enemyIx = (+1) <$> findPieceColor (enemyColor p)
