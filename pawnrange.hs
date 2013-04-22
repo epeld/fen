@@ -1,6 +1,4 @@
-module PawnRange (
-    pawnSeriesM
-    ) where
+module PawnRange ( pawnSeriesM) where
 
 import Control.Applicative ((<*>), (<$>))
 import Control.Monad ((>=>))
