@@ -4,7 +4,7 @@ module MovingPiece (
     piece,
     pieceType,
     color,
-    MovingPiece.range,
+    officerType,
     )where
 import Data.Maybe (fromJust)
 import Control.Monad.Error (throwError)
@@ -12,7 +12,7 @@ import Control.Monad.Error (throwError)
 import Square (Square)
 import qualified Piece (
     Piece,
-    pieceType,
+    pieceType, officerType,
     color,
     verifyHasColor,
     )
@@ -25,10 +25,6 @@ import Position (
 import ErrorMonad (
     ErrorMonad,
     Reason(NoPieceToMove),
-    )
-import Range(
-    Range,
-    range,
     )
 import MoveType(MoveType)
 
@@ -45,8 +41,6 @@ movingPiece p s = do
     return (PieceFromPosition p s)
 
 piece mp = fromJust $ position mp `readSquare` MovingPiece.square mp
-color = Piece.color . piece
-pieceType = Piece.pieceType . piece
-
-range :: MovingPiece -> MoveType -> Range
-range mp mt = Range.range (color mp) (pieceType mp) (square mp) mt
+color = Piece.color. piece
+pieceType = Piece.pieceType. piece
+officerType = Piece.officerType. pieceType
