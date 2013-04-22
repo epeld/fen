@@ -11,10 +11,11 @@ import MovingPiece ( MovingPiece, pieceType,)
 import Square ( Square, SquareSeries,)
 import Piece ( PieceType(..),)
 
+fromMaybeSquares msqs = map fromJust <$> validSquares
+    where validSquares = takeUntilInvalid <$> msqs
+
 series :: MovingPiece -> MoveType -> [SquareSeries]
-series mp mt = map fromJust <$> validSquares
-    where validSquares = takeUntilInvalid <$> seriesM mp mt
-          validSquares :: [[Maybe Square]]
+series mp mt = fromMaybeSquares $ seriesM mp mt
 
 takeUntilInvalid = takeWhile isJust
 
