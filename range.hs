@@ -1,8 +1,8 @@
 module Range ( series, Range, movingPiece, moveType, 
                range, Range.position,) where
 
-import Data.Maybe (isNothing, fromJust, isJust)
-import Control.Monad ((>=>), liftM)
+import Data.Maybe (fromJust, isJust,)
+import Control.Monad ((>=>), )
 import Control.Applicative ((<*>), (<$>))
 
 import PawnRange( pawnSeriesM)
@@ -10,12 +10,9 @@ import OfficerRange( officerSeriesM)
 import MoveType ( MoveType (Takes, Moves))
 import MovingPiece ( MovingPiece, pieceType, position)
 import Square ( Square, SquareSeries,)
-import Piece ( PieceType(..),)
+import Piece ( PieceType(Pawn),)
 
-data Range = Range {
-    movingPiece :: MovingPiece,
-    moveType :: MoveType
-    }
+data Range = Range { movingPiece :: MovingPiece, moveType :: MoveType }
 
 range = Range
 
