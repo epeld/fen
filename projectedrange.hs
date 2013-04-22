@@ -1,7 +1,5 @@
-module ProjectedRange (
-    ProjectedRange,
-    project,
-    ) where
+module ProjectedRange ( ProjectedRange, project,) where
+
 import Control.Monad (liftM)
 import Control.Applicative ((<$>))
 import Data.Maybe (isNothing, isJust)
@@ -12,18 +10,10 @@ import qualified Range ( series, position)
 import Square (Square, SquareSeries)
 import Range ( Range,)
 import Position ( Position, enemyColor, friendlyColor, enPassant,)
-import MoveType (
-    MoveType(..),
-    movetypes
-    )
-import Piece (
-    hasColor,
-    PieceType(Pawn),
-    )
-import Color (
-    Color,
-    invert
-    )
+import MoveType ( MoveType(..), movetypes)
+import Piece ( hasColor, PieceType(Pawn),)
+import Color ( Color, invert)
+
 data ProjectedRange = ProjectedRange { series :: [SquareSeries] }
 
 project :: Range -> ProjectedRange
