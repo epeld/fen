@@ -6,6 +6,7 @@ module Piece (
     pieceTypeToString,
     verifyHasColor,
     hasColor,
+    officerType,
     ) where
 
 import Data.Char
@@ -41,3 +42,6 @@ verifyHasColor :: Color -> Piece -> ErrorMonad ()
 verifyHasColor c p = unless (hasColor c p) (throwError ColorsMismatch)
 
 hasColor c p = color p == c
+
+officerType (Officer t) = t
+officerType _ = error "Not an officer"
