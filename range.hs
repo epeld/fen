@@ -11,17 +11,22 @@ import MovingPiece ( MovingPiece, pieceType,)
 import Square ( Square, SquareSeries,)
 import Piece ( PieceType(..),)
 
-range = series
+data Range = Range {
+    movingPiece :: MovingPiece,
+    moveType :: MoveType
+    }
 
-series :: MovingPiece -> MoveType -> [SquareSeries]
-series mp mt = fromMaybeSquares $ seriesM mp mt
+series :: Range -> [SquareSeries]
+series r = fromMaybeSquares $ seriesM r
 
 fromMaybeSquares msqs = map fromJust <$> validSquares
     where validSquares = takeUntilInvalid <$> msqs
 
 takeUntilInvalid = takeWhile isJust
 
-seriesM :: MovingPiece -> MoveType -> [[Maybe Square]]
-seriesM mp mt | isPawn = pawnSeriesM mp mt
-              | otherwise = officerSeriesM mp mt
+seriesM :: Range -> [[Maybe Square]]
+seriesM r | isPawn = pawnSeriesM mp mt
+          | otherwise = officerSeriesM mp mt
     where isPawn = pieceType mp == Pawn
+          mp = movingPiece r
+          mt = moveType r
