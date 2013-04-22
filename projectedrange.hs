@@ -15,27 +15,11 @@ import Control.Applicative ((<$>))
 import Data.Maybe (isNothing, isJust)
 import Data.List (findIndex, find)
 
-import qualified MovingPiece (
-    MovingPiece,
-    range,
-    position,
-    pieceType,
-    )
-import qualified Range (
-    Range,
-    SquareSeries,
-    moveType,
-    squares,
-    pieceType,
-    )
-import Square (Square)
-import Position (
-    Position, 
-    readSquare,
-    whoseTurn,
-    enemyColor,
-    enPassant,
-    )
+import MovingPiece ( MovingPiece, position,)
+import qualified Range ( series,)
+import Square (Square, SquareSeries)
+import Range ( Range,)
+import Position ( Position, enemyColor, friendlyColor, enPassant,)
 import MoveType (
     MoveType(..),
     movetypes
@@ -48,59 +32,22 @@ import Color (
     Color,
     invert
     )
+data ProjectedRange = ProjectedRange { series :: [SquareSeries] }
 
-type SquareSeries = Range.SquareSeries
+project :: Range -> ProjectedRange
+project r = ProjectedRange $ project' r
+project' r = map (projectSeries $ position r) (Range.series r)
 
-data ProjectedRange = Projected {
-    range :: Range.Range,
-    position :: Position
-    } deriving (Show)
+projectSeries :: Position -> SquareSeries -> SquareSeries
+projectSeries p s = take ixFirstStop
+    where ixFirstStop = maybe (length s) (findFirstStop p s)
 
-projectedRange :: MovingPiece.MovingPiece -> MoveType -> ProjectedRange
-projectedRange mp mt =
-    MovingPiece.range mp mt `project` MovingPiece.position mp
+findFirstStop p s = min' enemyIx friendlyIx
+    where enemyIx = (+1) <$> findPieceColor (enemyColor p)
+          friendlyIx = findPieceColor (friendlyColor p)
 
-project r p = Projected r p
+findPieceColor _ = Just 3
 
-reaches mp = isJust . whichMoveType mp
-whichMoveType mp d = find (mp `reachesBy` d) movetypes
-
-reachesBy mp d = ProjectedRange.elem d. projectedRange mp
-
-squares :: ProjectedRange -> [SquareSeries]
-squares pr = projectSeries p r <$> Range.squares r
-    where p = position pr
-          r = range pr
-
-elem :: Square -> ProjectedRange -> Bool
-elem s pr = any (Prelude.elem s) (squares pr)
-
-projectSeries p r ss =
-    projectSeries' p (Range.moveType r) (Range.pieceType r) ss
-
-projectSeries' :: Position -> MoveType -> PieceType -> SquareSeries
-    -> SquareSeries
-projectSeries' p Moves pt ss = takeWhile (isNothing . readSquare p) ss
-projectSeries' p Takes pt ss = maybe [] (takeOnly' ss) enemyIx
-    where enemyIx = firstEnemyIndex pt p ss
-
-takeOnly i = drop (i-1) . take 1
-takeOnly' = flip takeOnly
-
-firstEnemyIndex :: PieceType -> Position -> SquareSeries -> Maybe Int
-firstEnemyIndex Pawn = firstEnemyIndexPawn
-firstEnemyIndex _ = firstEnemyIndexOfficer
-
-firstEnemyIndexOfficer p = findColoredPieceIndex (invert $ whoseTurn p) p
-firstEnemyIndexPawn p [] = Nothing
-firstEnemyIndexPawn p [s] = 
-    if Just s == enPassant p || maybeIsEnemy p s
-        then Just 0
-        else Nothing
-firstEnemyIndexPawn p _ = error "firstEnemyIndexPawn: something is wrong"
-
-findColoredPieceIndex :: Color -> Position -> SquareSeries -> Maybe Int
-findColoredPieceIndex c p = findIndex (maybeHasColor c p)
-
-maybeHasColor c p = maybe False (hasColor c) . readSquare p
-maybeIsEnemy p = maybeHasColor (enemyColor p) p
+min' Nothing a = a
+min' a Nothing = a
+min' a b = min a b

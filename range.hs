@@ -1,4 +1,4 @@
-module Range ( series,) where
+module Range ( series, Range, movingPiece, moveType, range) where
 
 import Data.Maybe (isNothing, fromJust, isJust)
 import Control.Monad ((>=>), liftM)
@@ -15,6 +15,8 @@ data Range = Range {
     movingPiece :: MovingPiece,
     moveType :: MoveType
     }
+
+range = Range
 
 series :: Range -> [SquareSeries]
 series r = fromMaybeSquares $ seriesM r

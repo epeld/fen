@@ -1,4 +1,7 @@
-module Move (Move, move) where
+module Move (
+    Move, move,
+    Move.position,
+    ) where
 import Prelude hiding (elem)
 import Data.Maybe (maybe, fromJust)
 import Control.Monad.Error ( throwError)
@@ -62,3 +65,5 @@ verifyPromotion 8 White Pawn Nothing = throwError LastRankPromote
 verifyPromotion 1 Black Pawn Nothing = throwError LastRankPromote
 verifyPromotion _ _ _ (Just _) = throwError NoPromotion
 verifyPromotion _ _ _ _ = return ()
+
+position = MovingPiece.position . Move.movingPiece
