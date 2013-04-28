@@ -1,5 +1,5 @@
 module Range ( series, Range, movingPiece, moveType, 
-               range, Range.position,) where
+               range, Range.position, Range.pieceType, Range.isPawn) where
 
 import Data.Maybe (fromJust, isJust,)
 import Control.Monad ((>=>), )
@@ -8,7 +8,7 @@ import Control.Applicative ((<*>), (<$>))
 import PawnRange( pawnSeriesM)
 import OfficerRange( officerSeriesM)
 import MoveType ( MoveType (Takes, Moves))
-import MovingPiece ( MovingPiece, pieceType, position)
+import MovingPiece ( MovingPiece, pieceType, position, isPawn)
 import Square ( Square, SquareSeries,)
 import Piece ( PieceType(Pawn),)
 
@@ -25,10 +25,13 @@ fromMaybeSquares msqs = map fromJust <$> validSquares
 takeUntilInvalid = takeWhile isJust
 
 seriesM :: Range -> [[Maybe Square]]
-seriesM r | isPawn = pawnSeriesM mp mt
+seriesM r | pieceIsPawn = pawnSeriesM mp mt
           | otherwise = officerSeriesM mp mt
-    where isPawn = pieceType mp == Pawn
+    where 
+          pieceIsPawn = MovingPiece.isPawn mp
           mp = movingPiece r
           mt = moveType r
 
 position = MovingPiece.position. movingPiece
+pieceType = MovingPiece.pieceType. movingPiece
+isPawn = MovingPiece.isPawn. movingPiece

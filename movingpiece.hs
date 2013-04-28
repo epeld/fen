@@ -1,37 +1,18 @@
-module MovingPiece (
-    MovingPiece(..),
-    movingPiece,
-    piece,
-    pieceType,
-    color,
-    officerType,
-    )where
+module MovingPiece ( MovingPiece(..), movingPiece, piece, 
+                     pieceType, color, officerType, isPawn)where
 import Data.Maybe (fromJust)
 import Control.Monad.Error (throwError)
 
 import Square (Square)
-import qualified Piece (
-    Piece,
-    pieceType, officerType,
-    color,
-    verifyHasColor,
-    )
+import qualified Piece ( Piece, pieceType, officerType, color, verifyHasColor,)
 import Color (Color)
-import Position (
-    Position,
-    whoseTurn,
-    readSquare,
-    )
-import ErrorMonad (
-    ErrorMonad,
-    Reason(NoPieceToMove),
-    )
+import Position ( Position, whoseTurn, readSquare,)
+import ErrorMonad ( ErrorMonad, Reason(NoPieceToMove),)
 import MoveType(MoveType)
+import Piece (PieceType(Pawn))
 
-data MovingPiece = PieceFromPosition {
-    position :: Position,
-    square::Square
-    } deriving (Show)
+data MovingPiece = PieceFromPosition { position :: Position, square::Square }
+                                       deriving (Show)
 
 movingPiece :: Position -> Square -> ErrorMonad MovingPiece
 movingPiece p s = do
@@ -44,3 +25,6 @@ piece mp = fromJust $ position mp `readSquare` MovingPiece.square mp
 color = Piece.color. piece
 pieceType = Piece.pieceType. piece
 officerType = Piece.officerType. pieceType
+
+isPawn :: MovingPiece -> Bool
+isPawn mp = pieceType mp == Pawn

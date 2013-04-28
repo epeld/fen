@@ -6,7 +6,7 @@ import Data.List (findIndex, find)
 
 import MovingPiece ( MovingPiece, )
 import Square (Square, SquareSeries)
-import Range ( Range,)
+import Range ( Range, pieceType)
 import Position ( Position, enemyColor, friendlyColor, enPassant,
                   isCapturableSquare, containsFriendlyPiece)
 import MoveType ( MoveType(..), movetypes)
@@ -17,22 +17,21 @@ import qualified Range ( series, position)
 data ProjectedRange = ProjectedRange { series :: [SquareSeries] }
 
 project :: Range -> ProjectedRange
-project r = ProjectedRange $ project' r
+project r = ProjectedRange $ project' pt r
+    where pt = pieceType r
 
-project' :: Range -> [SquareSeries]
-project' r = map (projectSeries $ Range.position r) (Range.series r)
+project' :: PieceType -> Range -> [SquareSeries]
+project' Pawn r = []
+project' _ r = map (projectSeries $ Range.position r) (Range.series r)
 
 projectSeries :: Position -> SquareSeries -> SquareSeries
 projectSeries p s = take ixFirstStop s
-    where ixFirstStop = maybe (length s) id (indexFirstStop p s)
+    where ixFirstStop = indexFirstStop p s
 
-indexFirstStop p s = min' enemyIx friendlyIx
-    where enemyIx = liftM (+1) (indexCapturable p s)
-          friendlyIx = indexFriendly p s
+indexFirstStop p s = min enemyIx friendlyIx
+    where enemyIx = maybeEndOfSeries (+1) (indexCapturable p s)
+          friendlyIx = maybeEndOfSeries id (indexFriendly p s)
+          maybeEndOfSeries = maybe (length s)
           
 indexCapturable p s = findIndex (isCapturableSquare p) s
 indexFriendly p s = findIndex (containsFriendlyPiece p) s
-
-min' Nothing a = a
-min' a Nothing = a
-min' a b = min a b
