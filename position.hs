@@ -1,6 +1,6 @@
 module Position( Position(..), Position.readSquare, Promotion, 
                  friendlyColor, enemyColor, containsFriendlyPiece,
-                 containsEnemyPiece, isCapturableSquare) where
+                 containsEnemyPiece, isPawnCapturableSquare, isEmpty) where
 import Square (Square)
 import Piece ( Piece, OfficerType, color,)
 import Color ( Color, invert,)
@@ -18,8 +18,10 @@ data Position = Position {
 
 type Promotion = OfficerType
 
-isCapturableSquare :: Position -> Square -> Bool
-isCapturableSquare p s = if isPassantSquare p s
+isEmpty p s = Position.readSquare p s == Nothing
+
+isPawnCapturableSquare :: Position -> Square -> Bool
+isPawnCapturableSquare p s = if isPassantSquare p s
     then True
     else containsEnemyPiece p s
 
