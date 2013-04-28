@@ -4,16 +4,16 @@ import Control.Monad (liftM)
 import Data.Maybe (isNothing, isJust)
 import Data.List (findIndex, find)
 
-import MovingPiece ( MovingPiece, )
-import Square (Square, SquareSeries)
-import Range ( Range, pieceType, moveType)
-import Position ( Position, enemyColor, friendlyColor, enPassant, isEmpty,
-                  isPawnCapturableSquare, containsFriendlyPiece,
-                  containsEnemyPiece)
 import MoveType ( MoveType(..), movetypes)
 import Piece ( hasColor, PieceType(Pawn, Officer),)
 import Color ( Color, invert)
+import MovingPiece ( MovingPiece, )
+import Square (Square, SquareSeries)
+import Range ( Range, pieceType, moveType)
 import qualified Range ( series, position)
+import Position ( Position, enemyColor, friendlyColor, enPassant, isEmpty,
+                  isPawnCapturableSquare, containsFriendlyPiece,
+                  containsEnemyPiece)
 
 data ProjectedRange = ProjectedRange { series :: [SquareSeries] }
 

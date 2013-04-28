@@ -1,51 +1,22 @@
-module Move (
-    Move, move,
-    Move.position,
-    ) where
+module Move ( Move, move, Move.position,) where
+
 import Prelude hiding (elem)
 import Data.Maybe (maybe, fromJust)
 import Control.Monad.Error ( throwError)
 
-import Square (
-    Square, rank
-    )
-import Piece (
-    PieceType(..), 
-    OfficerType,
-    )
-import Color (
-    Color(..)
-    )
-import ErrorMonad (
-    ErrorMonad,
-    Reason(NoPromotion, LastRankPromote, NotInRange),
-    )
-import Position (
-    Position,
-    readSquare,
-    Promotion,
-    )
-import MovingPiece (
-    MovingPiece,
-    position, square,
-    color, pieceType,
-    movingPiece,
-    )
-import ProjectedRange (
-    projectedRange,
-    elem,
-    whichMoveType,
-    )
-import MoveType (
-    MoveType(..)
-    )
+import Square ( Square, rank)
+import Piece ( PieceType(..), OfficerType,)
+import Color ( Color(..))
+import ErrorMonad ( ErrorMonad, 
+                    Reason(NoPromotion, LastRankPromote, NotInRange),)
+import Position ( Position, readSquare, Promotion,)
+import MovingPiece ( MovingPiece, position, square, color, 
+                     pieceType, movingPiece,)
+import ProjectedRange ( projectedRange, elem, whichMoveType,)
+import MoveType ( MoveType(..))
 
-data Move = Move {
-    movingPiece :: MovingPiece,
-    destination :: Square,
-    moveType :: MoveType,
-    promotion :: Maybe Promotion
-    }
+data Move = Move { movingPiece :: MovingPiece, destination :: Square, 
+                   moveType :: MoveType, promotion :: Maybe Promotion }
 
 move :: Position -> Square -> Square -> Maybe Promotion -> ErrorMonad Move
 move p s d pr = do
