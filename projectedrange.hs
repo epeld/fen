@@ -1,4 +1,5 @@
-module ProjectedRange ( ProjectedRange, project,) where
+module ProjectedRange ( ProjectedRange, project, ProjectedRange.elem,
+                        inferMoveType) where
 
 import Control.Monad (liftM)
 import Data.Maybe (isNothing, isJust)
@@ -9,13 +10,18 @@ import Piece ( hasColor, PieceType(Pawn, Officer),)
 import Color ( Color, invert)
 import MovingPiece ( MovingPiece, )
 import Square (Square, SquareSeries)
-import Range ( Range, pieceType, moveType)
+import Range ( Range, pieceType, moveType, range)
 import qualified Range ( series, position)
 import Position ( Position, enemyColor, friendlyColor, enPassant, isEmpty,
                   isPawnCapturableSquare, containsFriendlyPiece,
                   containsEnemyPiece)
 
 data ProjectedRange = ProjectedRange { series :: [SquareSeries] }
+
+elem s pr = any (Prelude.elem s) (series pr)
+
+inferMoveType mp d = find isMoveType [Takes, Moves]
+    where isMoveType = ProjectedRange.elem d. project. Range.range mp
 
 project :: Range -> ProjectedRange
 project r = ProjectedRange $ project' pt r

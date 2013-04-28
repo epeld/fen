@@ -2,39 +2,51 @@ module Move ( Move, move, Move.position,) where
 
 import Prelude hiding (elem)
 import Data.Maybe (maybe, fromJust)
+import Control.Monad (when)
 import Control.Monad.Error ( throwError)
 
 import Square ( Square, rank)
 import Piece ( PieceType(..), OfficerType,)
 import Color ( Color(..))
+import MoveType ( MoveType(..))
+import Position ( Position, readSquare, Promotion, lastRank)
+import qualified ProjectedRange ( inferMoveType)
 import ErrorMonad ( ErrorMonad, 
                     Reason(NoPromotion, LastRankPromote, NotInRange),)
-import Position ( Position, readSquare, Promotion,)
 import MovingPiece ( MovingPiece, position, square, color, 
                      pieceType, movingPiece,)
-import ProjectedRange ( projectedRange, elem, whichMoveType,)
-import MoveType ( MoveType(..))
 
-data Move = Move { movingPiece :: MovingPiece, destination :: Square, 
-                   moveType :: MoveType, promotion :: Maybe Promotion }
+data Move = Move { movingPiece :: MovingPiece, moveType :: MoveType,
+                   destination :: Square,  promotion :: Maybe Promotion }
 
-move :: Position -> Square -> Square -> Maybe Promotion -> ErrorMonad Move
-move p s d pr = do
-    mp <- MovingPiece.movingPiece p s
-    move' mp d pr
-
-move' :: MovingPiece -> Square -> Maybe Promotion -> ErrorMonad Move
-move' mp d pr = do
-    mt <- identifyMoveType mp d
-    let mv = Move mp d mt pr
-    verifyPromotion (rank d) (color mp) (pieceType mp) pr
+move :: MovingPiece -> Square -> Maybe Promotion -> ErrorMonad Move
+move mp d pr = do
+    mt <- inferMoveType mp d
+    let mv = Move mp mt d pr
+    verifyPromotion mv
     return mv
 
-identifyMoveType mp d = maybe (throwError NotInRange) return (whichMoveType mp d)
+inferMoveType mp d = maybe (throwError NotInRange)
+    return (ProjectedRange.inferMoveType mp d)
 
-verifyPromotion 8 White Pawn Nothing = throwError LastRankPromote
-verifyPromotion 1 Black Pawn Nothing = throwError LastRankPromote
-verifyPromotion _ _ _ (Just _) = throwError NoPromotion
-verifyPromotion _ _ _ _ = return ()
+verifyPromotion mv = case Move.pieceType mv of
+    Pawn -> verifyPawnPromotion mv
+    _ -> verifyOfficerPromotion mv
 
-position = MovingPiece.position . Move.movingPiece
+verifyOfficerPromotion mv = case promotion mv of
+    Nothing -> return ()
+    Just _ -> throwError NoPromotion
+
+verifyPawnPromotion mv = case promotion mv of
+    Nothing -> when (requiresPromotion mv) (throwError LastRankPromote)
+    Just _ -> when (not. requiresPromotion $ mv) (throwError NoPromotion)
+
+requiresPromotion :: Move -> Bool
+requiresPromotion mv = Move.pieceType mv == Pawn && lastRankMove mv
+
+lastRankMove :: Move -> Bool
+lastRankMove mv = rank (destination mv) == Position.lastRank p
+    where p = MovingPiece.position. Move.movingPiece $ mv
+
+position = MovingPiece.position. Move.movingPiece
+pieceType = MovingPiece.pieceType. Move.movingPiece

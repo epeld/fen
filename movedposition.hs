@@ -1,12 +1,7 @@
-module MovedPosition (
-    ) where
+module MovedPosition () where
 import Position
-import Move (
-    position,
-    )
-import Color (
-    Color(..),
-    )
+import Move ( position,)
+import Color ( Color(..),)
 
 positionAfter mv = Position
     (boardAfter mv)

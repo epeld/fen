@@ -1,9 +1,10 @@
 module Position( Position(..), Position.readSquare, Promotion, 
                  friendlyColor, enemyColor, containsFriendlyPiece,
-                 containsEnemyPiece, isPawnCapturableSquare, isEmpty) where
+                 containsEnemyPiece, isPawnCapturableSquare, isEmpty,
+                 Position.lastRank,) where
 import Square (Square)
 import Piece ( Piece, OfficerType, color,)
-import Color ( Color, invert,)
+import Color ( Color, invert, lastRank)
 import Board ( Board, readSquare,)
 import CastlingRight (Right)
 
@@ -43,3 +44,6 @@ hasFriendlyColor p = not. hasEnemyColor p
 
 enemyColor = invert . whoseTurn
 friendlyColor = whoseTurn
+
+lastRank :: Position -> Int
+lastRank = Color.lastRank. whoseTurn
