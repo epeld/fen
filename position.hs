@@ -1,10 +1,10 @@
 module Position( Position(..), Position.readSquare, Promotion, 
                  friendlyColor, enemyColor, containsFriendlyPiece,
                  containsEnemyPiece, isPawnCapturableSquare, isEmpty,
-                 Position.lastRank,) where
+                 Position.lastRank, isPassantSquare, ) where
 import Square (Square)
 import Piece ( Piece, OfficerType, color,)
-import Color ( Color, invert, lastRank)
+import Color ( Color, invert, lastRank, initialPawnRank)
 import Board ( Board, readSquare,)
 import CastlingRight (Right)
 

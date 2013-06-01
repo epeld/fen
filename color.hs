@@ -1,4 +1,4 @@
-module Color ( Color(..), invert, lastRank) where
+module Color ( Color(..), invert, lastRank, initialPawnRank) where
 
 data Color = Black | White deriving (Show, Eq)
 

@@ -10,7 +10,7 @@ import Square ( Square, rank, twice, up)
 import Piece ( PieceType(..), OfficerType,)
 import Color ( Color(..))
 import MoveType ( MoveType(..))
-import Position ( Position, readSquare, Promotion, lastRank)
+import Position ( Position, readSquare, Promotion, lastRank, isPassantSquare)
 import qualified ProjectedRange ( inferMoveType)
 import ErrorMonad ( ErrorMonad, 
                     Reason(NoPromotion, LastRankPromote, NotInRange),)
@@ -49,12 +49,16 @@ lastRankMove :: Move -> Bool
 lastRankMove mv = rank (destination mv) == Position.lastRank p
     where p = Move.position mv
 
-isTwoStepPawnMove mv = twice up (square mv) == dest && isPawnMove mv
+isTwoStepPawnMove :: Move -> Bool
+isTwoStepPawnMove mv = twice up (Move.square mv) == Just dest && isPawnMove mv
     where dest = destination mv
 
 --initialPawnRankMove mv = rank (square mv) == initialPawnRank p
 --    where p = Move.position mv
 
+isPassantMove mv = isPassantSquare (Move.position mv) (destination mv)
+
+square = MovingPiece.square. Move.movingPiece
 position = MovingPiece.position. Move.movingPiece
 pieceType = MovingPiece.pieceType. Move.movingPiece
 isPawnMove = isPawn. Move.movingPiece
