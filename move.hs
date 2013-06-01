@@ -1,11 +1,12 @@
-module Move ( Move, move, Move.position,) where
+module Move ( Move, move, Move.position, isPawnMove, moveType,
+              Move.movingPiece, destination, promotion) where
 
 import Prelude hiding (elem)
 import Data.Maybe (maybe, fromJust)
 import Control.Monad (when)
 import Control.Monad.Error ( throwError)
 
-import Square ( Square, rank)
+import Square ( Square, rank, twice, up)
 import Piece ( PieceType(..), OfficerType,)
 import Color ( Color(..))
 import MoveType ( MoveType(..))
@@ -14,7 +15,7 @@ import qualified ProjectedRange ( inferMoveType)
 import ErrorMonad ( ErrorMonad, 
                     Reason(NoPromotion, LastRankPromote, NotInRange),)
 import MovingPiece ( MovingPiece, position, square, color, 
-                     pieceType, movingPiece,)
+                     pieceType, movingPiece, isPawn)
 
 data Move = Move { movingPiece :: MovingPiece, moveType :: MoveType,
                    destination :: Square,  promotion :: Maybe Promotion }
@@ -42,11 +43,18 @@ verifyPawnPromotion mv = case promotion mv of
     Just _ -> when (not. requiresPromotion $ mv) (throwError NoPromotion)
 
 requiresPromotion :: Move -> Bool
-requiresPromotion mv = Move.pieceType mv == Pawn && lastRankMove mv
+requiresPromotion mv = isPawnMove mv && lastRankMove mv
 
 lastRankMove :: Move -> Bool
 lastRankMove mv = rank (destination mv) == Position.lastRank p
-    where p = MovingPiece.position. Move.movingPiece $ mv
+    where p = Move.position mv
+
+isTwoStepPawnMove mv = twice up (square mv) == dest && isPawnMove mv
+    where dest = destination mv
+
+--initialPawnRankMove mv = rank (square mv) == initialPawnRank p
+--    where p = Move.position mv
 
 position = MovingPiece.position. Move.movingPiece
 pieceType = MovingPiece.pieceType. Move.movingPiece
+isPawnMove = isPawn. Move.movingPiece
