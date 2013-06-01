@@ -1,6 +1,7 @@
 module Board where
 import Control.Arrow ((&&&))
 import Control.Monad.State (State, StateT(..))
+import Data.Maybe (fromJust)
 
 import Square ((!!!), Square)
 import Piece (Piece)
@@ -29,8 +30,12 @@ stateify = StateT . returnResult
 
 putMaybe s mp = stateify $ noSideEffect $ replace s mp
 
-put :: Square -> Piece -> BoardState ()
-put s p = putMaybe s (Just p)
+put :: Piece -> Square -> BoardState ()
+put p s = putMaybe s (Just p)
 
 remove :: Square -> BoardState (Maybe Piece)
 remove s = stateify $ squareRead s  &&& clear s
+
+move s d = do
+    mp <- remove s
+    put (fromJust mp) s
