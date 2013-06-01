@@ -1,7 +1,9 @@
 module MovedPosition () where
+
 import Position
-import Move ( position,)
+import Move ( position, moveType, isPawnMove)
 import Color ( Color(..),)
+import MoveType (MoveType(..))
 
 positionAfter mv = Position
     (boardAfter mv)
@@ -12,21 +14,25 @@ positionAfter mv = Position
     (halfMovesAfter mv)
 
 boardAfter mv = []
+
 whoseTurnAfter = enemyColor. position
-enPassantAfter mv = Nothing
+
+enPassantAfter mv = if isTwoStepPawnMove mv
+    then Just (passantSquare mv) else Nothing
+
 castlingRightsAfter mv = []
 
--- full moves increase every time black makes his move
-fullMovesAfter mv = fullMovesAfter (whoseMove mv) mv
-fullMovesAfter Black = (+1). fullMovesAfter' White
-fullMovesAfter' White = fullMoves. position
+passantSquare mv = fromJust $ pawnDirection clr $ source mv
+    where clr = whoseTurn. position $ mv
+          pawnDirection White = up
+          pawnDirection Black = down
+
+fullMovesAfter mv = case whoseTurnAfter mv of
+    White -> oldValue + 1
+    Black -> oldValue
+    where oldValue = fullMoves. position $ mv
 
 -- Turns since the last pawn advance or capture
-halfMovesAfter mv = halfMovesAfter' (pieceType mv) (moveType mv) mv
-halfMovesAfter' Pawn _ mv = 1
-halfMovesAfter' _ Takes mv = 1
-halfMovesAfter' _ _ mv = (+1). halfMoves. position $ mv
-
-replace s mp b = 
-    let (first, second) = splitAt (fromEnum s) b
-    in first ++ mp : drop 1 second
+halfMovesAfter mv = if isPawnMove mv || moveType mv == Takes
+    then 1 else oldValue + 1
+    where oldValue = halfMoves. position $ mv
