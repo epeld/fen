@@ -47,3 +47,5 @@ friendlyColor = whoseTurn
 
 lastRank :: Position -> Int
 lastRank = Color.lastRank. whoseTurn
+
+initialPawnRank = Color.initialPawnRank. whoseTurn
