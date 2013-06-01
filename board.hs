@@ -1,4 +1,4 @@
-module Board where
+module Board (Board, readSquare, (!!!), squareRead, put, remove, move) where
 import Control.Arrow ((&&&))
 import Control.Monad.State (State, StateT(..))
 import Data.Maybe (fromJust)

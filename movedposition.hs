@@ -1,9 +1,17 @@
 module MovedPosition () where
+import Control.Monad.State (runState)
+import Control.Monad (when)
+import Data.Maybe (fromJust)
 
-import Position
-import Move ( position, moveType, isPawnMove)
-import Color ( Color(..),)
+import Position (Position(Position), enemyColor, whoseTurn,
+                 fullMoves, halfMoves,)
+import Board (move, remove,)
+import Move (position, moveType, isPawnMove, square, destination,
+             isPassantMove, isTwoStepPawnMove, whose, board,)
+import Color (Color(..), invert)
 import MoveType (MoveType(..))
+import Square (up, down)
+import PawnRange (pawnDirection,)
 
 positionAfter mv = Position
     (boardAfter mv)
@@ -13,19 +21,25 @@ positionAfter mv = Position
     (fullMovesAfter mv)
     (halfMovesAfter mv)
 
-boardAfter mv = []
+boardAfter mv = snd $ runState (makeMove mv) (board mv)
+
+makeMove mv = do
+    move (square mv) (destination mv)
+    when (isPassantMove mv) $ do
+        removePassantPawn mv
+        return ()
+
+removePassantPawn mv = remove . passantSquare $ mv
+
+passantSquare mv = fromJust $ backward $ destination mv
+    where backward = pawnDirection $ invert $ whose mv
 
 whoseTurnAfter = enemyColor. position
 
 enPassantAfter mv = if isTwoStepPawnMove mv
-    then Just (passantSquare mv) else Nothing
+    then Just $ passantSquare mv else Nothing
 
 castlingRightsAfter mv = []
-
-passantSquare mv = fromJust $ pawnDirection clr $ source mv
-    where clr = whoseTurn. position $ mv
-          pawnDirection White = up
-          pawnDirection Black = down
 
 fullMovesAfter mv = case whoseTurnAfter mv of
     White -> oldValue + 1

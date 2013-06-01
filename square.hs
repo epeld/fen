@@ -1,15 +1,12 @@
 {-#LANGUAGE NoMonomorphismRestriction #-}
 module Square(
-    Square, square,
-    file, rank,
+    Square, square, file, rank,
     fileLetters, rankNumbers,
     SquareSeries,
     above, below, left, right,
     up, down,
     upLeft, downLeft, upRight, downRight,
-    twice,
-    string,
-    (!!!),
+    twice, string, (!!!),
     Stepper, compose
     ) where 
 import Control.Applicative
