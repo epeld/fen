@@ -9,3 +9,6 @@ invert c = case c of
 lastRank :: Color -> Int
 lastRank White = 8
 lastRank Black = 1
+
+initialPawnRank White = 2
+initialPawnRank Black = 7
