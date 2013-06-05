@@ -6,7 +6,8 @@ module ErrorMonad (
 import Control.Monad.Error 
 
 data Reason = 
-    LastRankPromote | NoPieceToMove | NoPromotion | ColorsMismatch | NotInRange
+    LastRankPromote | NoPieceToMove | NoPromotion | ColorsMismatch | NotInRange |
+    KingCanBeCaptured
     deriving Show
 
 instance Error Reason where

@@ -1,29 +1,36 @@
-module MoveLogic (move, isPawnMove,
-                  isPassantMove, isTwoStepPawnMove,) where
+module MoveLogic (move, positionAfter,) where
 import Prelude hiding (elem)
 import Data.Maybe (maybe, fromJust)
 import Control.Monad (when, unless,)
 import Control.Monad.Error (throwError)
 
 import Move (Move(Move), pieceType, promotion, movingPiece, destination,
-             position, square,)
-import Square (Square, rank, twice, up)
+             position, square, isPawnMove, isLastRankMove)
+import MovedPosition (naivePositionAfter, kingIsSafe,)
+import Square (Square)
 import Piece (PieceType(..), OfficerType,)
 import Color (Color(..))
 import MoveType (MoveType(..))
-import Position (Position, readSquare, Promotion, lastRank, isPassantSquare,
+import Position (Position, readSquare, Promotion, 
                  board, whoseTurn, board,)
 import qualified ProjectedRange ( inferMoveType)
 import ErrorMonad (ErrorMonad, 
-                   Reason(NoPromotion, LastRankPromote, NotInRange),)
-import MovingPiece (MovingPiece, color, isPawn)
+                   Reason(NoPromotion, LastRankPromote, NotInRange,
+                          KingCanBeCaptured),)
+import MovingPiece (MovingPiece)
+
+positionAfter mv = naivePositionAfter mv
 
 move :: MovingPiece -> Square -> Maybe Promotion -> ErrorMonad Move
 move mp d pr = do
     mt <- inferMoveType mp d
     let mv = Move mp mt d pr
     verifyPromotion mv
+    let p = naivePositionAfter mv
+    verifyKingIsSafe p
     return mv
+
+verifyKingIsSafe p = unless (kingIsSafe p) $ throwError KingCanBeCaptured
 
 inferMoveType mp d = maybe (throwError NotInRange)
     return (ProjectedRange.inferMoveType mp d)
@@ -41,16 +48,4 @@ verifyPawnPromotion mv = case promotion mv of
     Just _ -> unless (requiresPromotion mv) (throwError NoPromotion)
 
 requiresPromotion :: Move -> Bool
-requiresPromotion mv = isPawnMove mv && lastRankMove mv
-
-isPawnMove = isPawn. movingPiece
-
-lastRankMove :: Move -> Bool
-lastRankMove mv = rank (destination mv) == Position.lastRank p
-    where p = position mv
-
-isTwoStepPawnMove :: Move -> Bool
-isTwoStepPawnMove mv = twice up (square mv) == Just dest && isPawnMove mv
-    where dest = destination mv
-
-isPassantMove mv = isPassantSquare (position mv) (destination mv)
+requiresPromotion mv = isPawnMove mv && isLastRankMove mv
