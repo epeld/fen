@@ -4,8 +4,9 @@ import Data.Maybe (maybe, fromJust)
 import Control.Monad (when, unless,)
 import Control.Monad.Error (throwError)
 
-import Move (Move(Move), pieceType, promotion, movingPiece, destination,
-             position, square, isPawnMove, isLastRankMove)
+import StandardMove (StandardMove(StandardMove), pieceType, promotion, 
+                     movingPiece, destination, position, square, 
+                     isPawnMove, isLastRankMove)
 import MovedPosition (naivePositionAfter, kingIsSafe,)
 import Square (Square)
 import Piece (PieceType(..), OfficerType,)
@@ -21,10 +22,10 @@ import MovingPiece (MovingPiece)
 
 positionAfter mv = naivePositionAfter mv
 
-move :: MovingPiece -> Square -> Maybe Promotion -> ErrorMonad Move
+move :: MovingPiece -> Square -> Maybe Promotion -> ErrorMonad StandardMove
 move mp d pr = do
     mt <- inferMoveType mp d
-    let mv = Move mp mt d pr
+    let mv = StandardMove mp mt d pr
     verifyPromotion mv
     let p = naivePositionAfter mv
     verifyKingIsSafe p
@@ -47,5 +48,5 @@ verifyPawnPromotion mv = case promotion mv of
     Nothing -> when (requiresPromotion mv) (throwError LastRankPromote)
     Just _ -> unless (requiresPromotion mv) (throwError NoPromotion)
 
-requiresPromotion :: Move -> Bool
+requiresPromotion :: StandardMove -> Bool
 requiresPromotion mv = isPawnMove mv && isLastRankMove mv
