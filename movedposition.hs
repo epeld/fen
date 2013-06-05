@@ -5,11 +5,11 @@ import Control.Applicative ((<$>))
 import Data.Either (rights, lefts)
 import Data.Maybe (fromJust)
 
+import Board (move, remove,)
+import Move (position, moveType, square, destination, whose, board,)
+import MoveLogic (move, isPawnMove, isTwoStepPawnMove, isPassantMove)
 import Position (Position(Position), enemyColor, whoseTurn,
                  fullMoves, halfMoves, friendlySquares, enemy,)
-import Board (move, remove,)
-import Move (position, moveType, isPawnMove, square, destination,
-             isPassantMove, isTwoStepPawnMove, whose, board,)
 import Piece (PieceType(Officer), OfficerType(King))
 import Color (Color(..), invert)
 import MoveType (MoveType(..))
@@ -37,7 +37,7 @@ naivePositionAfter mv = Position
 boardAfter mv = snd $ runState (makeMove mv) (board mv)
 
 makeMove mv = do
-    move (square mv) (destination mv)
+    Board.move (square mv) (destination mv)
     when (isPassantMove mv) $ do
         removePassantPawn mv
         return ()
