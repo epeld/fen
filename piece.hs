@@ -1,14 +1,6 @@
-module Piece (
-    PieceType(..),
-    OfficerType(..),
-    Piece(..),
-    charToOfficerType,
-    pieceTypeToString,
-    verifyHasColor,
-    hasColor,
-    officerType,
-    ) where
-
+module Piece (PieceType(..), OfficerType(..), Piece(..),
+              charToOfficerType, pieceTypeToString, verifyHasColor,
+              hasColor, officerType,) where 
 import Data.Char
 import Control.Monad.Error
 

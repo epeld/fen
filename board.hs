@@ -1,15 +1,25 @@
-module Board (Board, readSquare, (!!!), squareRead, put, remove, move) where
+module Board (Board, readSquare, (!!!), squareRead, put, remove, move,
+              pieceSquares, colorSquares,) where
 import Control.Arrow ((&&&))
+import Control.Monad (liftM)
 import Control.Monad.State (State, StateT(..))
 import Data.Maybe (fromJust)
+import Data.List (findIndices)
 
 import Square ((!!!), Square)
-import Piece (Piece)
+import Piece (Piece, hasColor)
+import Color (Color)
 
 type Board = [Maybe Piece] 
 
 readSquare :: Board -> Square -> Maybe Piece
 readSquare = (!!!)
+
+pieceSquares :: Piece -> Board -> [Square]
+pieceSquares pc = liftM toEnum . findIndices (Just pc ==)
+
+colorSquares :: Color -> Board -> [Square]
+colorSquares c = liftM toEnum . findIndices (maybe False $ hasColor c)
 
 squareRead = flip readSquare
 

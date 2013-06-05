@@ -7,6 +7,7 @@ import Control.Monad.Error
 
 data Reason = 
     LastRankPromote | NoPieceToMove | NoPromotion | ColorsMismatch | NotInRange
+    deriving Show
 
 instance Error Reason where
 noMsg = error "noMsg called"

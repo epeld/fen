@@ -13,9 +13,8 @@ import MovingPiece ( MovingPiece, officerType, square,
 
 officerSeriesM mp _ = officerSeriesM' (officerType mp) (square mp)
 officerSeriesM' t s | t `elem` longMovers = infiniteSeriesM
-                    | otherwise = takeFirst <$> infiniteSeriesM
+                    | otherwise = take 1 <$> infiniteSeriesM
     where infiniteSeriesM = infiniteOfficerSeriesM t s
-          takeFirst = take 1
           longMovers = [Queen, Rook, Bishop]
 
 infiniteOfficerSeriesM t s = zipWith applyStepper steppers (repeat s)

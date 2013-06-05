@@ -1,13 +1,14 @@
-module MovingPiece ( MovingPiece(..), movingPiece, piece, 
-                     pieceType, color, officerType, isPawn)where
+module MovingPiece (MovingPiece(..), movingPiece, piece, 
+                    pieceType, color, officerType, isPawn)where
 import Data.Maybe (fromJust)
 import Control.Monad.Error (throwError)
 
 import Square (Square)
 import qualified Piece ( Piece, pieceType, officerType, color, verifyHasColor,)
 import Color (Color)
-import Position ( Position, whoseTurn, readSquare,)
-import ErrorMonad ( ErrorMonad, Reason(NoPieceToMove),)
+import Position (Position, whoseTurn, readSquare, board,
+                 friendlyColor, enemyColor)
+import ErrorMonad (ErrorMonad, Reason(NoPieceToMove),)
 import MoveType(MoveType)
 import Piece (PieceType(Pawn))
 

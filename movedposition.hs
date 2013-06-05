@@ -1,19 +1,32 @@
-module MovedPosition () where
+module MovedPosition (naivePositionAfter, verifyKingIsSafe,) where
 import Control.Monad.State (runState)
 import Control.Monad (when)
+import Control.Applicative ((<$>))
+import Data.Either (rights, lefts)
 import Data.Maybe (fromJust)
 
 import Position (Position(Position), enemyColor, whoseTurn,
-                 fullMoves, halfMoves,)
+                 fullMoves, halfMoves, friendlySquares, enemy,)
 import Board (move, remove,)
 import Move (position, moveType, isPawnMove, square, destination,
              isPassantMove, isTwoStepPawnMove, whose, board,)
+import Piece (PieceType(Officer), OfficerType(King))
 import Color (Color(..), invert)
 import MoveType (MoveType(..))
 import Square (up, down)
 import PawnRange (pawnDirection,)
+import MovingPiece (movingPiece,)
+import ProjectedRange (threatens,)
 
-positionAfter mv = Position
+verifyKingIsSafe p = not. any (threatens enemyKingSq) $ friendlies p
+    where enemyKingSq = enemy (Officer King) p
+
+friendlies p = case lefts mps of
+    [] -> rights mps
+    x  -> error $ show $ head x
+    where mps = movingPiece p <$> friendlySquares p
+
+naivePositionAfter mv = Position
     (boardAfter mv)
     (whoseTurnAfter mv)
     (enPassantAfter mv)
