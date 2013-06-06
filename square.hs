@@ -2,12 +2,12 @@
 module Square(
     Square, square, file, rank,
     fileLetters, rankNumbers,
-    SquareSeries,
+    SquareSeries, squareSeries,
     above, below, left, right,
     up, down,
     upLeft, downLeft, upRight, downRight,
     twice, string, (!!!),
-    Stepper, compose
+    Stepper, compose,
     ) where 
 import Control.Applicative
 import Control.Monad
@@ -44,6 +44,15 @@ square f r = liftM2 Square (findFile f) (findRank r)
 string (Square f r) = f : show r
 
 type SquareSeries = [Square]
+
+squareSeries (Square f r) (Square f2 r2) = 
+    let df = fromEnum f2 - fromEnum f
+        dr = r2 - r
+     in if df == 0 || dr == 0 || abs df == abs dr
+        then takeWhile isJust $
+            [square f' r' | (f',r') <- zip (enumFromTo f f2) (enumFromTo r r2)]
+        else error "Can't interpolate"
+
 
 above s = square (file $ s) (succ . rank $ s)
 below s = square (file $ s) (pred . rank $ s)

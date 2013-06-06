@@ -7,7 +7,7 @@ import Control.Monad.Error
 
 data Reason = 
     LastRankPromote | NoPieceToMove | NoPromotion | ColorsMismatch | NotInRange |
-    KingCanBeCaptured
+    KingCanBeCaptured | InsufficientCastlingRights | EnemyPiecesHinderCastling
     deriving Show
 
 instance Error Reason where

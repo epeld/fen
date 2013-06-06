@@ -18,7 +18,10 @@ import PawnRange (pawnDirection,)
 import MovingPiece (movingPiece,)
 import ProjectedRange (threatens,)
 
-kingIsSafe p = not. any (threatens enemyKingSq) $ friendlies p
+squareIsThreatened p sq = not. any (threatens sq) $ enemies p
+squareIsDefended p sq = not. any (threatens sq) $ friendlies p
+
+kingIsSafe p = squareIsDefended p enemyKingSq
     where enemyKingSq = enemy (Officer King) p
 
 friendlies p = case lefts mps of
