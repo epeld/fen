@@ -1,7 +1,5 @@
 module ChessMove (ChessMove) where
-import StandardMove (StandardMove)
 import CastlingRight (Side)
+import Move (Move)
 
-data ChessMove = Either CastlingMove StandardMove
-
-data CastlingMove = Castles Side deriving (Show, Eq)
+data ChessMove = Standard Move | Castles Side deriving (Show, Eq)

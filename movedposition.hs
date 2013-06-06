@@ -6,8 +6,8 @@ import Data.Either (rights, lefts)
 import Data.Maybe (fromJust)
 
 import Board (move, remove,)
-import StandardMove (position, moveType, square, destination, whose, board,
-                     isPawnMove, isTwoStepPawnMove, isPassantMove)
+import Move (position, moveType, square, destination, whose, board,
+             isPawnMove, isTwoStepPawnMove, isPassantMove)
 import Position (Position(Position), enemyColor, whoseTurn,
                  fullMoves, halfMoves, friendlySquares, enemy,)
 import Piece (PieceType(Officer), OfficerType(King))

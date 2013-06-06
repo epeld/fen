@@ -1,7 +1,7 @@
-module StandardMove (StandardMove(..), position, pieceType,
-                     board, square, whose,
-                     isPawnMove, isPassantMove, isTwoStepPawnMove,
-                     isLastRankMove,) where
+module Move (Move(..), position, pieceType,
+             board, square, whose,
+             isPawnMove, isPassantMove, isTwoStepPawnMove,
+             isLastRankMove,) where
 
 import Square (Square, rank, twice, up)
 import MoveType (MoveType(..))
@@ -10,7 +10,7 @@ import qualified Position (Position, Promotion, lastRank, isPassantSquare,
 import qualified MovingPiece (MovingPiece, position, square, 
                               pieceType, isPawn, color, )
 
-data StandardMove = StandardMove { 
+data Move = Move { 
     movingPiece :: MovingPiece.MovingPiece,
     moveType :: MoveType,
     destination :: Square,  
@@ -24,11 +24,11 @@ pieceType = MovingPiece.pieceType. movingPiece
 
 isPawnMove = MovingPiece.isPawn. movingPiece
 
-isLastRankMove :: StandardMove -> Bool
+isLastRankMove :: Move -> Bool
 isLastRankMove mv = rank (destination mv) == Position.lastRank p
     where p = position mv
 
-isTwoStepPawnMove :: StandardMove -> Bool
+isTwoStepPawnMove :: Move -> Bool
 isTwoStepPawnMove mv = twice up (square mv) == Just dest && isPawnMove mv
     where dest = destination mv
 
