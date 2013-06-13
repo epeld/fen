@@ -1,4 +1,4 @@
-module MovedPosition (naivePositionAfter, kingIsSafe,) where
+module MovedPosition (naivePositionAfter, kingIsSafe, squareIsThreatened) where
 import Control.Monad.State (runState)
 import Control.Monad (when)
 import Control.Applicative ((<$>))
@@ -9,7 +9,7 @@ import Board (move, remove,)
 import Move (position, moveType, square, destination, whose, board,
              isPawnMove, isTwoStepPawnMove, isPassantMove)
 import Position (Position(Position), enemyColor, whoseTurn,
-                 fullMoves, halfMoves, friendlySquares, enemy,)
+                 fullMoves, halfMoves, friendlySquares, enemySquares, enemy)
 import Piece (PieceType(Officer), OfficerType(King))
 import Color (Color(..), invert)
 import MoveType (MoveType(..))
@@ -24,10 +24,12 @@ squareIsDefended p sq = not. any (threatens sq) $ friendlies p
 kingIsSafe p = squareIsDefended p enemyKingSq
     where enemyKingSq = enemy (Officer King) p
 
-friendlies p = case lefts mps of
+enemies p = shouldntFail $ movingPiece p <$> enemySquares p
+friendlies p = shouldntFail $ movingPiece p <$> friendlySquares p
+
+shouldntFail mps = case lefts mps of
     [] -> rights mps
-    x  -> error $ show $ head x
-    where mps = movingPiece p <$> friendlySquares p
+    x -> error $ show $ head mps
 
 naivePositionAfter mv = Position
     (boardAfter mv)

@@ -9,14 +9,14 @@ import MoveType (MoveType(..), movetypes)
 import Piece (hasColor, PieceType(Pawn, Officer),)
 import Color (Color, invert)
 import MovingPiece ( MovingPiece, )
-import Square (Square, SquareSeries)
+import Square (Square, Series)
 import Range (Range, pieceType, moveType, range)
 import qualified Range ( series, position)
 import Position (Position, enemyColor, friendlyColor, enPassant, isEmpty,
                  isPawnCapturableSquare, containsFriendlyPiece,
                  containsEnemyPiece)
 
-data ProjectedRange = ProjectedRange { series :: [SquareSeries] }
+data ProjectedRange = ProjectedRange { series :: [Series] }
 
 threatens :: Square -> MovingPiece -> Bool
 threatens sq mp = ProjectedRange.elem sq pr
@@ -31,7 +31,7 @@ project :: Range -> ProjectedRange
 project r = ProjectedRange $ project' pt r
     where pt = pieceType r
 
-project' :: PieceType -> Range -> [SquareSeries]
+project' :: PieceType -> Range -> [Series]
 
 project' Pawn r = map (pawnProjection mt p) sqs
     where p = Range.position r
@@ -48,7 +48,7 @@ pawnProjection Moves = projectPawnMovesSeries
 projectPawnTakesSeries p sqs = filter (isPawnCapturableSquare p) sqs
 projectPawnMovesSeries p sqs = takeWhile (isEmpty p) sqs
 
-projectSeries :: Position -> SquareSeries -> SquareSeries
+projectSeries :: Position -> Series -> Series
 projectSeries p s = take ixFirstStop s
     where ixFirstStop = indexFirstStop p s
 

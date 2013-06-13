@@ -9,14 +9,14 @@ import PawnRange( pawnSeriesM)
 import OfficerRange( officerSeriesM)
 import MoveType ( MoveType (Takes, Moves))
 import MovingPiece ( MovingPiece, pieceType, position, isPawn)
-import Square ( Square, SquareSeries,)
+import Square ( Square, Series,)
 import Piece ( PieceType(Pawn),)
 
 data Range = Range { movingPiece :: MovingPiece, moveType :: MoveType }
 
 range = Range
 
-series :: Range -> [SquareSeries]
+series :: Range -> [Series]
 series r = fromMaybeSquares $ seriesM r
 
 fromMaybeSquares msqs = map fromJust <$> validSquares

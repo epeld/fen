@@ -1,6 +1,6 @@
 module Piece (PieceType(..), OfficerType(..), Piece(..),
               charToOfficerType, pieceTypeToString, verifyHasColor,
-              hasColor, officerType,) where 
+              hasColor, officerType, officer) where 
 import Data.Char
 import Control.Monad.Error
 
@@ -19,6 +19,8 @@ data Piece = Piece {
     pieceType :: PieceType,
     color :: Color
     } deriving (Show, Eq)
+
+officer = Piece. Officer
 
 charToOfficerType c = lowerCharToOfficerType (toLower c)
 lowerCharToOfficerType 'r' = Rook

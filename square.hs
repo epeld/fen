@@ -1,8 +1,8 @@
 {-#LANGUAGE NoMonomorphismRestriction #-}
 module Square(
-    Square, square, file, rank,
+    Square, square, square', file, rank,
     fileLetters, rankNumbers,
-    SquareSeries, squareSeries,
+    Series, series,
     above, below, left, right,
     up, down,
     upLeft, downLeft, upRight, downRight,
@@ -43,13 +43,15 @@ findRank r = find (==r) rankNumbers
 square f r = liftM2 Square (findFile f) (findRank r)
 string (Square f r) = f : show r
 
-type SquareSeries = [Square]
+square' f r = fromJust $ square f r
 
-squareSeries (Square f r) (Square f2 r2) = 
+type Series = [Square]
+
+series (Square f r) (Square f2 r2) = 
     let df = fromEnum f2 - fromEnum f
         dr = r2 - r
      in if df == 0 || dr == 0 || abs df == abs dr
-        then takeWhile isJust $
+        then fromJust <$> takeWhile isJust
             [square f' r' | (f',r') <- zip (enumFromTo f f2) (enumFromTo r r2)]
         else error "Can't interpolate"
 

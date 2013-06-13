@@ -3,7 +3,7 @@ module OfficerRange (officerSeriesM) where
 import Control.Monad ((>=>))
 import Control.Applicative ((<*>), (<$>))
 
-import Square ( Square, SquareSeries, up, down, left, right,
+import Square ( Square, Series, up, down, left, right,
                 upLeft, upRight, downLeft, downRight,
                 twice, rank, Stepper, compose,)
 import Color ( Color(..),)
