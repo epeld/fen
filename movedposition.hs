@@ -6,6 +6,7 @@ import Data.Maybe (fromJust)
 import Data.Char (toLower)
 import Data.List ((\\))
 
+import ChessMove (ChessMove(..))
 import qualified ChessMove
 import qualified Move
 import qualified Castles
@@ -20,21 +21,22 @@ import Square (up, down)
 import PawnRange 
 import Threats
 
+naivePositionAfter :: ChessMove.ChessMove -> Position
 naivePositionAfter mv = Position
     (boardAfter mv)
     (whoseTurnAfter mv)
     (enPassantAfter mv)
-    (castlingRightsAfter mv)
+    (castlingCastlingsAfter mv)
     (fullMovesAfter mv)
     (halfMovesAfter mv)
 
-enPassantAfter (Right _) = Nothing
-enPassantAfter (Left mv) = if Move.isTwoStepPawnMove mv
+enPassantAfter (Castling _) = Nothing
+enPassantAfter (Standard mv) = if Move.isTwoStepPawnMove mv
     then Just $ passantSquare mv else Nothing
 
 -- Turns since the last pawn advance or capture
-halfMovesAfter (Right _) = 0
-halfMovesAfter (Left mv) = if Move.isPawnMove mv || Move.moveType mv == Takes
+halfMovesAfter (Castling _) = 0
+halfMovesAfter (Standard mv) = if Move.isPawnMove mv || Move.moveType mv == Takes
     then 1 else oldValue + 1
     where oldValue = halfMoves. Move.position $ mv
 
@@ -46,7 +48,7 @@ fullMovesAfter mv = case ChessMove.whoseTurnAfter mv of
     where oldValue = fullMoves. ChessMove.position $ mv
 
 boardAfter mv = snd $ runState (makeMove mv) (ChessMove.board mv)
-    where makeMove (Right mv) = do
+    where makeMove (Castling mv) = do
               let cr = Castles.expendedCastlingRight mv
 
               Board.move
@@ -57,14 +59,14 @@ boardAfter mv = snd $ runState (makeMove mv) (ChessMove.board mv)
                 (Castles.rookSourceSquare cr)
                 (Castles.rookDestinationSquare cr)
 
-          makeMove (Left mv) = do
+          makeMove (Standard mv) = do
               Board.move (Move.square mv) (Move.destination mv)
               when (Move.isPassantMove mv) $ do
                   mpc <- removePassantPawn mv
                   checkIsEnemyPawn mpc mv
                   return ()
 
-removePassantPawn mv = remove . passantSquare $ mv
+removePassantPawn mv = remove. passantSquare $ mv
 
 passantSquare mv = fromJust $ backward $ Move.destination mv
     where backward = pawnDirection $ invert $ Move.whose mv
@@ -77,8 +79,8 @@ checkIsPawnColored pc c =
     where coloredPawn = Piece Pawn c
           cs = toLower <$> show c
 
-castlingRightsAfter (Right mv) = rightsBefore \\ friendlyRights
+castlingCastlingsAfter (Castling mv) = rightsBefore \\ friendlyCastlings
     where rightsBefore = castlingRights (Castles.position mv)
-          friendlyRights = Castles <$> [Kingside, Queenside] <*> [Castles.whose mv]
+          friendlyCastlings = Castles <$> [Kingside, Queenside] <*> [Castles.whose mv]
 
-castlingRightsAfter mv = [] -- TODO
+castlingCastlingsAfter mv = [] -- TODO

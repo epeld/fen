@@ -1,20 +1,20 @@
 module ChessMove (ChessMove(..), whose, whoseTurnAfter, ChessMove.board, position) where
 import Data.Either 
 
-import CastlingRight 
+import CastlingRight
 import Position 
 import Color
 import qualified Castles 
 import qualified Move 
 
-data ChessMove = Either Move.Move Castles.CastlingMove 
+data ChessMove = Standard Move.Move | Castling Castles.CastlingMove  deriving (Show, Eq)
 
-whose (Left mv) = Move.whose mv
-whose (Right mv) = Castles.whose mv
+whose (Standard mv) = Move.whose mv
+whose (Castling mv) = Castles.whose mv
 
 whoseTurnAfter = invert. whose
 
-position (Right mv) = Castles.position mv
-position (Left mv) = Move.position mv
+position (Castling mv) = Castles.position mv
+position (Standard mv) = Move.position mv
 
 board = Position.board. position
