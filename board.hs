@@ -32,6 +32,7 @@ clear s = replace s Nothing
 
 type BoardState = State Board
 
+-- TODO this should be called "noReturn". noSideEffect is a lie
 noSideEffect :: (b -> c) -> b -> ((), c)
 noSideEffect f = const () &&& f
 
