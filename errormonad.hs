@@ -1,7 +1,4 @@
-module ErrorMonad (
-    Reason(..),
-    ErrorMonad
-    ) where
+module ErrorMonad ( Reason(..), ErrorMonad) where
 
 import Control.Monad.Error 
 
