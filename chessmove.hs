@@ -1,8 +1,7 @@
-module ChessMove (ChessMove(..), castles, move) where
+module ChessMove (ChessMove(..)) where
 import CastlingRight (Side)
 import Move (Move)
-import MoveLogic (move)
 import Position (Position)
-import Castles (castles, CastlingMove)
+import Castles (CastlingMove)
 
 data ChessMove = Either Move CastlingMove 
