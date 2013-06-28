@@ -1,4 +1,4 @@
-module Castles(verifyCanCastle, kingSquare, kingDestinationSquare,
+module Castles(castles, CastlingMove(..), kingSquare, kingDestinationSquare,
                rookSourceSquare, rookDestinationSquare) where
 import Control.Monad (unless)
 import Data.Maybe (fromJust)
@@ -14,11 +14,13 @@ import Color (firstRank, Color(..))
 import qualified Square (series, Square, Series)
 import Square (square')
 
-verifyCanCastle p s = do
+data CastlingMove = CastlingMove Position Side deriving (Show, Eq)
+
+castles p s = do
     verifyHasRights p s
     verifyKingCanMoveSafely p s
     kingAndRookShouldBeInPlace p s
-    return () -- $ ChessMove.Castles p s
+    return $ CastlingMove p s
 
 kingAndRookShouldBeInPlace p s = unless (kingInPlace p && rookInPlace p s) $
     internalError "missing piece, can't castle"
