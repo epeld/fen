@@ -48,9 +48,11 @@ fullMovesAfter mv = case ChessMove.whoseTurnAfter mv of
 boardAfter mv = snd $ runState (makeMove mv) (ChessMove.board mv)
     where makeMove (Right mv) = do
               let cr = Castles.expendedCastlingRight mv
+
               Board.move
                 (Castles.kingSquare $ Castles.whose mv)
                 (Castles.kingDestinationSquare cr)
+
               Board.move
                 (Castles.rookSourceSquare cr)
                 (Castles.rookDestinationSquare cr)
