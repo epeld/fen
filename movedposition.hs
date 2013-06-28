@@ -1,37 +1,18 @@
 module MovedPosition (naivePositionAfter, kingIsSafe, squareIsThreatened) where
 import Control.Monad.State (runState)
 import Control.Monad (when, unless)
-import Control.Applicative ((<$>))
-import Data.Either (rights, lefts)
 import Data.Maybe (fromJust)
 import Data.Char (toLower)
 
+import ChessMove
+import qualified Castles
+import qualified Move
 import Board (move, remove,)
-import Move (position, moveType, square, destination, whose, board,
-             isPawnMove, isTwoStepPawnMove, isPassantMove)
-import qualified Move (enemyColor)
-import Position (Position(Position), enemyColor, whoseTurn,
-                 fullMoves, halfMoves, friendlySquares, enemySquares, enemy)
-import Piece (PieceType(..), OfficerType(King), Piece(..), )
-import Color (Color(..), invert)
-import MoveType (MoveType(..))
+import Position 
+import Color 
+import MoveType 
 import Square (up, down)
 import PawnRange (pawnDirection,)
-import MovingPiece (movingPiece,)
-import ProjectedRange (threatens,)
-
-squareIsThreatened p sq = not. any (threatens sq) $ enemies p
-squareIsDefended p sq = not. any (threatens sq) $ friendlies p
-
-kingIsSafe p = squareIsDefended p enemyKingSq
-    where enemyKingSq = enemy (Officer King) p
-
-enemies p = shouldntFail $ movingPiece p <$> enemySquares p
-friendlies p = shouldntFail $ movingPiece p <$> friendlySquares p
-
-shouldntFail mps = case lefts mps of
-    [] -> rights mps
-    x -> error $ show $ head mps
 
 naivePositionAfter mv = Position
     (boardAfter mv)
@@ -41,14 +22,40 @@ naivePositionAfter mv = Position
     (fullMovesAfter mv)
     (halfMovesAfter mv)
 
-boardAfter mv = snd $ runState (makeMove mv) (board mv)
+enPassantAfter (Right _) = Nothing
+enPassantAfter (Left mv) = if isTwoStepPawnMove mv
+    then Just $ passantSquare mv else Nothing
 
-makeMove mv = do
-    Board.move (square mv) (destination mv)
-    when (isPassantMove mv) $ do
-        mpc <- removePassantPawn mv
-        checkIsEnemyPawn mpc mv
-        return ()
+-- Turns since the last pawn advance or capture
+halfMovesAfter (Right _) = 0
+halfMovesAfter (Left mv) = if isPawnMove mv || moveType mv == Takes
+    then 1 else oldValue + 1
+    where oldValue = halfMoves. position $ mv
+
+whoseTurnAfter = enemyColor. position
+
+fullMovesAfter mv = case whoseTurnAfter mv of
+    White -> oldValue + 1
+    Black -> oldValue
+    where oldValue = fullMoves. position $ mv
+
+boardAfter mv = snd $ runState (makeMove mv) (board mv)
+    where makeMove (Right mv) = do
+              Board.move (kingSquare mv) (kingSourceSquare mv)
+              Board.move (rookSourceSquare mv) (rookDestinationSquare mv)
+
+          makeMove (Left mv) = do
+              Board.move (square mv) (destination mv)
+              when (isPassantMove mv) $ do
+                  mpc <- removePassantPawn mv
+                  checkIsEnemyPawn mpc mv
+                  return ()
+
+removePassantPawn mv = remove . passantSquare $ mv
+
+passantSquare mv = fromJust $ backward $ destination mv
+    where backward = pawnDirection $ invert $ whose mv
+
 
 checkIsEnemyPawn (Just pc) mv = checkIsPawnColored pc (Move.enemyColor mv)
 
@@ -57,25 +64,7 @@ checkIsPawnColored pc c =
     where coloredPawn = Piece Pawn c
           cs = toLower <$> show c
 
-
-removePassantPawn mv = remove . passantSquare $ mv
-
-passantSquare mv = fromJust $ backward $ destination mv
-    where backward = pawnDirection $ invert $ whose mv
-
-whoseTurnAfter = enemyColor. position
-
-enPassantAfter mv = if isTwoStepPawnMove mv
-    then Just $ passantSquare mv else Nothing
-
-castlingRightsAfter mv = []
-
-fullMovesAfter mv = case whoseTurnAfter mv of
-    White -> oldValue + 1
-    Black -> oldValue
-    where oldValue = fullMoves. position $ mv
-
--- Turns since the last pawn advance or capture
-halfMovesAfter mv = if isPawnMove mv || moveType mv == Takes
-    then 1 else oldValue + 1
-    where oldValue = halfMoves. position $ mv
+castlingRightsAfter (Right mv) = rightsBefore \\ friendlyRights
+    where rightsBefore = castlingRights (position mv)
+          friendlyRights = Castles <$> [Kingside, Queenside] <*> [whose mv]
+castlingRightsAfter mv = [] -- TODO
