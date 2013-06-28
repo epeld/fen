@@ -4,13 +4,8 @@ module Piece (PieceType(..), OfficerType(..), Piece(..),
 import Data.Char
 import Control.Monad.Error
 
-import ErrorMonad (
-    ErrorMonad,
-    Reason(ColorsMismatch),
-    )
-import Color (
-    Color(..),
-    )
+import ErrorMonad ( ErrorMonad, Reason(ColorsMismatch),)
+import Color ( Color(..),)
 
 -- Differentiate pawns from officers
 data PieceType = Pawn | Officer OfficerType deriving (Show, Eq)
