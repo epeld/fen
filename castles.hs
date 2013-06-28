@@ -1,4 +1,4 @@
-module Castles(castles, kingSquare, kingDestinationSquare,
+module Castles(verifyCanCastle, kingSquare, kingDestinationSquare,
                rookSourceSquare, rookDestinationSquare) where
 import Control.Monad (unless)
 import Data.Maybe (fromJust)
@@ -11,11 +11,10 @@ import CastlingRight (Right(Castles))
 import Position (Position, whoseTurn, castlingRights, readSquare)
 import MovedPosition (squareIsThreatened)
 import Color (firstRank, Color(..))
-import qualified ChessMove (ChessMove(Castles))
 import qualified Square (series, Square, Series)
 import Square (square')
 
-castles p s = do
+verifyCanCastle p s = do
     verifyHasRights p s
     verifyKingCanMoveSafely p s
     kingAndRookShouldBeInPlace p s
