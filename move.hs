@@ -1,8 +1,9 @@
-module Move (Move(..), position, pieceType,
+module Move (Move(..), position, pieceType, enemyColor,
              board, square, whose,
              isPawnMove, isPassantMove, isTwoStepPawnMove,
              isLastRankMove,) where
 
+import Color (invert)
 import Square (Square, rank, twice, up)
 import MoveType (MoveType(..))
 import qualified Position (Position, Promotion, lastRank, isPassantSquare,
@@ -16,6 +17,7 @@ data Move = Move {
     destination :: Square,  
     promotion :: Maybe Position.Promotion } deriving (Show, Eq)
 
+enemyColor = invert. whose
 whose = Position.whoseTurn. position
 square = MovingPiece.square. movingPiece
 position = MovingPiece.position. movingPiece

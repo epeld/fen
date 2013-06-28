@@ -1,16 +1,18 @@
 module MovedPosition (naivePositionAfter, kingIsSafe, squareIsThreatened) where
 import Control.Monad.State (runState)
-import Control.Monad (when)
+import Control.Monad (when, unless)
 import Control.Applicative ((<$>))
 import Data.Either (rights, lefts)
 import Data.Maybe (fromJust)
+import Data.Char (toLower)
 
 import Board (move, remove,)
 import Move (position, moveType, square, destination, whose, board,
              isPawnMove, isTwoStepPawnMove, isPassantMove)
+import qualified Move (enemyColor)
 import Position (Position(Position), enemyColor, whoseTurn,
                  fullMoves, halfMoves, friendlySquares, enemySquares, enemy)
-import Piece (PieceType(Officer), OfficerType(King))
+import Piece (PieceType(..), OfficerType(King), Piece(..), )
 import Color (Color(..), invert)
 import MoveType (MoveType(..))
 import Square (up, down)
@@ -44,8 +46,17 @@ boardAfter mv = snd $ runState (makeMove mv) (board mv)
 makeMove mv = do
     Board.move (square mv) (destination mv)
     when (isPassantMove mv) $ do
-        removePassantPawn mv
+        mpc <- removePassantPawn mv
+        checkIsEnemyPawn mpc mv
         return ()
+
+checkIsEnemyPawn (Just pc) mv = checkIsPawnColored pc (Move.enemyColor mv)
+
+checkIsPawnColored pc c =
+    unless (pc == coloredPawn) (error $ "Not a " ++ cs ++ " pawn")
+    where coloredPawn = Piece Pawn c
+          cs = toLower <$> show c
+
 
 removePassantPawn mv = remove . passantSquare $ mv
 
