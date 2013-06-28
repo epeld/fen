@@ -18,7 +18,7 @@ data Position = Position {
     castlingRights :: [Right],
     fullMoves :: Int,
     halfMoves :: Int
-    } deriving Show
+    } deriving (Show, Eq)
 
 type Promotion = OfficerType
 

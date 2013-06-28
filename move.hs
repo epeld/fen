@@ -14,7 +14,7 @@ data Move = Move {
     movingPiece :: MovingPiece.MovingPiece,
     moveType :: MoveType,
     destination :: Square,  
-    promotion :: Maybe Position.Promotion }
+    promotion :: Maybe Position.Promotion } deriving (Show, Eq)
 
 whose = Position.whoseTurn. position
 square = MovingPiece.square. movingPiece

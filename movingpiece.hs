@@ -13,7 +13,7 @@ import MoveType(MoveType)
 import Piece (PieceType(Pawn))
 
 data MovingPiece = PieceFromPosition { position :: Position, square::Square }
-                                       deriving (Show)
+                                       deriving (Show, Eq)
 
 movingPiece :: Position -> Square -> ErrorMonad MovingPiece
 movingPiece p s = do

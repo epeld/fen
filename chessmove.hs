@@ -5,7 +5,7 @@ import MoveLogic (move)
 import Position (Position)
 import qualified Castles as Castling
 
-data ChessMove = Standard Move | Castles Position Side 
+data ChessMove = Standard Move | Castles Position Side deriving (Show, Eq)
 
 castles p s = do
     Castling.verifyCanCastle p s
