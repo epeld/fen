@@ -1,5 +1,6 @@
 module Castles(castles, CastlingMove(..), kingSquare, kingDestinationSquare,
-               rookSourceSquare, rookDestinationSquare) where
+               rookSourceSquare, rookDestinationSquare, whose,
+               expendedCastlingRight, ) where
 import Control.Monad (unless)
 import Data.Maybe (fromJust)
 import Control.Monad.Error (throwError)
@@ -8,13 +9,16 @@ import Piece(PieceType(..), OfficerType(..), officer)
 import ErrorMonad (Reason(..))
 import CastlingSide (Side(..)) 
 import CastlingRight (Right(Castles))
-import Position (Position, whoseTurn, castlingRights, readSquare)
+import Position 
 import Threats (squareIsThreatened)
 import Color (firstRank, Color(..))
 import qualified Square (series, Square, Series)
 import Square (square')
 
-data CastlingMove = CastlingMove Position Side deriving (Show, Eq)
+data CastlingMove = 
+    CastlingMove { position::Position, side::Side } deriving (Show, Eq)
+
+expendedCastlingRight mv = Castles (side mv) (whose mv)
 
 castles p s = do
     verifyHasRights p s
@@ -74,3 +78,5 @@ rookDestinationSquare (Castles s c) = square' (rookDestinationFile s) (firstRank
           rookDestinationFile Queenside = 'd'
 
 internalError err = error $ "Internal error in castles-module: " ++ err
+
+whose = whoseTurn. position
