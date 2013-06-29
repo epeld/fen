@@ -38,8 +38,9 @@ project' Pawn r = map (pawnProjection mt p) sqs
           sqs = Range.series r
           mt = moveType r
 
-project' (Officer _) r =  map projectSeries' sqs
-    where projectSeries' = projectSeries $ Range.position r
+project' (Officer _) r =  map proj sqs
+    where proj = projectSeries (Range.moveType r) p
+          p = Range.position r
           sqs = Range.series r
 
 pawnProjection Takes = projectPawnTakesSeries
@@ -48,14 +49,7 @@ pawnProjection Moves = projectPawnMovesSeries
 projectPawnTakesSeries p sqs = filter (isPawnCapturableSquare p) sqs
 projectPawnMovesSeries p sqs = takeWhile (isEmpty p) sqs
 
-projectSeries :: Position -> Series -> Series
-projectSeries p s = take ixFirstStop s
-    where ixFirstStop = indexFirstStop p s
-
-indexFirstStop p s = min enemyIx friendlyIx
-    where enemyIx = maybeEndOfSeries (+1) (indexEnemy p s)
-          friendlyIx = maybeEndOfSeries id (indexFriendly p s)
-          maybeEndOfSeries = maybe (length s)
-          
-indexEnemy p s = findIndex (containsEnemyPiece p) s
-indexFriendly p s = findIndex (containsFriendlyPiece p) s
+projectSeries :: MoveType -> Position -> Series -> Series
+projectSeries Moves p s = takeWhile (isEmpty p) s
+projectSeries Takes p s = maybe [] (flip take s. succ) (indexEnemy p s)
+    where indexEnemy p s = findIndex (containsEnemyPiece p) s
