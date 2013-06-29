@@ -1,4 +1,5 @@
-module ChessMove (ChessMove(..), whose, whoseTurnAfter, ChessMove.board, position) where
+module ChessMove (ChessMove(..), whose, whoseTurnAfter, 
+                  ChessMove.board, position, square,) where
 import Data.Either 
 
 import CastlingRight
@@ -18,3 +19,5 @@ position (Castling mv) = Castles.position mv
 position (Standard mv) = Move.position mv
 
 board = Position.board. position
+
+square (Standard mv) = Move.square mv
