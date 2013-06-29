@@ -10,11 +10,13 @@ import Control.Monad
 import Data.Maybe
 import Board
 import qualified Square
+import PGNSquare
 import Color
 import CastlingSide
 import CastlingRight
 import qualified Position
 
+-- TODO WHAT DOES THE SECOND PARAM TO runParser DO?
 startingPosition = case runParser position 0 "FEN-String" startingPosFen of
     Right p -> p
     _ -> error "Couldn't parse FEN"
@@ -80,15 +82,9 @@ digits = many1 digit >>= return . read
 
 whoseMove = white <|> black <?> "color"
 castlingRights = many1 castlingRight <|> omitted <?> "castling rights"
-enPassant = fmap Just square <|> omitted <?> "passant-square"
+enPassant = liftM return PGNSquare.square <|> omitted <?> "passant-square"
 halfMove = digits <?> "half-move number"
 fullMove = digits <?> "move-number"
-
-square = do
-    f <- oneOf "abcdefgh" <?> "file"
-    r <- liftM digitToInt (oneOf "12345678" <?> "rank")
-    return $ Square.square' f r
-
 
 castlingSide c =
     case toLower c of
