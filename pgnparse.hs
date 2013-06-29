@@ -1,21 +1,24 @@
 {-#LANGUAGE NoMonomorphismRestriction #-}
 module PGNParse where
+import Control.Applicative ((<$>))
 
-import Square hiding (file, rank)
-import Game
-import Board
-import Piece
-import qualified PGNMove
+import PGNSquare (square, file, rank)
+import Square hiding (file, rank, square, square', string)
+import Piece (Piece(..), OfficerType(..), PieceType(..), charToOfficerType)
+import CastlingSide
 import Data.Char
 import Text.Parsec
-import Control.Applicative hiding ((<|>))
+import MoveType
+import qualified PGNMove
+import qualified PGNMove
+import qualified PGNMoveEssentials
 
-castlesKingside = string "O-O" >> return (Pgn.Castles Kingside)
-castlesQueenside = string "O-O-O" >> return (Pgn.Castles Queenside)
+castlesKingside = string "O-O" >> return (PGNMove.Castles Kingside)
+castlesQueenside = string "O-O-O" >> return (PGNMove.Castles Queenside)
 
 castles = try castlesQueenside <|> castlesKingside
 
-moveType = option Pgn.Moves (char 'x' >> return Pgn.Takes) 
+moveType = option Moves (char 'x' >> return Takes) 
 
 -- "exd4"
 longPawnMove = do
@@ -23,23 +26,29 @@ longPawnMove = do
     m <- moveType
     s <- square
     p <- optionMaybe promotion
-    let e = Pgn.PGNMoveEssentials (Just h) m s
-    return $ Pgn.PawnMove e p
+    let e = PGNMoveEssentials.Essentials {
+        PGNMoveEssentials.hint = Just h,
+        PGNMoveEssentials.moveType = m,
+        PGNMoveEssentials.destination = s
+        }
+    return $ PGNMove.PawnMove e p
 
 -- "e4=D"
 shortPawnMove = do
     s <- square
     p <- optionMaybe promotion
-    let e = Pgn.PGNMoveEssentials Nothing Pgn.Moves s
-    return $ Pgn.PawnMove e p
+    let e = PGNMoveEssentials.Essentials {
+        PGNMoveEssentials.hint = Nothing,
+        PGNMoveEssentials.moveType = Moves,
+        PGNMoveEssentials.destination = s
+        }
+    return $ PGNMove.PawnMove e p
 
 promotion = string "=" >> charToOfficerType <$> oneOf "RBQN"
 
-squareHint = Pgn.SquareHint <$> square 
-fileHint = Pgn.FileHint <$> file 
-rankHint = Pgn.RankHint <$> rank 
-file = File <$> oneOf ['a'..'h'] 
-rank = Rank . digitToInt <$> oneOf ['1'..'8']
+squareHint = PGNMoveEssentials.SquareHint <$> square 
+fileHint = PGNMoveEssentials.FileHint <$> file 
+rankHint = PGNMoveEssentials.RankHint <$> rank 
 
 officerHint = try rankHint <|> pawnHint
 pawnHint = try squareHint <|> fileHint
@@ -54,16 +63,16 @@ shortOfficerMove = do
     t <- officerType
     m <- moveType
     s <- square
-    let e = Pgn.PGNMoveEssentials Nothing m s
-    return $ Pgn.OfficerMove t e
+    let e = PGNMoveEssentials.Essentials Nothing m s
+    return $ PGNMove.OfficerMove t e
 
 longOfficerMove = do
     t <- officerType
     h <- officerHint
     m <- moveType
     s <- square
-    let e = Pgn.PGNMoveEssentials (Just h) m s
-    return $ Pgn.OfficerMove t e
+    let e = PGNMoveEssentials.Essentials (Just h) m s
+    return $ PGNMove.OfficerMove t e
 
 pgnMove = choice [try pawnMove, try officerMove, castles]
 
