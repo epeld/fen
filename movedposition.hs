@@ -83,4 +83,14 @@ castlingCastlingsAfter (Castling mv) = rightsBefore \\ friendlyCastlings
     where rightsBefore = castlingRights (Castles.position mv)
           friendlyCastlings = Castles <$> [Kingside, Queenside] <*> [Castles.whose mv]
 
-castlingCastlingsAfter mv = [] -- TODO
+castlingCastlingsAfter (Standard mv) =
+    case Move.pieceType mv of
+        Officer King -> removeRights bothRights
+        Officer Rook -> maybe oldRights removeRight rookRight
+        _ -> oldRights
+    where
+        oldRights = castlingRights $ Move.position mv
+        bothRights = Castles <$> [Queenside, Kingside] <*> [Move.whose mv]
+        rookRight = Castles.lookupFromRookSourceSquare $ Move.square mv
+        removeRights = (oldRights \\)
+        removeRight = (oldRights \\) . (:[])

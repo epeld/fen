@@ -1,9 +1,10 @@
 module Castles(castles, CastlingMove(..), kingSquare, kingDestinationSquare,
                rookSourceSquare, rookDestinationSquare, whose,
-               expendedCastlingRight, ) where
+               expendedCastlingRight, lookupFromRookSourceSquare) where
+import Control.Applicative
 import Control.Monad (unless)
-import Data.Maybe (fromJust)
 import Control.Monad.Error (throwError)
+import Data.Maybe (fromJust)
 
 import Piece(PieceType(..), OfficerType(..), officer)
 import ErrorMonad (Reason(..))
@@ -76,6 +77,11 @@ rookDestinationSquare :: Right -> Square.Square
 rookDestinationSquare (Castles s c) = square' (rookDestinationFile s) (firstRank c)
     where rookDestinationFile Kingside = 'f'
           rookDestinationFile Queenside = 'd'
+
+lookupFromRookSourceSquare a = lookup a table
+    where table = zip squares rights
+          rights = Castles <$> [Queenside, Kingside] <*> [White, Black]
+          squares = rookSourceSquare <$> rights
 
 internalError err = error $ "Internal error in castles-module: " ++ err
 
