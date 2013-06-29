@@ -1,35 +1,20 @@
 {-#LANGUAGE NoMonomorphismRestriction #-}
 module Pgn where
 
-import Chess
 import Square 
-import Game
 import Piece
-import MonadOps
-import Data.Char
-import Data.List
-import Text.Parsec
-import Control.Monad
-import Control.Applicative
-
-data MoveType = Takes | Moves deriving (Show, Eq)
-
-data PGNMoveEssentials = PGNMoveEssentials {
-    hint :: (Maybe Hint),
-    moveType :: MoveType,
-    destination :: Square
-    } deriving (Show, Eq)
+import MoveType
+import Piece
+import PGNMoveEssentials
+import CastlingSide
 
 data PGNMove = 
     PawnMove {
-        essentials :: PGNMoveEssentials,
-        promotion :: (Maybe OfficerType)
+        essentials :: Essentials,
+        promotion :: Maybe OfficerType
     } |
     OfficerMove {
         officerType :: OfficerType,
-        essentials :: PGNMoveEssentials
+        essentials :: Essentials
     } |
-    Castles Side deriving (Show)
-
-data Hint = FileHint File | RankHint Rank | SquareHint Square deriving (Show, Eq)
-
+    Castles Side deriving (Show, Eq)
