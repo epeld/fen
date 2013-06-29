@@ -4,9 +4,12 @@ module PGNMove where
 import Square 
 import Piece
 import MoveType
+import ChessMove
 import Piece
 import PGNMoveEssentials
 import CastlingSide
+import ErrorMonad
+import Position
 
 data PGNMove = 
     PawnMove {
@@ -18,3 +21,6 @@ data PGNMove =
         essentials :: Essentials
     } |
     Castles Side deriving (Show, Eq)
+
+translate :: PGNMove -> Position -> ErrorMonad ChessMove
+translate mv p = error "hej"
