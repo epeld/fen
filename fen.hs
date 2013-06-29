@@ -1,5 +1,5 @@
 {-#LANGUAGE NoMonomorphismRestriction #-}
-module Fen where
+module FEN where
 
 import Text.Parsec
 import Data.Char
@@ -8,10 +8,16 @@ import Piece
 import Control.Applicative hiding ((<|>))
 import Control.Monad
 import Data.Maybe
-import Data.Array.IArray
 import Board
-import Square
-import qualified Game
+import qualified Square
+import Color
+import CastlingSide
+import CastlingRight
+import qualified Position
+
+startingPosition = case runParser position 0 "FEN-String" startingPosFen of
+    Right p -> p
+    _ -> error "Couldn't parse FEN"
 
 startingPosFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
@@ -43,10 +49,12 @@ row = do
     verifyLength8 (length all)
     return all
 
-fenSquares = [Square (File f) (Rank r) | r <- [8,7..1], f <- ['a'..'h']]
+fenSquares = [Square.square' f r | r <- [8,7..1], f <- ['a'..'h']]
 
 board = concat <$> reverse <$> sepBy1 row (char '/')
-props = do
+position = do
+    b <- board
+    space
     m <- whoseMove
     space
     c <- castlingRights
@@ -56,7 +64,14 @@ props = do
     h <- halfMove
     space
     f <- fullMove
-    return $ Game.GameProperties m c e h f
+    return $ Position.Position {
+        Position.board = b,
+        Position.whoseTurn = m,
+        Position.enPassant = e,
+        Position.castlingRights = c,
+        Position.fullMoves = f,
+        Position.halfMoves = h
+        }
 
 white = char 'w' >> return White
 black = char 'b' >> return Black
@@ -66,20 +81,20 @@ digits = many1 digit >>= return . read
 whoseMove = white <|> black <?> "color"
 castlingRights = many1 castlingRight <|> omitted <?> "castling rights"
 enPassant = fmap Just square <|> omitted <?> "passant-square"
-halfMove = digits <?> "half move number"
-fullMove = digits <?> "move number"
+halfMove = digits <?> "half-move number"
+fullMove = digits <?> "move-number"
+
+square = do
+    f <- oneOf "abcdefgh" <?> "file"
+    r <- liftM digitToInt (oneOf "12345678" <?> "rank")
+    return $ Square.square' f r
+
 
 castlingSide c =
     case toLower c of
-        'k' -> Game.Kingside
-        'q' -> Game.Queenside
+        'k' -> Kingside
+        'q' -> Queenside
 
 castlingRight = do
     c <- oneOf "KkQq"
-    return $ Game.CastlingRight (castlingSide c) (charToColor c)
-
-game = do
-    b <- Fen.board
-    space
-    p <- props
-    return $ Game.Game b p
+    return $ CastlingRight.Castles (castlingSide c) (charToColor c)
