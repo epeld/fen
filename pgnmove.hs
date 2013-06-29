@@ -1,5 +1,5 @@
 {-#LANGUAGE NoMonomorphismRestriction #-}
-module Pgn where
+module PGNMove where
 
 import Square 
 import Piece

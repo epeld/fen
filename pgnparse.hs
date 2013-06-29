@@ -1,11 +1,11 @@
 {-#LANGUAGE NoMonomorphismRestriction #-}
-module PgnParse where
+module PGNParse where
 
 import Square hiding (file, rank)
 import Game
 import Board
 import Piece
-import qualified Pgn
+import qualified PGNMove
 import Data.Char
 import Text.Parsec
 import Control.Applicative hiding ((<|>))
