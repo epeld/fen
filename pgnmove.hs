@@ -38,10 +38,10 @@ translate mv p = oneValid $ map apply candidates
         candidates = filter (compatible mv) (MovingPiece.friendlies p)
         apply mp = liftM ChessMove.Standard $ MoveLogic.move mp mt d pr
         d = destination mv
+        mt = moveType mv
         pr = case mv of
             PawnMove _ _ -> promotion mv
             _ -> Nothing
-        mt = moveType mv
 
 oneValid :: [ErrorMonad ChessMove.ChessMove] -> ErrorMonad ChessMove.ChessMove
 oneValid mvs = case valids of
