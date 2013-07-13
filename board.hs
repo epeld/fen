@@ -48,4 +48,4 @@ remove s = stateify $ squareRead s  &&& clear s
 
 move s d = do
     mp <- remove s
-    put (fromJust mp) s
+    put (fromJust mp) d
