@@ -11,9 +11,9 @@ testList = TestList [
             TestLabel "file letters" $ TestCase testFileLetters,
             TestLabel "rank numbers" $ TestCase testRankNumbers,
             TestLabel "squares" $ TestCase testSquares,
-            movementTests,
+            TestLabel "square indexes" $ indexesTest,
             TestCase indexTest,
-            TestLabel "square indexes" $ indexesTest
+            movementTests
             ]
 
 movementTests = TestList $ map TestCase $
