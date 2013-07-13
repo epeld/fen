@@ -5,13 +5,12 @@ import Data.Maybe (fromJust)
 
 tests = TestLabel "Square Tests" testList
 
-testList = TestList $ labeled
-    where 
-          labeled = [
+testList = TestList [
             TestLabel "square creation" squareTests,
             TestLabel "horizontal series" $ TestCase testHorizontalSeries,
             TestLabel "file letters" $ TestCase testFileLetters,
-            TestLabel "rank numbers" $ TestCase testRankNumbers
+            TestLabel "rank numbers" $ TestCase testRankNumbers,
+            TestCase testAbove, TestCase testBelow
             ]
 
 squareTests = TestList [ TestCase testSquare, TestCase testSquareFail ]
@@ -40,6 +39,14 @@ testHorizontalSeries = do
     assertLength 5 s
     assertEqual "first square" start $ head s
     assertEqual "last square" end $ last s
+
+testAbove = let s = square' 'e' 4
+                s' = square' 'e' 5
+             in assertEqual "above" (Just s') (above s)
+
+testBelow = let s = square' 'e' 4
+                s' = square' 'e' 3
+             in assertEqual "below" (Just s') (below s)
 
 assertLength l a = assertEqual s l $ length a
     where s = "length " ++ show l
