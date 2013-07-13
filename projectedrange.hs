@@ -11,10 +11,10 @@ import Color (Color, invert)
 import MovingPiece ( MovingPiece, )
 import Square (Square, Series)
 import Range (Range, pieceType, moveType, range)
+import Piece (color)
 import qualified Range ( series, position)
 import Position (Position, enemyColor, friendlyColor, enPassant, isEmpty,
-                 isPawnCapturableSquare, containsFriendlyPiece,
-                 containsEnemyPiece)
+                 isPawnCapturableSquare, containsFriendlyPiece, readSquare)
 
 data ProjectedRange = ProjectedRange { series :: [Series] }
 
@@ -51,5 +51,10 @@ projectPawnMovesSeries p sqs = takeWhile (isEmpty p) sqs
 
 projectSeries :: MoveType -> Position -> Series -> Series
 projectSeries Moves p s = takeWhile (isEmpty p) s
-projectSeries Takes p s = maybe [] (flip take s. succ) (indexEnemy p s)
-    where indexEnemy p s = findIndex (containsEnemyPiece p) s
+projectSeries Takes p s = loop s
+    where loop [] = []
+          loop (x:xs) =
+              case readSquare p x of
+                  Nothing -> loop xs
+                  Just pc -> if color pc == enemyColor p
+                      then [x] else []
