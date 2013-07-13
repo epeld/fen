@@ -1,4 +1,4 @@
-module Board (Board, readSquare, (!!!), squareRead, put, remove, move,
+module Board (Board, readSquare, (!!!), squareRead, put, remove, move, replace,
               pieceSquares, colorSquares,) where
 import Control.Arrow ((&&&))
 import Control.Monad (liftM)
