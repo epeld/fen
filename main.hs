@@ -3,10 +3,13 @@ import Control.Monad
 import System.IO
 import Text.Parsec
 
+import Position
+import ErrorMonad
 import PGNParse
 import PGNMove
 import MoveLogic
 import FEN
+import FENEncode
 
 main = processLines stdin stdout
 
@@ -21,11 +24,12 @@ processLine h o = do
     let r = parsePGNMoves s
     hPutStrLn o $
         case r of
-            Right mvs -> show $ applyMoves startingPosition mvs
+            Right mvs -> show $ liftM encode $ applyMoves startingPosition mvs
             Left err -> show err
 
 parsePGNMoves = parse (sepBy1 pgnMove space) "(stdin)"
 
+applyMoves :: Position -> [PGNMove] -> ErrorMonad Position
 applyMoves p [] = Right p
 applyMoves p (mv:mvs) = p' >>= flip applyMoves mvs
     where p' = liftM positionAfter $ translate mv p
