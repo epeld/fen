@@ -1,5 +1,5 @@
 - Castling does not check for interfering friendly pieces
 - movingPiece only allows creation of friendly pieces; split up: enemy, friendly and movingPiece (which allows both)
 - castling rights must disappear if move destination is a rook square
-- e4 d5 exd5
-- should output FEN
+- Wrong: 1. Rxh2 or Rxh5
+- Wrong: e4 d5 exd5
