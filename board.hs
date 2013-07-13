@@ -32,14 +32,13 @@ clear s = replace s Nothing
 
 type BoardState = State Board
 
--- TODO this should be called "noReturn". noSideEffect is a lie
-noSideEffect :: (b -> c) -> b -> ((), c)
-noSideEffect f = const () &&& f
+noReturn :: (b -> c) -> b -> ((), c)
+noReturn f = const () &&& f
 
 stateify = StateT . returnResult 
     where returnResult = (return.)
 
-putMaybe s mp = stateify $ noSideEffect $ replace s mp
+putMaybe s mp = stateify $ noReturn $ replace s mp
 
 put :: Piece -> Square -> BoardState ()
 put p s = putMaybe s (Just p)
