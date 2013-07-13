@@ -1,2 +1,4 @@
 - Castling does not check for interfering friendly pieces
 - castling rights must disappear if move destination is a rook square
+- e4 d5 e5 f5 exf6 error
+- e4 e5 wrong passant square

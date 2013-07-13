@@ -1,6 +1,6 @@
 module MovingPiece (MovingPiece(..), movingPiece, piece, 
                     pieceType, color, officerType, isPawn,
-                    friendlies, enemies, )where
+                    friendlies, enemies, friendly, enemy)where
 import Control.Monad.Error (throwError)
 import Control.Applicative
 import Data.Either (rights, lefts)
@@ -9,7 +9,7 @@ import Data.Maybe (fromJust, isNothing)
 import Square (Square)
 import qualified Piece 
 import Color (Color)
-import Position
+import Position hiding (friendly, enemy)
 import ErrorMonad 
 import MoveType (MoveType)
 import Piece (PieceType(Pawn))

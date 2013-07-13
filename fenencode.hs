@@ -3,12 +3,21 @@ import Data.List (intersperse, groupBy)
 import Data.Maybe (isNothing)
 
 import FEN (fenSquares)
-import Position (readSquare)
 import Piece (Piece, pieceToChar)
+import Square (string)
+import Color (colorToChar)
+import CastlingRight
+import Position 
 
 encode p = fenRLEEncodePieces p ++ ' ' : fenEncodeProperties p
 
-fenEncodeProperties p = "TODO"
+fenEncodeProperties p = concat $ intersperse " " [
+    colorToChar (whoseTurn p) : [],
+    rightsToString (castlingRights p),
+    maybe "-" Square.string (enPassant p),
+    show (halfMoves p),
+    show (fullMoves p)
+    ]
 
 fenRLEEncodePieces p = concat $ intersperse "/" $ 
     map fenRLEEncodeRow rows
