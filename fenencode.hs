@@ -42,4 +42,4 @@ every l s = takeWhile (not. null) $
     map (\x -> slice x l s) offsets
     where offsets = [x*l | x <- [0..]]
 
-slice o l s = take l $ drop o $ s
+slice o l s = take l . drop o $ s
