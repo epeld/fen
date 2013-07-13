@@ -13,6 +13,9 @@ testList = TestList [
             TestLabel "horizontal series" $ TestCase testHorizontalSeries,
             TestLabel "horizontal series backward" $
                 TestCase testHorizontalSeries2,
+            TestLabel "diagonal series" $ TestCase testDiagonalSeries,
+            TestLabel "diagonal series2" $ TestCase testDiagonalSeries2,
+            TestLabel "diagonal series3" $ TestCase testDiagonalSeries3,
             TestLabel "file letters" $ TestCase testFileLetters,
             TestLabel "rank numbers" $ TestCase testRankNumbers,
             TestLabel "squares" $ TestCase testSquares,
@@ -50,19 +53,34 @@ testSquares = assertLength 64 squares
 testFileLetters = assertLength 8 fileLetters
 testRankNumbers = assertLength 8 rankNumbers
 
-testHorizontalSeries = do
+testHorizontalSeries = 
     let start = square' 'a' 3
-    let end = square' 'e' 3
-    let s = series start end
-    assertLength 5 s
-    assertEqual "first square" start $ head s
-    assertEqual "last square" end $ last s
+        end = square' 'e' 3
+     in testSeries start end 5
 
 testHorizontalSeries2 = do
     let start = square' 'e' 3
-    let end = square' 'a' 3
+        end = square' 'a' 3
+     in testSeries start end 5
+
+testDiagonalSeries = 
+    let start = square' 'a' 1
+        end = square' 'c' 3
+     in testSeries start end 3
+
+testDiagonalSeries2 =
+    let start = square' 'h' 8
+        end = square' 'c' 3
+     in testSeries start end 6
+
+testDiagonalSeries3 = 
+    let start = square' 'a' 5
+        end = square' 'c' 3
+     in testSeries start end 3
+
+testSeries start end l = do
     let s = series start end
-    assertLength 5 s
+    assertLength l s
     assertEqual "first square" start $ head s
     assertEqual "last square" end $ last s
 
