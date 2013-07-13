@@ -1,7 +1,8 @@
-module Piece (PieceType(..), OfficerType(..), Piece(..),
+module Piece (PieceType(..), OfficerType(..), Piece(..), pieceToChar,
               charToOfficerType, pieceTypeToString, verifyHasColor,
               hasColor, officerType, officer) where 
 import Data.Char
+import Data.Maybe (fromJust)
 import Control.Monad.Error
 
 import ErrorMonad ( ErrorMonad, Reason(ColorsMismatch),)
@@ -23,6 +24,19 @@ lowerCharToOfficerType 'b' = Bishop
 lowerCharToOfficerType 'k' = King
 lowerCharToOfficerType 'q' = Queen
 lowerCharToOfficerType 'n' = Knight
+
+pieceToChar p | color p == White = toUpper c
+              | otherwise = toLower c
+    where c = pieceTypeToLowerChar $ pieceType p
+
+pieceTypeToLowerChar  :: PieceType -> Char
+pieceTypeToLowerChar Pawn = 'p'
+pieceTypeToLowerChar (Officer ot) = officerTypeToLowerChar ot
+
+officerTypeToLowerChar :: OfficerType -> Char
+officerTypeToLowerChar ot = fromJust $ lookup ot table
+    where table = zip (map lowerCharToOfficerType otcs) otcs
+          otcs = "rbkqn"
 
 pieceTypeToString Pawn = "Pawn"
 pieceTypeToString (Officer t) = show t
