@@ -53,8 +53,7 @@ projectSeries :: MoveType -> Position -> Series -> Series
 projectSeries Moves p s = takeWhile (isEmpty p) s
 projectSeries Takes p s = loop s
     where loop [] = []
-          loop (x:xs) =
-              case readSquare p x of
-                  Nothing -> loop xs
-                  Just pc -> if color pc == enemyColor p
-                      then [x] else []
+          loop (x:xs) = case readSquare p x of
+              Nothing -> loop xs
+              Just pc -> if color pc == enemyColor p
+                  then [x] else []
