@@ -4,6 +4,8 @@ module FEN where
 import Text.Parsec
 import Data.Char
 import Data.List
+import Test.HUnit
+
 import Piece
 import Control.Applicative hiding ((<|>))
 import Control.Monad
@@ -16,10 +18,21 @@ import CastlingSide
 import CastlingRight
 import qualified Position
 
+tests = TestLabel "parsed initial position" $ TestCase testStartingPosition
+
 -- TODO WHAT DOES THE SECOND PARAM TO runParser DO?
 startingPosition = case runParser position 0 "FEN-String" startingPosFen of
     Right p -> p
     _ -> error "Couldn't parse FEN"
+
+testStartingPosition = do
+    let p = startingPosition
+    let e2 = Square.square' 'e' 2
+    let d8 = Square.square' 'd' 8
+    let whitePawn = Piece Pawn White
+    let blackQueen = Piece (Officer Queen) Black
+    assertEqual "pawn at e2" (Just whitePawn) (Position.readSquare p e2)
+    assertEqual "queen at d8" (Just blackQueen) (Position.readSquare p d8)
 
 startingPosFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
