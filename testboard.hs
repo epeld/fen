@@ -16,7 +16,7 @@ tests = TestList [
     moveTests
     ]
 
-moveTests = TestCase testMove
+moveTests = TestLabel "test move " $ TestCase testMove
 
 replaceTests= TestLabel "test replace" $ TestList [
     TestCase testReplace,
@@ -30,13 +30,13 @@ e2 = square' 'e' 4
 
 testReplace = do
     let b = replace e4 (Just whiteQueen) initialBoard
-    assertBool "queen at e4" (Just whiteQueen == b !!! e4)
+    assertEqual "queen at e4" (Just whiteQueen) (b !!! e4)
 
 testReplace2 = do
     let b = replace e2 (Just whiteQueen) initialBoard
-    assertBool "queen at e2" (Just whiteQueen == b !!! e2)
+    assertEqual "queen at e2" (Just whiteQueen) (b !!! e2)
 
 testMove = do
     let (_, b) = runState (move e2 e4) initialBoard
-    assertBool "pawn at e4" (Just whitePawn == b !!! e4)
+    assertEqual "pawn at e4" (Just whitePawn) (b !!! e4)
 
