@@ -75,4 +75,3 @@ longOfficerMove = do
     return $ PGNMove.OfficerMove t e
 
 pgnMove = choice [try pawnMove, try officerMove, castles]
-

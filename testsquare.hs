@@ -1,13 +1,18 @@
+module TestSquare where
 import Test.HUnit
-import Square
-
 import Data.Maybe (fromJust)
+
+import Square
+import TestUtils
 
 tests = TestLabel "Square Tests" testList
 
 testList = TestList [
+            TestLabel "internal square tests" $ Square.internalTests,
             TestLabel "square creation" squareTests,
             TestLabel "horizontal series" $ TestCase testHorizontalSeries,
+            TestLabel "horizontal series backward" $
+                TestCase testHorizontalSeries2,
             TestLabel "file letters" $ TestCase testFileLetters,
             TestLabel "rank numbers" $ TestCase testRankNumbers,
             TestLabel "squares" $ TestCase testSquares,
@@ -49,7 +54,14 @@ testHorizontalSeries = do
     let start = square' 'a' 3
     let end = square' 'e' 3
     let s = series start end
-    assertString $ show s
+    assertLength 5 s
+    assertEqual "first square" start $ head s
+    assertEqual "last square" end $ last s
+
+testHorizontalSeries2 = do
+    let start = square' 'e' 3
+    let end = square' 'a' 3
+    let s = series start end
     assertLength 5 s
     assertEqual "first square" start $ head s
     assertEqual "last square" end $ last s
@@ -69,6 +81,3 @@ testLeft = let s = square' 'e' 4
 testRight = let s = square' 'e' 4
                 s' = square' 'f' 4
              in assertEqual "right" (Just s') (right s)
-
-assertLength l a = assertEqual s l $ length a
-    where s = "length " ++ show l

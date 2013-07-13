@@ -4,10 +4,11 @@ module Square(
     fileLetters, rankNumbers,
     Series, series,
     above, below, left, right,
-    up, down,
+    up, down, squares,
     upLeft, downLeft, upRight, downRight,
     twice, string, (!!!),
     Stepper, compose,
+    internalTests
     ) where 
 import Control.Applicative
 import Control.Monad
@@ -15,6 +16,9 @@ import Data.List
 import Data.Ix
 import Data.Maybe
 import Data.Char
+import Test.HUnit
+
+import TestUtils
 
 type Stepper = Square -> Maybe Square
 compose :: Stepper -> Stepper -> Stepper
@@ -34,6 +38,7 @@ data Square = Square {
     rank :: Int
 } deriving (Show, Eq, Ix, Ord)
 
+squares = [square' f r | f <- fileLetters, r <- rankNumbers ]
 fileLetters = ['a'..'h']
 rankNumbers = [1..8]
 
@@ -47,14 +52,30 @@ square' f r = fromJust $ square f r
 
 type Series = [Square]
 
-series (Square f r) (Square f2 r2) = 
-    let df = fromEnum f2 - fromEnum f
-        dr = r2 - r
-     in if df == 0 || dr == 0 || abs df == abs dr
-        then fromJust <$> takeWhile isJust
-            [square f' r' | (f',r') <- zip (enumFromTo f f2) (enumFromTo r r2)]
-        else error "Can't interpolate"
+series (Square f r) (Square f2 r2)
+    | f == f2 = [square' f r' | r' <- r `fromTo` r2]
+    | r == r2 = [square' f' r | f' <- f `fromTo` f2]
+    | abs df == abs dr =
+        [square' f' r' | (f',r') <- zip (f `fromTo` f2) (r `fromTo` r2)]
+    | otherwise = error "Square series invalid argument."
+    where df = fromEnum f2 - fromEnum f
+          dr = r2 - r
 
+fromTo e e2 | i < i2 = e `enumFromTo` e2
+            | otherwise = take di $ e `enumFromThen` (pred e)
+    where i = fromEnum e
+          i2 = fromEnum e2
+          di = i - i2 + 1
+
+testFromTo1 = do
+    let s = 'a' `fromTo` 'c'
+    assertLength 3 s
+    assertEqual "first" 'a' $ head s
+
+testFromTo2 = do
+    let s = 'c' `fromTo` 'a'
+    assertLength 3 s
+    assertEqual "first" 'c' $ head s
 
 above s = square (file $ s) (succ . rank $ s)
 below s = square (file $ s) (pred . rank $ s)
@@ -69,3 +90,8 @@ downLeft = below >=> left
 downRight = below >=> right
 
 twice m = m >=> m
+
+internalTests = TestList $ [
+    TestLabel "testFromTo1" $ TestCase testFromTo1,
+    TestLabel "testFromTo2" $ TestCase testFromTo2
+    ]
