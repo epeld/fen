@@ -4,6 +4,7 @@ module Move (Move(..), position, pieceType, enemyColor,
              isLastRankMove,) where
 
 import Color (invert)
+import PawnRange (pawnDirection)
 import Square (Square, rank, twice, up)
 import MoveType (MoveType(..))
 import qualified Position (Position, Promotion, lastRank, isPassantSquare,
@@ -30,8 +31,10 @@ isLastRankMove :: Move -> Bool
 isLastRankMove mv = rank (destination mv) == Position.lastRank p
     where p = position mv
 
+-- TODO unit test for both black and white
 isTwoStepPawnMove :: Move -> Bool
-isTwoStepPawnMove mv = twice up (square mv) == Just dest && isPawnMove mv
+isTwoStepPawnMove mv = twice forward (square mv) == Just dest && isPawnMove mv
     where dest = destination mv
+          forward = pawnDirection (whose mv)
 
 isPassantMove mv = Position.isPassantSquare (position mv) (destination mv)
