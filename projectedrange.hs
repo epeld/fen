@@ -13,8 +13,8 @@ import Square (Square, Series)
 import Range (Range, pieceType, moveType, range)
 import Piece (color)
 import qualified Range ( series, position)
-import Position (Position, enemyColor, friendlyColor, enPassant, isEmpty,
-                 isPawnCapturableSquare, containsFriendlyPiece, readSquare)
+import Position (Position, enemyColor, isEmpty,
+                 isPawnCapturableSquare, readSquare)
 
 data ProjectedRange = ProjectedRange { series :: [Series] }
 
