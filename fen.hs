@@ -1,5 +1,5 @@
 {-#LANGUAGE NoMonomorphismRestriction #-}
-module FEN where
+module FEN (FEN.parse, startingPosition, fenSquares, tests) where
 
 import Text.Parsec
 import Data.Char
@@ -21,7 +21,9 @@ import qualified Position
 tests = TestLabel "parsed initial position" $ TestCase testStartingPosition
 
 -- TODO WHAT DOES THE SECOND PARAM TO runParser DO?
-startingPosition = case runParser position 0 "FEN-String" startingPosFen of
+parse = runParser position 0 "FEN-String"
+
+startingPosition = case FEN.parse startingPosFen of
     Right p -> p
     _ -> error "Couldn't parse FEN"
 

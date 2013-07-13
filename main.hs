@@ -27,7 +27,7 @@ processLine h o = do
             Right mvs -> show $ liftM encode $ applyMoves startingPosition mvs
             Left err -> show err
 
-parsePGNMoves = parse (sepBy1 pgnMove space) "(stdin)"
+parsePGNMoves = Text.Parsec.parse (sepBy1 pgnMove space) "(stdin)"
 
 applyMoves :: Position -> [PGNMove] -> ErrorMonad Position
 applyMoves p [] = Right p
