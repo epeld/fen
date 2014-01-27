@@ -8,7 +8,8 @@ data Piece = Piece {
     color :: Color} deriving (Show, Eq)
 
 
-piece :: Char -> Piece
-piece c = Piece {
-  pieceType = pieceType c,
-  color = color c}
+piece :: Char -> Maybe Piece
+piece c = do
+  let clr = color c
+  pt <- pieceType c
+  Just $ Piece {pieceType = pt, color = clr}
