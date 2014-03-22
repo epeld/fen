@@ -67,21 +67,19 @@ performMove pos source dest = pos { turn = calcTurn pos,
                                     passant = calcPassant pos source dest,
                                     castling = calcCastling pos source dest }
 
-calcCastling pos source dest = let lost = fromList $
-                                              map lostCastling [source, dest]
-                                in castling pos `difference` lost
 
 calcHalfMoveNr pos source dest = 0
 calcPassant pos source dest = Nothing
 calcFullMoveNr = (+1). fullMoveNr
 calcTurn = toggle. turn
 
-calcHalfMove pos source dest = let reset = pawnAt source ||
-                                           enemyAt dest
-                                in if reset
-                                   then 0
-                                   else halfMoveNr pos + 1
+calcHalfMove pos source dest = if pawnAt source || enemyAt dest
+                               then 0
+                               else halfMoveNr pos + 1
 
+calcCastling pos source dest = 
+    let lost = fromList $ map lostCastling [source, dest]
+    in Data.Set.difference (castling pos) lost
 
 calcBoard pos source dest =
     let b = relocate (board pos) source dest
@@ -105,9 +103,20 @@ when :: Bool -> Maybe a -> Maybe a
 when a mb = if a then mb else Nothing
 
 
+pawnAt :: Position -> Square -> Bool
 pawnAt pos source = Just Pawn == pieceTypeAt pos source
 
+enemyAt :: Position -> Square -> Bool
+enemyAt pos source =  Just (enemyColor pos) == colorAt pos source
+
+pieceTypeAt :: Position -> Square -> Maybe PieceType
+pieceTypeAt pos source = pieceType =<< lookup source pos
+
+enemyColor :: Position -> Color
+enemyColor = toggle. turn
+
 -- What castling right is lost if a piece moves from or to 'sq'?
+lostCastling :: Square -> Maybe CastlingRight
 lostCastling sq = let clr = case rank sq of
                                 1 -> Just White
                                 8 -> Just Black
@@ -120,12 +129,17 @@ lostCastling sq = let clr = case rank sq of
 
                    in liftM2 Castling
 
+adjacentFiles :: Square -> Square -> Bool
 adjacentFiles sq1 sq2 = 1 == abs (file sq1 - file sq2)
 
+toggle :: Color -> Color
 toggle White = Black
 toggle Black = White
 
+backN :: Position -> Square -> Int -> Maybe Square
 backN pos sq n = take n $ iterate (>>= back) (Just sq)
+
+aheadN :: Position -> Square -> Int -> Maybe Square
 aheadN pos sq n = take n $ iterate (>>= ahead) (Just sq)
 
 ahead pos sq = if turn pos == White
@@ -141,12 +155,16 @@ down sq = mv sq -1 0
 right sq = mv sq 0 1
 left sq = mv sq 0 -1
 
+mv :: Square -> Int -> Int -> Maybe Square
 mv sq v h = let r' = rank sq + v
                 f' = file sq + h
              in liftM2 Square (newFile' f') (newRank r') 
 
 
+newRank :: Int -> Maybe Int
 newRank r = boolMaybe r (validRank r)
+
+newFile :: Int -> Maybe Int
 newFile f = boolMaybe f (validFile f)
 
 validRank r = 1 <= r && r <= 8
