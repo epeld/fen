@@ -30,9 +30,7 @@ data Position = Position { board :: Board,
                            castling :: Data.Set.Set CastlingRight }
                            deriving (Show, Eq)
 
-move :: Position -> Square -> Square
-     -> Either Error Position
-
+move :: Position -> Square -> Square -> Either Error Position
 move pos source dest = let newPos = moveNaive pos source dest
                            errs = checkSource pos source <|> 
                                   checkLegal newPos
@@ -41,9 +39,7 @@ move pos source dest = let newPos = moveNaive pos source dest
                            else Left KingCapturable
                             
 -- Naive move: move disregarding king safety
-moveNaive :: Position -> Square -> Square
-          -> Either Error Position
-        
+moveNaive :: Position -> Square -> Square -> Either Error Position
 moveNaive pos source dest = let t = pieceTypeAt pos source
                              in if t == Just Pawn
                                 then moveNaivePawn pos source dest
