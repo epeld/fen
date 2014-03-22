@@ -1,5 +1,34 @@
+import Data.Map qualified
+import Data.Set qualified
 
+data Error = FilesNotAdjacent | 
+             DestNotAheadBy Int | 
+             KingCapturable | 
+             NoPiece |
+             WrongColor
+             deriving (Show, Eq)
 
+data Color = White | Black
+             deriving (Show, Eq, Ord)
+
+data Side = Queenside | Kingside
+            deriving (Show, Eq)
+
+data CastlingRight = Castling { side :: Side, color :: Color }
+                     deriving (Show, Eq)
+
+data Square = Square { file :: Char, Int :: rank }
+              deriving (Show, Eq)
+
+type Board = Data.Map.Map Square Piece
+
+data Position = Position { board :: Board,
+                           passant :: Maybe Square,
+                           halfMoveNr :: Int,
+                           fullMoveNr :: Int,
+                           turn :: Color,
+                           castling :: Data.Set.Set CastlingRight }
+                           deriving (Show, Eq)
 
 move :: Position -> Square -> Square
      -> Either Error Position
@@ -16,7 +45,7 @@ moveNaive :: Position -> Square -> Square
           -> Either Error Position
         
 moveNaive pos source dest = let t = pieceTypeAt pos source
-                             in if t == Pawn
+                             in if t == Just Pawn
                                 then moveNaivePawn pos source dest
                                 else moveNaiveOfficer pos source dest
 
@@ -25,7 +54,7 @@ moveNaivePawn pos source dest = if capturableAt pos dest
                                 else naivePawnMove pos source dest
 
 naivePawnTakes pos source dest = let errs = checkAdjacent source dest <|>
-                                            checkOneUp pos source dest
+                                            checkAhead1 pos source dest
                                      newPos = performMove pos source dest
                                   in maybeEither errs newPos
 
@@ -38,23 +67,102 @@ performMove pos source dest = pos { turn = calcTurn pos,
                                     passant = calcPassant pos source dest,
                                     castling = calcCastling pos source dest }
 
+calcCastling pos source dest = let lost = fromList $
+                                              map lostCastling [source, dest]
+                                in castling pos `difference` lost
+
+calcHalfMoveNr pos source dest = 0
+calcPassant pos source dest = Nothing
+calcFullMoveNr = (+1). fullMoveNr
+calcTurn = toggle. turn
+
+calcHalfMove pos source dest = let reset = pawnAt source ||
+                                           enemyAt dest
+                                in if reset
+                                   then 0
+                                   else halfMoveNr pos + 1
+
+
+calcBoard pos source dest =
+    let b = relocate (board pos) source dest
+     in maybe b (flip' delete b) (passantCapture pos source dest)
+                           
+flip' f = (flip f $)
+
+-- Calculate the square that was captured en passant by a move (if any)
+passantCapture :: Position -> Square -> Square
+passantCapture pos source dest = 
+    let captureSquare = back pos dest
+        isPassant = Just dest == passant pos &&
+                    Just dest == ahead pos source &&
+                    adjacentFiles source dest &&
+                    pawnAt pos source &&
+                    pawnAt pos =<< captureSquare &&
+                    enemyAt pos =<< captureSquare
+     in when isPassant captureSquare
+
+when :: Bool -> Maybe a -> Maybe a
+when a mb = if a then mb else Nothing
+
+
+pawnAt pos source = Just Pawn == pieceTypeAt pos source
+
+-- What castling right is lost if a piece moves from or to 'sq'?
+lostCastling sq = let clr = case rank sq of
+                                1 -> Just White
+                                8 -> Just Black
+                                _ -> Nothing
+
+                      side = case file sq of
+                                'a' -> Just Kingside
+                                'h' -> Just Queenside
+                                _ -> Nothing
+
+                   in liftM2 Castling
+
+adjacentFiles sq1 sq2 = 1 == abs (file sq1 - file sq2)
+
+toggle White = Black
+toggle Black = White
+
+backN pos sq n = take n $ iterate (>>= back) (Just sq)
+aheadN pos sq n = take n $ iterate (>>= ahead) (Just sq)
+
+ahead pos sq = if turn pos == White
+               then up sq
+               else down sq
+
+back pos sq = if turn pos == Black
+              then up sq
+              else down sq
+
+up sq = mv sq 1 0
+down sq = mv sq -1 0
+right sq = mv sq 0 1
+left sq = mv sq 0 -1
+
+mv sq v h = let r' = rank sq + v
+                f' = file sq + h
+             in liftM2 Square (newFile' f') (newRank r') 
+
+
+newRank r = boolMaybe r (validRank r)
+newFile f = boolMaybe f (validFile f)
+
+validRank r = 1 <= r && r <= 8
+validFile f = 'a' <= f && f <= 'h'
+
 maybeEither :: Maybe a -> b -> Either a b
 maybeEither ma b = maybe (Right b) Left ma
 
-checkOneUp = checkAhead 1
-checkAhead :: Int -> Position -> Square -> Square
-           -> Maybe Error
+checkAhead1 = checkAheadN 1
 
-checkAhead n pos source dest = let r = rank source
-                                   r2 = rank dest
-                                in case turn pos of
-                                      White -> n == r2 - r
-                                      Black -> n == r - r2
+checkAheadN :: Int -> Position -> Square -> Square -> Maybe Error
+checkAheadN n pos source dest =
+    boolMaybe (DestNotAheadBy n) (aheadN pos source n == Just dest)
 
 checkAdjacent :: Square -> Square -> Maybe Error
-checkAdjacent source dest = let f1 = file source
-                                f2 = file dest
-                             in boolMaybe FilesNotAdjacent (1 /= abs (f1 - f2))
+checkAdjacent = boolMaybe FilesNotAdjacent. adjacentFiles
 
 checkSource :: Position -> Square -> Maybe Error
 checkSource pos source = let pclr = colorAt pos source
