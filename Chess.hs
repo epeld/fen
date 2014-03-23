@@ -6,6 +6,22 @@ import Data.List (find)
 import Data.Set (fromList, Set, difference)
 import Data.Maybe (catMaybes, fromMaybe, isJust, mapMaybe)
 
+-- Thoughts on improvement:
+-- * Could we declare a common 'form' type: 
+--   type MoveFunction = Position -> Square -> Square
+--   that can be used because many functions start with the same signature?
+--
+-- * Consider writing util function for converting Either to Bool (canMoveNaive)
+--
+-- * Util function f:
+--   f Nothing pred = False
+--   f (Just a) = pred a
+--   f = maybe False
+--   would be useful in many places
+--
+-- * moveRange uses some obscure maps (e.g map (:[]) ) can we make these
+--   more legible?
+
 data Error = FilesNotAdjacent | 
              DestNotAheadBy Int | 
              KingCapturable | 
