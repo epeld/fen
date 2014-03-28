@@ -6,9 +6,7 @@ import Data.List (find)
 import Data.Set (fromList, Set, difference)
 import Data.Maybe (catMaybes, fromMaybe, isJust, mapMaybe, fromJust)
 
-data Error = FilesNotAdjacent | 
-             DestNotAheadBy Int | 
-             KingCapturable | 
+data Error = KingCapturable | 
              NoPiece |
              WrongColor |
              NotInRange |
@@ -59,11 +57,21 @@ move pos mv = do
     p <- moveNaive pos mv
     maybeError (checkLegal p) p
 
+-- Naive move := move disregarding king safety and promotions
+moveNaive :: Position -> Move -> Either Error Position
+moveNaive pos mv = maybeError errs (performMove pos mv)
+    where errs = checkSource pos mv <|> checkRange pos mv
 
-maybeError :: Maybe Error -> a -> Either Error a
-maybeError Nothing a = Right a
-maybeError (Just err) _ = Left err
-                  
+checkRange :: Position -> Move -> Maybe Error
+checkRange pos mv = 
+    case pieceTypeAt pos src of
+        Nothing -> Just NoPiece
+        Just pt -> checkInRange pos dest (range pt pos src) 
+    where dest = destination mv
+          src = source mv
+          range = if isCapture pos mv
+                  then threats
+                  else moves
 
 checkLegal :: Position -> Maybe Error
 checkLegal pos = checkKingSafe pos <|> checkPromotions pos
@@ -84,9 +92,6 @@ checkKingSafe = maybe (Just MissingKing) <$> checkAttacked <*> kingSquare
 kingSquare :: Position -> Maybe Square
 kingSquare pos = findSquare (kingAt pos `fAnd` enemyAt pos) pos
 
-fAnd :: Applicative f => f Bool -> f Bool -> f Bool
-fAnd a b = (&&) <$> a <*> b
-
 checkAttacked :: Position -> Square -> Maybe Error
 checkAttacked pos sq = if isAttacked pos sq
                        then Just KingCapturable
@@ -103,29 +108,8 @@ friendlySquares :: Position -> [Square]
 friendlySquares pos = filter (friendlyAt pos) (occupiedSquares pos)
 
                            
--- Naive move := move disregarding king safety and promotions
 canMoveNaive :: Position -> Move -> Bool
 canMoveNaive pos mv = isRight $ moveNaive pos mv
-
-isRight (Right _) = True
-isRight (Left _) = False
-
-moveNaive :: Position -> Move -> Either Error Position
-moveNaive pos mv = maybeError errs (performMove pos mv)
-    where errs = checkSource pos mv <|> checkRange pos mv
-
-
-checkRange :: Position -> Move -> Maybe Error
-checkRange pos mv = 
-    case pieceTypeAt pos src of
-        Nothing -> Just NoPiece
-        Just pt -> checkInRange pos dest (range pt pos src) 
-    where dest = destination mv
-          src = source mv
-          range = if isCapture pos mv
-                  then threats
-                  else moves
-
 
 checkInRange :: Position -> Square -> [[Square]] -> Maybe Error
 checkInRange pos dest range = if any (reaches pos dest) range
@@ -294,6 +278,7 @@ enemyColor = toggle. turn
 findSquare :: (Square -> Bool) -> Position -> Maybe Square
 findSquare pred = find pred. occupiedSquares
 
+occupiedSquares :: Position -> [Square]
 occupiedSquares = keys. board
 
 -- What castling right is lost if a piece moves from or to 'sq'?
@@ -323,10 +308,12 @@ backN pos sq n = iterate (>>= back pos) (Just sq) !! n
 aheadN :: Position -> Square -> Int -> Maybe Square
 aheadN pos sq n = iterate (>>= ahead pos) (Just sq) !! n
 
+ahead :: Position -> Square -> Maybe Square
 ahead pos sq = if turn pos == White
                then up sq
                else down sq
 
+back :: Position -> Square -> Maybe Square
 back pos sq = if turn pos == Black
               then up sq
               else down sq
@@ -344,7 +331,6 @@ up sq = mv sq 1 0
 down sq = mv sq (-1) 0
 right sq = mv sq 0 1
 left sq = mv sq 0 (-1)
-
 upLeft = up >=> left
 upRight = up >=> right
 downLeft = down >=> left
@@ -378,4 +364,14 @@ checkColorsMatch :: Position -> Color -> Maybe Error
 checkColorsMatch pos clr = if clr /= turn pos
                            then Just WrongColor
                            else Nothing
+
+maybeError :: Maybe Error -> a -> Either Error a
+maybeError Nothing a = Right a
+maybeError (Just err) _ = Left err
+
+isRight (Right _) = True
+isRight (Left _) = False
+
+fAnd :: Applicative f => f Bool -> f Bool -> f Bool
+fAnd a b = (&&) <$> a <*> b
 
