@@ -350,6 +350,7 @@ upRight = up >=> right
 downLeft = down >=> left
 downRight = down >=> right
 
+inc :: Enum a => a -> Int -> a
 inc x n = let op = if n < 0 then pred else succ
           in iterate op x !! n
 
