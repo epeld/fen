@@ -1,33 +1,19 @@
 import Prelude hiding (lookup)
-import Control.Applicative ((<|>), (<$>), (<*>))
+import Control.Applicative ((<|>), (<$>), (<*>), Applicative)
 import Control.Monad (liftM2, (>=>), (>>=), (=<<))
 import Data.Map (insert, delete, keys, Map, lookup)
 import Data.List (find)
 import Data.Set (fromList, Set, difference)
-import Data.Maybe (catMaybes, fromMaybe, isJust, mapMaybe)
-
--- Thoughts on improvement:
--- * Could we declare a common 'form' type: 
---   type MoveFunction = Position -> Square -> Square
---   that can be used because many functions start with the same signature?
---
--- * Consider writing util function for converting Either to Bool (canMoveNaive)
---
--- * Util function f:
---   f Nothing pred = False
---   f (Just a) = pred a
---   f = maybe False
---   would be useful in many places
---
--- * moveRange uses some obscure maps (e.g map (:[]) ) can we make these
---   more legible?
+import Data.Maybe (catMaybes, fromMaybe, isJust, mapMaybe, fromJust)
 
 data Error = FilesNotAdjacent | 
              DestNotAheadBy Int | 
              KingCapturable | 
              NoPiece |
              WrongColor |
-             NotInRange
+             NotInRange |
+             MissingKing |
+             MustPromote
              deriving (Show, Eq)
 
 data Color = White | Black
@@ -62,77 +48,125 @@ data Position = Position { board :: Board,
                            castling :: Set CastlingRight }
                            deriving (Show, Eq)
 
+data Move = Move { source :: Square,
+                   destination :: Square,
+                   promotion :: Maybe PieceType }
+            deriving (Show, Eq)
 
-move :: Position -> Square -> Square -> Either Error Position
-move pos source dest = 
-    moveNaive pos source dest >>= \newPos ->
-        if isLegal newPos
-        then Right newPos
-        else Left KingCapturable
 
-isLegal pos = let ks = findSquare (kingAt pos `fAnd` enemyAt pos) pos
-                  fAnd = liftM2 (&&)
-               in maybe False (\ks -> isAttacked pos ks) ks
+move :: Position -> Move -> Either Error Position
+move pos mv = do
+    p <- moveNaive pos mv
+    maybeError (checkLegal p) p
+
+
+maybeError :: Maybe Error -> a -> Either Error a
+maybeError Nothing a = Right a
+maybeError (Just err) _ = Left err
+                  
+
+checkLegal :: Position -> Maybe Error
+checkLegal pos = checkKingSafe pos <|> checkPromotions pos
+
+checkPromotions :: Position -> Maybe Error
+checkPromotions pos = if any onLastRank pawnSquares
+                      then Just MustPromote
+                      else Nothing
+    where pawnSquares = filter (pawnAt pos) (friendlySquares pos)
+          onLastRank sq = rank sq == lastRank pos
+          lastRank pos = case turn pos of
+                             White -> 8
+                             Black -> 1
+
+checkKingSafe :: Position -> Maybe Error
+checkKingSafe = maybe (Just MissingKing) <$> checkAttacked <*> kingSquare
+
+kingSquare :: Position -> Maybe Square
+kingSquare pos = findSquare (kingAt pos `fAnd` enemyAt pos) pos
+
+fAnd :: Applicative f => f Bool -> f Bool -> f Bool
+fAnd a b = (&&) <$> a <*> b
+
+checkAttacked :: Position -> Square -> Maybe Error
+checkAttacked pos sq = if isAttacked pos sq
+                       then Just KingCapturable
+                       else Nothing
 
 isAttacked :: Position -> Square -> Bool
-isAttacked pos sq = any (\x -> canMoveNaive pos x sq) friendlySquares
-    where friendlySquares = filter (friendlyAt pos) (keys $ board pos)
+isAttacked pos sq = any couldMove (friendlySquares pos)
+    where couldMove :: Square -> Bool
+          couldMove src = canMoveNaive pos (Move { source = src,
+                                                   destination = sq,
+                                                   promotion = Nothing })
+
+friendlySquares :: Position -> [Square]
+friendlySquares pos = filter (friendlyAt pos) (occupiedSquares pos)
 
                            
-                            
--- Naive move := move disregarding king safety
-canMoveNaive :: Position -> Square -> Square -> Bool
-canMoveNaive pos source dest = case moveNaive pos source dest of
-    Left _ -> False
-    Right _ -> True
+-- Naive move := move disregarding king safety and promotions
+canMoveNaive :: Position -> Move -> Bool
+canMoveNaive pos mv = isRight $ moveNaive pos mv
 
-moveNaive :: Position -> Square -> Square -> Either Error Position
-moveNaive pos source dest = let errs = checkSource pos source <|>
-                                       checkRange pos source dest
-                                newPos = performMove pos source dest
-                            in maybeEither errs newPos
+isRight (Right _) = True
+isRight (Left _) = False
+
+moveNaive :: Position -> Move -> Either Error Position
+moveNaive pos mv = maybeError errs (performMove pos mv)
+    where errs = checkSource pos mv <|> checkRange pos mv
 
 
-checkRange pos source dest = case pieceTypeAt pos source of
-    Nothing -> Just NoPiece
-    Just pt -> let range = applicableRange pt pos source dest
-               in if reaches pos dest range
-               then Nothing
-               else Just NotInRange
+checkRange :: Position -> Move -> Maybe Error
+checkRange pos mv = 
+    case pieceTypeAt pos src of
+        Nothing -> Just NoPiece
+        Just pt -> checkInRange pos dest (range pt pos src) 
+    where dest = destination mv
+          src = source mv
+          range = if isCapture pos mv
+                  then threats
+                  else moves
 
 
-applicableRange pt pos source dest = if capturableBy pt pos dest
-                                     then captureRange pt pos dest
-                                     else moveRange pt pos dest
+checkInRange :: Position -> Square -> [[Square]] -> Maybe Error
+checkInRange pos dest range = if any (reaches pos dest) range
+                              then Nothing 
+                              else Just NotInRange
 
+reaches :: Position -> Square -> [Square] -> Bool
+reaches pos sq series = let sqs = takeWhile (isEmpty pos) series
+                         in sq `elem` (take 8 series)
 
-captureRange :: PieceType -> Position -> Square -> [[Square]]
-captureRange Pawn pos source = let fw = ahead pos source
-                                   sqs = [ left =<< fw, right =<< fw ] 
-                                in map (:[]) (catMaybes sqs)
-captureRange pt pos source = moveRange pt pos source
+threats :: PieceType -> Position -> Square -> [[Square]]
 
-moveRange :: PieceType -> Position -> Square -> [[Square]]
-moveRange Pawn pos source = [ catMaybes [ aheadN pos source 1,
-                                          aheadN pos source 2 ]]
+threats Pawn pos source = let fw = ahead pos source
+                              sqs = [ left =<< fw, right =<< fw ] 
+                           in return <$> catMaybes sqs
 
-moveRange (Officer o) pos source = moveRange' o pos source
-moveRange' Bishop _ s = applySteppers [ upLeft, upRight, downLeft, downRight ] s
-moveRange' Rook _ s = applySteppers [ up, down, left, right ] s
-moveRange' Queen p s = moveRange' Bishop p s ++ moveRange' Rook p s
-moveRange' King p s = map (take 1) (moveRange' Queen p s)
-moveRange' Knight p s = map (:[]) (knightSquares s)
+threats pt pos source = moves pt pos source
+
+moves :: PieceType -> Position -> Square -> [[Square]]
+moves Pawn pos src = map (take 2) (applySteppers [up] src)
+
+moves (Officer o) pos source = moves' o source
+
+moves' Bishop s = applySteppers [ upLeft, upRight, downLeft, downRight ] s
+moves' Rook s = applySteppers [ up, down, left, right ] s
+moves' Queen s = moves' Bishop s ++ moves' Rook s
+moves' King s = map (take 1) (moves' Queen s)
+moves' Knight s = return <$> knightSquares s
 
 knightSquares :: Square -> [Square]
-knightSquares s = stepSteppers [ up >=> up >=> left,
-                                 up >=> up >=> right,
-                                 up >=> right >=> right,
-                                 down >=> right >=> right,
-                                 down >=> down >=> right,
-                                 down >=> down >=> left,
-                                 down >=> left >=> left,
-                                 up >=> left >=> left ] s
-
+knightSquares s = stepSteppers steppers s
+    where makeStepper = foldl (>=>) return
+          steppers = map makeStepper [ [up, up, left],
+                                       [up, up, right],
+                                       [up, right, right],
+                                       [down, right, right],
+                                       [down, down, right],
+                                       [down, down, left],
+                                       [down, left, left],
+                                       [up, left, left] ]
+          
 
 type Stepper = Square -> Maybe Square
 
@@ -146,49 +180,47 @@ applyStepper stepper s = catMaybes $ takeWhile isJust $ drop 1 $
 
 applySteppers :: [Stepper] -> Square -> [[Square]]
 applySteppers steppers source = applyStepper <$> steppers <*> [source]
-
-reaches :: Position -> Square -> [[Square]] -> Bool
-reaches pos dest = any $ emptyUntil pos dest
-    where emptyUntil :: Position -> Square -> [Square] -> Bool
-          emptyUntil pos sq series = let checkees = takeWhile (/= sq) series
-                                     in sq `elem` series &&
-                                        all (isEmpty pos) checkees
        
-capturableBy Pawn pos dest = enemyAt pos dest || capturableEnPassant pos dest
-capturableBy _ pos dest = enemyAt pos dest
+isCapture :: Position -> Move -> Bool
+isCapture pos mv = enemyAt pos (destination mv) || isPassantCapture pos mv
 
-capturableEnPassant pos dest = let target = back pos dest
-                                in Just dest == passant pos &&
-                                   maybe False (enemyPawnAt pos) target
-                                   
+isPassantCapture :: Position -> Move -> Bool
+isPassantCapture pos mv = isJust (passantCapture pos mv)
 
+
+
+enemyPawnAt :: Position -> Square -> Bool
 enemyPawnAt pos dest = enemyAt pos dest && pawnAt pos dest
                                            
 
 -- peformMove is the function that actually performs the work;
 -- moves the piece from source to dest and updates the position
-performMove pos source dest = pos { turn = calcTurn pos,
-                                    board = calcBoard pos source dest,
-                                    fullMoveNr = calcFullMoveNr pos,
-                                    halfMoveNr = calcHalfMoveNr pos source dest,
-                                    passant = calcPassant pos source dest,
-                                    castling = calcCastling pos source dest }
+performMove  :: Position -> Move -> Position
+performMove pos mv = pos { turn = calcTurn pos,
+                           board = calcBoard pos mv,
+                           fullMoveNr = calcFullMoveNr pos,
+                           halfMoveNr = calcHalfMoveNr pos mv,
+                           passant = calcPassant pos mv,
+                           castling = calcCastling pos mv }
 
 
-calcHalfMoveNr pos source dest = 0
-calcPassant pos source dest = 
-    if pieceTypeAt pos source == Just Pawn &&
-       Just dest == aheadN pos source 2 &&
-       rank source == initialPawnRank
-    then back pos source
+calcHalfMoveNr pos mv = if pawnAt pos (source mv) || isCapture pos mv
+                        then 0
+                        else 1 + halfMoveNr pos
+calcPassant pos mv = 
+    if pieceTypeAt pos src == Just Pawn &&
+       Just dest == aheadN pos src 2 &&
+       rank src == initialPawnRank
+    then back pos src
     else Nothing
-    where initialPawnRank :: Int
+    where src = source mv
+          dest = destination mv
           initialPawnRank = case turn pos of
               White -> 2
               Black -> 7
 
 calcFullMoveNr :: Position -> Int
-calcFullMoveNr = (+1). fullMoveNr
+calcFullMoveNr pos = 1 + fullMoveNr pos
 
 calcTurn :: Position -> Color
 calcTurn = toggle. turn
@@ -198,40 +230,41 @@ calcHalfMove pos source dest = if pawnAt pos source || enemyAt pos dest
                                then 0
                                else halfMoveNr pos + 1
 
-calcCastling :: Position -> Square -> Square -> Set CastlingRight
-calcCastling pos source dest = 
-    let lost = Data.Set.fromList $ mapMaybe lostCastling [source, dest]
+calcCastling :: Position -> Move -> Set CastlingRight
+calcCastling pos mv = 
+    let src = source mv
+        dest = destination mv
+        lost = Data.Set.fromList $ mapMaybe lostCastling [src, dest]
     in difference (castling pos) lost
 
-calcBoard :: Position -> Square -> Square -> Board
-calcBoard pos source dest =
-    let b = relocate pos source dest
-     in maybe b (flip' delete b) (passantCapture pos source dest)
+calcBoard :: Position -> Move -> Board
+calcBoard pos mv =
+    let b = relocate pos (source mv) (destination mv)
+        remove b a = delete a b
+     in maybe b (remove b) (passantCapture pos mv)
 
-relocate pos source dest = let b = board pos
-                               p = mustBeJust (lookup source b) "relocate"
-                             in insert dest p $ delete source b
-
-mustBeJust mb msg = fromMaybe (error msg) mb
-                           
-flip' f = (flip f $)
+relocate :: Position -> Square -> Square -> Board
+relocate pos src dest = let b = board pos
+                            p = fromJust (lookup src b)
+                         in insert dest p $ delete src b
 
 -- Calculate the square that was captured en passant by a move (if any)
-passantCapture :: Position -> Square -> Square -> Maybe Square
-passantCapture pos source dest = 
-    let captureSquare = back pos dest
-        isPassant = Just dest == passant pos &&
-                    Just dest == ahead pos source &&
-                    adjacentFiles source dest &&
-                    pawnAt pos source &&
-                    maybe False (pawnAt pos) captureSquare &&
-                    maybe False (enemyAt pos) captureSquare
-     in when isPassant captureSquare
+passantCapture :: Position -> Move -> Maybe Square
+passantCapture pos mv = 
+    if Just dest == passant pos &&
+       Just dest == ahead pos src &&
+       adjacentFiles src dest &&
+       pawnAt pos src &&
+       maybe False (pawnAt pos) captureSquare &&
+       maybe False (enemyAt pos) captureSquare
+    then captureSquare
+    else Nothing
+    where captureSquare = back pos dest
+          src = source mv
+          dest = destination mv
 
-when :: Bool -> Maybe a -> Maybe a
-when a mb = if a then mb else Nothing
 
-
+isEmpty :: Position -> Square -> Bool
 isEmpty pos sq = Nothing == pieceTypeAt pos sq
 
 pawnAt :: Position -> Square -> Bool
@@ -259,7 +292,9 @@ enemyColor :: Position -> Color
 enemyColor = toggle. turn
 
 findSquare :: (Square -> Bool) -> Position -> Maybe Square
-findSquare pred pos = find pred (keys $ board pos)
+findSquare pred = find pred. occupiedSquares
+
+occupiedSquares = keys. board
 
 -- What castling right is lost if a piece moves from or to 'sq'?
 lostCastling :: Square -> Maybe CastlingRight
@@ -273,7 +308,7 @@ lostCastling sq = let clr = case rank sq of
                                 'h' -> Just Queenside
                                 _ -> Nothing
 
-                   in liftM2 Castling side clr
+                   in Castling <$> side <*> clr
 
 adjacentFiles :: Square -> Square -> Bool
 adjacentFiles sq1 sq2 = 1 == abs (fromEnum (file sq1) - fromEnum (file sq2))
@@ -300,6 +335,10 @@ up :: Square -> Maybe Square
 down :: Square -> Maybe Square
 left :: Square -> Maybe Square
 right :: Square -> Maybe Square
+upLeft :: Square -> Maybe Square
+upRight :: Square -> Maybe Square
+downLeft :: Square -> Maybe Square
+downRight :: Square -> Maybe Square
 
 up sq = mv sq 1 0
 down sq = mv sq (-1) 0
@@ -321,25 +360,21 @@ mv sq v h = let r' = inc (rank sq) v
 
 
 newRank :: Int -> Maybe Int
-newRank r = boolMaybe r (validRank r)
+newRank r = if validRank r then Just r else Nothing
 
 newFile :: Char -> Maybe Char
-newFile f = boolMaybe f (validFile f)
+newFile f = if validFile f then Just f else Nothing
 
 validRank r = 1 <= r && r <= 8
 validFile f = 'a' <= f && f <= 'h'
 
-maybeEither :: Maybe a -> b -> Either a b
-maybeEither ma b = maybe (Right b) Left ma
-
-
-checkSource :: Position -> Square -> Maybe Error
-checkSource pos source = let pclr = colorAt pos source
-                          in maybe (Just NoPiece) (checkColorsMatch pos) pclr
+checkSource :: Position -> Move -> Maybe Error
+checkSource pos mv  = let src = source mv
+                          pclr = colorAt pos src
+                       in maybe (Just NoPiece) (checkColorsMatch pos) pclr
 
 checkColorsMatch :: Position -> Color -> Maybe Error
-checkColorsMatch pos clr = boolMaybe WrongColor (clr /= turn pos)
+checkColorsMatch pos clr = if clr /= turn pos
+                           then Just WrongColor
+                           else Nothing
 
-
-boolMaybe :: a -> Bool -> Maybe a
-boolMaybe a b = if b then Just a else Nothing
