@@ -11,7 +11,8 @@ data Error = KingCapturable |
              WrongColor |
              NotInRange |
              MissingKing |
-             MustPromote
+             IllegalPromotion |
+             PromotionRequired
              deriving (Show, Eq)
 
 data Color = White | Black
@@ -54,8 +55,18 @@ data Move = Move { source :: Square,
 
 move :: Position -> Move -> Either Error Position
 move pos mv = do
-    p <- moveNaive pos mv
-    maybeError (checkLegal p) p
+    p <- maybePromote mv <$> moveNaive pos mv 
+    let errs = checkPromotion pos mv <|> checkLegal p
+    maybeError errs p
+
+maybePromote :: Move -> Position -> Position
+maybePromote mv pos = 
+    case promotion mv of
+        Just pt -> pos { board = insert dest (Piece pt clr) b }
+        Nothing -> pos
+    where b = board pos
+          clr = turn pos
+          dest = destination mv
 
 -- Naive move := move disregarding king safety and promotions
 moveNaive :: Position -> Move -> Either Error Position
@@ -73,18 +84,28 @@ checkRange pos mv =
                   then threats
                   else moves
 
-checkLegal :: Position -> Maybe Error
-checkLegal pos = checkKingSafe pos <|> checkPromotions pos
+checkPromotion pos mv =
+    case promotion mv of
+        Nothing -> if shouldPromote pos mv
+                   then Just PromotionRequired
+                   else Nothing
 
-checkPromotions :: Position -> Maybe Error
-checkPromotions pos = if any onLastRank pawnSquares
-                      then Just MustPromote
-                      else Nothing
+        Just _ -> if shouldPromote pos mv
+                  then Nothing
+                  else Just IllegalPromotion
+
+shouldPromote pos mv = pawnAt pos (source mv) && onLastRank pos (destination mv)
+
+checkLegal :: Position -> Maybe Error
+checkLegal pos = checkKingSafe pos <|> checkPromotedPawns pos
+
+checkPromotedPawns :: Position -> Maybe Error
+checkPromotedPawns pos = if any (onLastRank pos) pawnSquares
+                         then Just PromotionRequired
+                         else Nothing
     where pawnSquares = filter (pawnAt pos) (friendlySquares pos)
-          onLastRank sq = rank sq == lastRank pos
-          lastRank pos = case turn pos of
-                             White -> 8
-                             Black -> 1
+
+onLastRank pos sq = rank sq == lastRank pos
 
 checkKingSafe :: Position -> Maybe Error
 checkKingSafe = maybe (Just MissingKing) <$> checkAttacked <*> kingSquare
@@ -364,6 +385,10 @@ checkColorsMatch :: Position -> Color -> Maybe Error
 checkColorsMatch pos clr = if clr /= turn pos
                            then Just WrongColor
                            else Nothing
+
+lastRank pos = case turn pos of
+                    White -> 8
+                    Black -> 1
 
 maybeError :: Maybe Error -> a -> Either Error a
 maybeError Nothing a = Right a
