@@ -1,6 +1,6 @@
 module Fen where
 import Prelude hiding (lookup)
-import Data.List (groupBy, intersperse)
+import Data.List (groupBy, intersperse, sort)
 import Data.Maybe
 import Data.Char ( toUpper, 
                    toLower, 
@@ -50,7 +50,7 @@ decodeCastlingRights s = let r = sequence $ map (\x -> decode [x]) s
                          in fmap Data.Set.fromList r
 
 encodeCastlingRights :: Data.Set.Set CastlingRight -> String
-encodeCastlingRights = mapcat encode. Data.Set.toList
+encodeCastlingRights = sort. mapcat encode. Data.Set.toList
 
 encodePassant :: Maybe Square -> String
 encodePassant = maybe "-" encode
