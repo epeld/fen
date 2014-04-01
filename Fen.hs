@@ -24,6 +24,8 @@ import Chess ( Position(..),
                CastlingRight(..),
                newRank, newFile )
 
+decodeChar c = decode [c]
+
 class FEN f where
     encode :: f -> String
     decode :: String -> Maybe f
