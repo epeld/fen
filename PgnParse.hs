@@ -1,5 +1,6 @@
 module PgnParse where
 import Data.Char (digitToInt)
+import Data.Maybe (fromJust)
 import Control.Applicative ((<$>), (<*>))
 import Text.ParserCombinators.Parsec
 import qualified Pgn
@@ -19,11 +20,36 @@ castles = Pgn.Castles <$> (try queenside <|> kingside)
 queenside = string "O-O-O" >> return Chess.Queenside
 kingside = string "O-O" >> return Chess.Kingside
 
+pieceMove :: Parser Pgn.Move
+pieceMove = (try longPieceMove) <|> shortPieceMove
+
+move :: Parser Pgn.Move
+move = try pawnMove <|> try pieceMove <|> castles
+
+shortPieceMove :: Parser Pgn.Move
+shortPieceMove = Pgn.PieceMove <$> fmap Chess.Officer officerType
+                               <*> return Nothing
+                               <*> moveType
+                               <*> square
+                               <*> return Nothing
+
+longPieceMove :: Parser Pgn.Move
+longPieceMove = Pgn.PieceMove <$> fmap Chess.Officer officerType
+                              <*> fmap Just sourceIndicator
+                              <*> moveType
+                              <*> square
+                              <*> return Nothing
+
+officerType :: Parser Chess.OfficerType
+officerType = fmap (fromJust. Fen.decodeChar) (oneOf "RNBQ")
+
+moveType = option Pgn.Moves (string "x" >> return Pgn.Takes)
+
 pawnMove :: Parser Pgn.Move
-pawnMove = shortPawnMove <|> longPawnMove
+pawnMove = (try longPawnMove) <|> shortPawnMove
 
 shortPawnMove :: Parser Pgn.Move
-shortPawnMove = movePawnTo <$> square <*> promotion
+shortPawnMove = movePawnTo <$> square <*> maybePromotion
 
 movePawnTo dest promo = Pgn.PieceMove {
     Pgn.pieceType = Chess.Pawn,
@@ -36,7 +62,9 @@ longPawnMove :: Parser Pgn.Move
 longPawnMove = (try longPawnMoves) <|> pawnTakes
 
 longPawnMoves :: Parser Pgn.Move
-longPawnMoves = movePawnFromTo <$> squareIndicator <*> square <*> promotion
+longPawnMoves = movePawnFromTo <$> squareIndicator 
+                               <*> square 
+                               <*> maybePromotion
 
 movePawnFromTo :: Pgn.SourceIndicator -> Chess.Square -> 
                   Maybe Chess.OfficerType -> Pgn.Move
@@ -50,11 +78,13 @@ movePawnFromTo src sq promo = Pgn.PieceMove {
 pawnTakes :: Parser Pgn.Move
 pawnTakes = movePawnTakes <$> pawnSourceIndicator 
                           <*> (char 'x' >> square)
-                          <*> promotion
+                          <*> maybePromotion
 
-promotion :: Parser (Maybe Chess.OfficerType)
-promotion = option Nothing $ 
-    char '=' >> fmap Fen.decodeChar (oneOf "RNBQ")
+promotion :: Parser Chess.OfficerType
+promotion = char '=' >> officerType
+
+maybePromotion :: Parser (Maybe Chess.OfficerType)
+maybePromotion = fmap Just promotion <|> return Nothing
 
 
 movePawnTakes src sq promo = Pgn.PieceMove {
