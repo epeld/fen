@@ -50,7 +50,7 @@ data Position = Position { board :: Board,
 
 data Move = Move { source :: Square,
                    destination :: Square,
-                   promotion :: Maybe PieceType }
+                   promotion :: Maybe OfficerType }
             deriving (Show, Eq)
 
 
@@ -63,7 +63,7 @@ move pos mv = do
 maybePromote :: Move -> Position -> Position
 maybePromote mv pos = 
     case promotion mv of
-        Just pt -> pos { board = insert dest (Piece pt clr) b }
+        Just pt -> pos { board = insert dest (Piece (Officer pt) clr) b }
         Nothing -> pos
     where b = board pos
           clr = turn pos
@@ -85,6 +85,7 @@ checkRange pos mv =
                   then threats
                   else moves
 
+checkPromotion :: Position -> Move -> Maybe Error
 checkPromotion pos mv =
     case promotion mv of
         Nothing -> if shouldPromote pos mv
@@ -94,6 +95,7 @@ checkPromotion pos mv =
         Just _ -> if shouldPromote pos mv
                   then Nothing
                   else Just IllegalPromotion
+
 
 shouldPromote pos mv = pawnAt pos (source mv) && onLastRank pos (destination mv)
 
