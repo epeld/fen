@@ -46,7 +46,7 @@ officerType = fmap (fromJust. Fen.decodeChar) (oneOf "RNBQ")
 moveType = option Pgn.Moves (string "x" >> return Pgn.Takes)
 
 pawnMove :: Parser Pgn.Move
-pawnMove = (try longPawnMove) <|> shortPawnMove
+pawnMove = try longPawnMove <|> shortPawnMove
 
 shortPawnMove :: Parser Pgn.Move
 shortPawnMove = movePawnTo <$> square <*> maybePromotion
@@ -59,7 +59,7 @@ movePawnTo dest promo = Pgn.PieceMove {
     Pgn.promotion = promo }
 
 longPawnMove :: Parser Pgn.Move
-longPawnMove = (try longPawnMoves) <|> pawnTakes
+longPawnMove = try longPawnMoves <|> pawnTakes
 
 longPawnMoves :: Parser Pgn.Move
 longPawnMoves = movePawnFromTo <$> squareIndicator 
@@ -75,6 +75,7 @@ movePawnFromTo src sq promo = Pgn.PieceMove {
     Pgn.destination = sq,
     Pgn.promotion = promo }
 
+-- exd3=R
 pawnTakes :: Parser Pgn.Move
 pawnTakes = movePawnTakes <$> pawnSourceIndicator 
                           <*> (char 'x' >> square)
