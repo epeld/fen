@@ -4,7 +4,7 @@ import Control.Applicative ((<|>), (<$>), (<*>), pure, Applicative)
 import Control.Monad (liftM, liftM2, filterM, (>=>), (>>=), (=<<))
 import Control.Monad.Reader (Reader)
 import Control.Monad.Trans.Reader (runReader, ReaderT, ask, local)
-import Data.Monoid (mconcat, First(..), Monoid)
+import Data.Monoid (mconcat, First(..), getFirst, Monoid)
 import Data.Map (insert, delete, keys, Map, lookup)
 import Data.List (find, foldl')
 import Data.Set (fromList, Set, difference)
@@ -80,8 +80,6 @@ moveNaive pos mv = maybeError <$> errs <*> performMove pos mv
 -- Move Logic
 -------------------------------------------------------
 
-type Stepper = Square -> Maybe Square
-
 type Sequence = [Square]
 type Range = [Sequence]
 
@@ -155,15 +153,31 @@ theoretical (Officer o) _ = theoretical' o
 theoretical' :: PieceType -> RangeProducer
 theoretical' Bishop = fromSteppers [upLeft, upRight, downLeft, downRight]
 theoretical' Rook = fromSteppers [up, down, left, right]
-theoretical' Queen = sequence [theoretical' Bishop, theoretical Rook]
+theoretical' Queen = concat <$> sequence [theoretical' Bishop, 
+                                          theoretical' Rook]
 theoretical' King = map (take 1) =<< theoretical' Queen
-theoretical' Knight = fromSteppers knightSteppers
+theoretical' Knight = sequence $ mapMaybe runStepper knightSteppers
           
-knightSteppers = foldl' (>=>) return $
+knightSteppers :: [Stepper]
+knightSteppers = foldl' (>=>) return <$>
     [[up, up, left], [up, up, right], 
      [up, right, right], [down, right, right],
      [down, down, right], [down, down, left],
      [down, left, left], [up, left, left]]
+
+---------------------
+-- Steppers
+
+type Stepper = Square -> Maybe Square
+
+runStepper :: Stepper -> Square -> [Square]
+runStepper stepper sq = 
+    case stepper sq of
+        Just sq' -> sq' : runStepper stepper sq'
+        Nothing -> []
+
+fromSteppers :: [Stepper] -> RangeProducer
+fromSteppers steppers = sequence (map runStepper steppers)
 
 ------------------------------------------
 -- Position Construction
@@ -183,6 +197,7 @@ calcHalfMoveNr mv = choice <$> someM [pawnAt $ source mv,
                            <*> pure 0
                            <*> liftM (inc 1. halfMoveNr) ask
 
+calcPassant :: Move -> PositionReader (Maybe Square)
 calcPassant mv = 
     let src = source mv
         dest = destination mv 
@@ -191,7 +206,7 @@ calcPassant mv =
                        isForward 2 src dest,
                        onInitialRank src]
            <*> back src
-           <*> Nothing
+           <*> pure Nothing
           
 
 calcFullMoveNr :: PositionReader Int
@@ -206,12 +221,15 @@ calcCastling mv =
             mapMaybe lostCastling [source mv, destination mv]
     in do
         c <- liftM castling ask
-        difference c lost
+        return $ difference c lost
 
 calcBoard :: Move -> PositionReader Board
-calcBoard mv =
-    fromMaybe id delete <$> passantCapture mv 
-                        <*> relocate (source mv) (destination mv)
+calcBoard mv = do
+    let b = relocate (source mv) (destination mv)
+    capture <- passantCapture mv 
+    case capture of
+        Nothing -> b
+        Just sq -> liftM (delete sq) b
 
 ------------------------------------
 -- Square Stepping (Construction)
@@ -222,15 +240,17 @@ backN n sq = local toggleTurn (forwardN n sq)
 forwardN :: Int -> Square -> PositionReader (Maybe Square)
 forwardN 0 sq = return $ Just sq
 forwardN n sq = do next <- forward sq 
-                   forwardN (n - 1) <$> next
+                   case next of
+                       Just sq' -> forwardN (n - 1) sq'
+                       Nothing -> return Nothing
 
 forward :: Square -> PositionReader (Maybe Square)
-forward sq = choice <$> liftM turn ask
-                    <*> up sq
-                    <*> down sq
+forward sq = choice <$> liftM ((White ==). turn) ask
+                    <*> return (up sq)
+                    <*> return (down sq)
 
 back :: Square -> PositionReader (Maybe Square)
-back sq = local toggleTurn forward
+back = local toggleTurn. forward
               
 
 up :: Square -> Maybe Square
@@ -275,39 +295,44 @@ validFile f = 'a' <= f && f <= 'h'
 
 checkSource :: Move -> PositionReader (Maybe Error)
 checkSource mv = let c = colorAt (source mv)
-                  in checks [liftM (flipMaybe NoPiece) c, 
-                             checkColorsMatch =<< c]
+                  in firstError [liftM (flipMaybe NoPiece) c, 
+                                 checkColorsMatch. fromJust =<< c]
 
 checkColorsMatch :: Color -> PositionReader (Maybe Error)
 checkColorsMatch clr = choice <$> liftM ((clr /=). turn) ask
-                              <*> pure $ Just WrongColor
+                              <*> pure (Just WrongColor)
                               <*> pure Nothing
 
 checkPromotion :: Move -> PositionReader (Maybe Error)
-checkPromotion mv = shouldPromote mv >>= checkPromotes mv
+checkPromotion mv = liftM (checkPromotes mv) (shouldPromote mv)
            
+checkPromotes :: Move -> Bool -> Maybe Error
 checkPromotes mv should = 
     let promo = promotion mv
     in if should 
-       then flipMaybe promo PromotionRequired 
+       then flipMaybe PromotionRequired promo
        else promo >> Just IllegalPromotion
 
 
 
 checkPromotedPawns :: PositionReader (Maybe Error)
-checkPromotedPawns = choice <$> anyM onLastRank pawnSquares
+checkPromotedPawns = choice <$> (anyM onLastRank =<< pawnSquares)
                             <*> pure (Just PromotionRequired)
                             <*> pure Nothing
     where pawnSquares = filterM pawnAt =<< friendlySquares
 
 
 checkKingSafe :: PositionReader (Maybe Error)
-checkKingSafe = maybe (Just MissingKing) <$> checkAttacked <*> kingSquare
+checkKingSafe = do
+    ks <- kingSquare
+    case ks of
+        Nothing -> return $ Just MissingKing
+        Just s -> checkAttacked s
 
 checkAttacked :: Square -> PositionReader (Maybe Error)
-checkAttacked pos sq = choice <$> isAttacked sq 
-                              <*> pure (Just KingCapturable)
-                              <*> pure Nothing
+checkAttacked sq = choice <$> isAttacked sq 
+                          <*> pure (Just KingCapturable)
+                          <*> pure Nothing
 
 ----------------------------------
 -- Chess Utils
@@ -315,46 +340,47 @@ checkAttacked pos sq = choice <$> isAttacked sq
 --
 
 isCapture :: Move -> PositionReader Bool
-isCapture pos mv = everyM [enemyAt (destination mv), isPassantCapture mv]
+isCapture mv = everyM [enemyAt $ destination mv,
+                       isPassantCapture mv]
 
 isPassantCapture :: Move -> PositionReader Bool
-isPassantCapture pos mv = isJust (passantCapture pos mv)
+isPassantCapture mv = liftM isJust (passantCapture mv)
 
 
 enemyPawnAt :: Square -> PositionReader Bool
-enemyPawnAt pos dest = everyM [enemyAt dest, pawnAt dest]
+enemyPawnAt dest = everyM [enemyAt dest, pawnAt dest]
                                            
 
 shouldPromote :: Move -> PositionReader Bool
 shouldPromote mv = everyM [pawnAt $ source mv, onLastRank $ destination mv]
 
 kingSquare :: PositionReader (Maybe Square)
-kingSquare = findSquare $ fmap all $ sequence [kingAt, enemyAt]
+kingSquare = findSquare $ everyM. sequence [kingAt, enemyAt]
 
 isAttacked :: Square -> PositionReader Bool
-isAttacked sq = any <$> couldMove <*> friendlySquares
-    where couldMove :: Square -> Bool
+isAttacked sq = anyM couldMove =<< friendlySquares
+    where couldMove :: Square -> PositionReader Bool
           couldMove src = canMoveNaive (Move { source = src,
                                                destination = sq,
                                                promotion = Nothing })
 
 canMoveNaive :: Move -> PositionReader Bool
-canMoveNaive pos mv = isRight <$> moveNaive mv
+canMoveNaive mv = isRight <$> moveNaive mv
 
 friendlySquares :: PositionReader [Square]
-friendlySquares = filterM friendlyAt occupiedSquares
+friendlySquares = filterM friendlyAt =<< occupiedSquares
 
 occupiedSquares :: PositionReader [Square]
-occupiedSquares = liftM (keys. board)
+occupiedSquares = liftM (keys. board) ask
 
 isLegal :: PositionReader (Maybe Error)
 isLegal = firstError [checkKingSafe, checkPromotedPawns]
 
 onLastRank sq = do last <- lastRank
-                   rank sq == last
+                   return $ rank sq == last
 
 onInitialRank sq = do initial <- initialRank
-                      rank sq == initial
+                      return $ rank sq == initial
 
 
 initialRank :: PositionReader Int
@@ -395,25 +421,27 @@ passantCapture mv = do
         then captureSquare
         else Nothing
 
-isPassantSquare sq = liftM ((destination sq ==). passant) ask
+isPassantSquare :: Square -> PositionReader Bool
+isPassantSquare sq = liftM ((Just sq ==). passant) ask
 
-isForward n src dst = forwardN n src == dst
+isForward :: Int -> Square -> Square -> PositionReader Bool
+isForward n src dst = liftM (Just dst ==) (forwardN n src)
 
 
 isEmpty :: Square -> PositionReader Bool
 isEmpty sq = liftM isNothing (pieceTypeAt sq)
 
-pawnAt :: Square -> Bool
+pawnAt :: Square -> PositionReader Bool
 pawnAt sq = liftM (Just Pawn ==) (pieceTypeAt sq)
 
 kingAt :: Square -> PositionReader Bool
 kingAt sq = liftM (Just (Officer King) ==) (pieceTypeAt sq)
 
 enemyAt :: Square -> PositionReader Bool
-enemyAt pos sq = liftM2 (==) (colorAt pos sq) enemyColor
+enemyAt sq = liftM2 (==) (Just <$> enemyColor) (colorAt sq) 
 
 friendlyAt :: Square -> PositionReader Bool
-friendlyAt pos sq = liftM2 (==) (turn =<< ask) (colorAt sq)
+friendlyAt sq = liftM2 (==) (Just. turn <$> ask) (colorAt sq)
 
 pieceAt :: Square -> PositionReader (Maybe Piece)
 pieceAt sq = liftM (lookup sq. board) ask
@@ -427,7 +455,7 @@ colorAt sq = do pc <- pieceAt sq
                 return $ fmap color pc
 
 enemyColor :: PositionReader Color
-enemyColor = liftM (toggle. turn)
+enemyColor = liftM (toggle. turn) ask
 
 findSquare :: (Square -> PositionReader Bool) -> PositionReader (Maybe Square)
 findSquare pred = fmap safeHead (filterM pred =<< occupiedSquares)
@@ -471,31 +499,27 @@ maybeError (Just err) _ = Left err
 isRight (Right _) = True
 isRight (Left _) = False
 
-flipMaybe a b = case a of
-    Nothing -> Just b
+flipMaybe a b = case b of
+    Nothing -> Just a
     Just _ -> Nothing
 
 firstError :: [PositionReader (Maybe Error)] -> PositionReader (Maybe Error)
-firstError = getFirst. checks First. map (First <$>)
-
-checks :: Monoid m => 
-          m -> [PositionReader (Maybe Error)] -> PositionReader (Maybe Error)
-checks = fmap mconcat. sequence
+firstError = liftM (getFirst. mconcat. map First). sequence
 
 takeWhileM :: Monad m => (a -> m Bool) -> [a] -> m [a]
 takeWhileM f xs = liftM (flip take xs. length. takeWhile id) $ seqmap f xs
 
 seqmap f = sequence. map f
 
-choice :: Bool -> a -> a
+choice :: Bool -> a -> a -> a
 choice a b c = if a then b else c
 
 anyM :: (a -> PositionReader Bool) -> [a] -> PositionReader Bool
-anyM f [] = True
+anyM f [] = return True
 anyM f xs = liftM (not. null) (filterM f xs)
 
 everyM :: [PositionReader Bool] -> PositionReader Bool
-everyM xs = liftM all $ sequence xs
+everyM = fmap (all id). sequence
 
 someM :: [PositionReader Bool] -> PositionReader Bool
-someM xs = liftM any $ sequence xs
+someM xs = anyM id xs
