@@ -79,12 +79,6 @@ moveNaive :: Move -> PositionReader (Either Error Position)
 moveNaive mv = maybeError <$> errs <*> performMove mv
     where errs = firstError [checkSource mv, checkRange mv]
 
-promote :: Square -> OfficerType -> PositionReader Position
-promote sq pr = do
-    pos <- ask
-    let pc = Piece (Officer pr) (turn pos) 
-    return pos{ board = insert sq pc (board pos) }
-
 -------------------------------------------------------
 -- Move Logic
 -------------------------------------------------------
@@ -359,6 +353,13 @@ checkAttacked sq = choice <$> isAttacked sq
 -- Chess Utils
 --
 --
+
+promote :: Square -> OfficerType -> PositionReader Position
+promote sq pr = do
+    pos <- ask
+    let pc = Piece (Officer pr) (turn pos) 
+    return pos{ board = insert sq pc (board pos) }
+
 
 isCapture :: Move -> PositionReader Bool
 isCapture mv = everyM [enemyAt $ destination mv,
