@@ -2,6 +2,7 @@ module Chess where
 import Prelude hiding (lookup)
 import Control.Applicative ((<|>), (<$>), (<*>), Applicative)
 import Control.Monad (liftM2, (>=>), (>>=), (=<<))
+import Control.Monad.Trans.Reader (ReaderT)
 import Data.Map (insert, delete, keys, Map, lookup)
 import Data.List (find)
 import Data.Set (fromList, Set, difference)
@@ -53,294 +54,180 @@ data Move = Move { source :: Square,
                    promotion :: Maybe OfficerType }
             deriving (Show, Eq)
 
+type PositionReader = Reader Chess.Position 
+type PositionReaderT = ReaderT Chess.Position 
 
-move :: Position -> Move -> Either Error Position
-move pos mv = do
-    p <- maybePromote mv <$> moveNaive pos mv 
-    let errs = checkPromotion pos mv <|> checkLegal p
-    maybeError errs p
+move :: Move -> PositionReader (Either Error Position)
+move mv = do p <- moveNaivePromote mv
+             let legal = withReader (const p) isLegal
+             maybeError legal p
 
-maybePromote :: Move -> Position -> Position
-maybePromote mv pos = 
-    case promotion mv of
-        Just pt -> pos { board = insert dest (Piece (Officer pt) clr) b }
-        Nothing -> pos
-    where b = board pos
-          clr = turn pos
-          dest = destination mv
+-- Naive move := move disregarding king safety
+moveNaivePromote :: Move -> PositionReader (Either Error Position)
+moveNaivePromote mv = do checkPromotion mv
+                         pos <- moveNaive mv
+                         let promo = promotion mv
+                         let promote = put $ destination mv
+                         return (maybe id promote promo <$> pos)
 
--- Naive move := move disregarding king safety and promotions
-moveNaive :: Position -> Move -> Either Error Position
-moveNaive pos mv = maybeError errs (performMove pos mv)
-    where errs = checkSource pos mv <|> checkRange pos mv
+moveNaive :: Move -> PositionReader (Either Error Position)
+moveNaive pos mv = maybeError <$> errs <*> performMove pos mv
+    where errs = firstError [checkSource mv, checkRange mv]
 
-checkRange :: Position -> Move -> Maybe Error
-checkRange pos mv = 
-    case pieceTypeAt pos src of
-        Nothing -> Just NoPiece
-        Just pt -> checkInRange pos dest (range pt pos src) 
-    where dest = destination mv
-          src = source mv
-          range = if isCapture pos mv
-                  then threats
-                  else moves
-
-checkPromotion :: Position -> Move -> Maybe Error
-checkPromotion pos mv =
-    case promotion mv of
-        Nothing -> if shouldPromote pos mv
-                   then Just PromotionRequired
-                   else Nothing
-
-        Just _ -> if shouldPromote pos mv
-                  then Nothing
-                  else Just IllegalPromotion
-
-
-shouldPromote pos mv = pawnAt pos (source mv) && onLastRank pos (destination mv)
-
-checkLegal :: Position -> Maybe Error
-checkLegal pos = checkKingSafe pos <|> checkPromotedPawns pos
-
-checkPromotedPawns :: Position -> Maybe Error
-checkPromotedPawns pos = if any (onLastRank pos) pawnSquares
-                         then Just PromotionRequired
-                         else Nothing
-    where pawnSquares = filter (pawnAt pos) (friendlySquares pos)
-
-onLastRank pos sq = rank sq == lastRank pos
-
-checkKingSafe :: Position -> Maybe Error
-checkKingSafe = maybe (Just MissingKing) <$> checkAttacked <*> kingSquare
-
-kingSquare :: Position -> Maybe Square
-kingSquare pos = findSquare (kingAt pos `fAnd` enemyAt pos) pos
-
-checkAttacked :: Position -> Square -> Maybe Error
-checkAttacked pos sq = if isAttacked pos sq
-                       then Just KingCapturable
-                       else Nothing
-
-isAttacked :: Position -> Square -> Bool
-isAttacked pos sq = any couldMove (friendlySquares pos)
-    where couldMove :: Square -> Bool
-          couldMove src = canMoveNaive pos (Move { source = src,
-                                                   destination = sq,
-                                                   promotion = Nothing })
-
-friendlySquares :: Position -> [Square]
-friendlySquares pos = filter (friendlyAt pos) (occupiedSquares pos)
-
-                           
-canMoveNaive :: Position -> Move -> Bool
-canMoveNaive pos mv = isRight $ moveNaive pos mv
-
-checkInRange :: Position -> Square -> [[Square]] -> Maybe Error
-checkInRange pos dest range = if any (reaches pos dest) range
-                              then Nothing 
-                              else Just NotInRange
-
-reaches :: Position -> Square -> [Square] -> Bool
-reaches pos sq series = let sqs = takeWhile (isEmpty pos) series
-                         in sq `elem` (take 8 series)
-
-threats :: PieceType -> Position -> Square -> [[Square]]
-
-threats Pawn pos source = let fw = ahead pos source
-                              sqs = [ left =<< fw, right =<< fw ] 
-                           in return <$> catMaybes sqs
-
-threats pt pos source = moves pt pos source
-
-moves :: PieceType -> Position -> Square -> [[Square]]
-moves Pawn pos src = map (take 2) (applySteppers [up] src)
-
-moves (Officer o) pos source = moves' o source
-
-moves' Bishop s = applySteppers [ upLeft, upRight, downLeft, downRight ] s
-moves' Rook s = applySteppers [ up, down, left, right ] s
-moves' Queen s = moves' Bishop s ++ moves' Rook s
-moves' King s = map (take 1) (moves' Queen s)
-moves' Knight s = return <$> knightSquares s
-
-knightSquares :: Square -> [Square]
-knightSquares s = stepSteppers steppers s
-    where makeStepper = foldl (>=>) return
-          steppers = map makeStepper [ [up, up, left],
-                                       [up, up, right],
-                                       [up, right, right],
-                                       [down, right, right],
-                                       [down, down, right],
-                                       [down, down, left],
-                                       [down, left, left],
-                                       [up, left, left] ]
-          
+-------------------------------------------------------
+-- Move Logic
+-------------------------------------------------------
 
 type Stepper = Square -> Maybe Square
 
--- Make one step with each stepper
-stepSteppers :: [Stepper] -> Square -> [Square]
-stepSteppers steppers source = catMaybes $ map ($ source) steppers
+type Sequence = [Square]
+type Range = [Sequence]
 
--- Run a stepper until it doesn't produce squares anymore
-applyStepper stepper s = catMaybes $ takeWhile isJust $ drop 1 $
-                         iterate (>>= stepper) (Just s)
+type SequenceProducer = Square -> PositionReader Sequence
+type RangeProducer = Square -> PositionReader Range
 
-applySteppers :: [Stepper] -> Square -> [[Square]]
-applySteppers steppers source = applyStepper <$> steppers <*> [source]
+data RangeStrategy = TraverseEmpty |
+                     FirstCapture
+                     deriving (Show, Eq)
+
+checkRange :: Move -> PositionReader (Maybe Error)
+checkRange mv = choice <$> isInRange mv 
+                       <*> pure Nothing 
+                       <*> pure $ Just NotInRange
+
+isInRange :: Move -> PositionReader Bool
+isInRange mv = elem (destination mv) <$> flatten (fromMove mv)
+                    
+
+fromMove :: Move -> Range
+fromMove mv = let pt = pieceTypeAt $ source mv
+              in
+              case pt of
+                 Just t -> range t mv
+                 Nothing -> []
+
+fromMove' :: PieceType -> Move -> Range
+fromMove' pt mv = let src = source mv
+                  in choice <$> isCapture mv 
+                            <*> threats pt src
+                            <*> moves pt src
+
        
-isCapture :: Position -> Move -> Bool
-isCapture pos mv = enemyAt pos (destination mv) || isPassantCapture pos mv
+threats :: PieceType -> RangeProducer
+threats = applied FirstCapture
 
-isPassantCapture :: Position -> Move -> Bool
-isPassantCapture pos mv = isJust (passantCapture pos mv)
+moves :: PieceType -> RangeProducer
+moves = applied TraverseEmpty
 
-
-
-enemyPawnAt :: Position -> Square -> Bool
-enemyPawnAt pos dest = enemyAt pos dest && pawnAt pos dest
-                                           
-
--- peformMove is the function that actually performs the work;
--- moves the piece from source to dest and updates the position
-performMove  :: Position -> Move -> Position
-performMove pos mv = pos { turn = calcTurn pos,
-                           board = calcBoard pos mv,
-                           fullMoveNr = calcFullMoveNr pos,
-                           halfMoveNr = calcHalfMoveNr pos mv,
-                           passant = calcPassant pos mv,
-                           castling = calcCastling pos mv }
+-- Applied, as opposed to theoretical range. See below
+applied :: RangeStrategy -> PieceType -> RangeProducer
+applied s pt = withStrategy s $ theoretical pt s
 
 
-calcHalfMoveNr pos mv = if pawnAt pos (source mv) || isCapture pos mv
-                        then 0
-                        else 1 + halfMoveNr pos
-calcPassant pos mv = 
-    if pieceTypeAt pos src == Just Pawn &&
-       Just dest == aheadN pos src 2 &&
-       rank src == initialPawnRank
-    then back pos src
-    else Nothing
-    where src = source mv
-          dest = destination mv
-          initialPawnRank = case turn pos of
-              White -> 2
-              Black -> 7
+withStrategy :: RangeStrategy -> RangeProducer -> RangeProducer
+withStrategy s r sq = map (withStrategy' s sq) <$> r sq
 
-calcFullMoveNr :: Position -> Int
-calcFullMoveNr pos = 1 + fullMoveNr pos
+withStrategy' :: RangeStrategy -> SequenceProducer -> SequenceProducer
+withStrategy' TraverseEmpty pr sq = takeWhileM isEmpty (pr sq)
 
-calcTurn :: Position -> Color
-calcTurn = toggle. turn
+-- TODO handle passant
+withStrategy' FirstCapture pr sq = 
+    do empty <- withStrategy' TraverseEmpty pr sq
+       sqs <- pr sq
+       let last = safeHead $ drop (length empty) sqs
+       return $ case last of
+           Nothing -> empty
+           Just sq -> empty ++ (enemyAt sq >>= \y -> if y then [sq] else [])
 
-calcHalfMove :: Position -> Square -> Square -> Int
-calcHalfMove pos source dest = if pawnAt pos source || enemyAt pos dest
-                               then 0
-                               else halfMoveNr pos + 1
+-- Theoretical ranges. That is, 'in the best case'
+theoretical :: PieceType -> RangeStrategy -> RangeProducer
+theoretical Pawn TraverseEmpty = fromSteppers [forward] >>= 
+                                 map (take 2)
 
-calcCastling :: Position -> Move -> Set CastlingRight
-calcCastling pos mv = 
+theoretical Pawn FirstCapture = fromSteppers [forward >=> left, 
+                                              forward >=> right] >>= 
+                                map (take 1)
+
+theoretical (Officer o) _ = theoretical' o 
+
+theoretical' :: PieceType -> RangeProducer
+theoretical' Bishop = fromSteppers [upLeft, upRight, downLeft, downRight]
+theoretical' Rook = fromSteppers [up, down, left, right]
+theoretical' Queen = sequence [theoretical' Bishop, theoretical Rook s]
+theoretical' King = map (take 1) =<< theoretical' Queen
+theoretical' Knight = fromSteppers knightSteppers
+          
+knightSteppers = foldl' (>=>) return $
+    [[up, up, left], [up, up, right], 
+     [up, right, right], [down, right, right],
+     [down, down, right], [down, down, left],
+     [down, left, left], [up, left, left]]
+
+------------------------------------------
+-- Position Construction
+       
+performMove :: Move -> PositionReader Position
+performMove mv = 
+    Position <$> calcBoard mv 
+             <*> calcPassant mv
+             <*> calcHalfMoveNr mv
+             <*> calcFullMoveNr
+             <*> calcTurn
+             <*> calcCastling mv
+    
+
+calcHalfMoveNr mv = choice <$> anyM [pawnAt $ source mv,
+                                     isCapture mv]
+                           <*> pure 0
+                           <*> liftM (inc 1. halfMoveNr) ask
+
+calcPassant mv = 
     let src = source mv
-        dest = destination mv
-        lost = Data.Set.fromList $ mapMaybe lostCastling [src, dest]
-    in difference (castling pos) lost
+        dest = dest = destination mv 
+    in
+    choice <$> everyM [pawnAt src, 
+                       isForward 2 src dest,
+                       onInitialRank src]
+           <*> back src
+           <*> Nothing
+          
 
-calcBoard :: Position -> Move -> Board
-calcBoard pos mv =
-    let b = relocate pos (source mv) (destination mv)
-        remove b a = delete a b
-     in maybe b (remove b) (passantCapture pos mv)
+calcFullMoveNr :: PositionReader Int
+calcFullMoveNr = liftM (inc 1. fullMoveNr) ask
 
-relocate :: Position -> Square -> Square -> Board
-relocate pos src dest = let b = board pos
-                            p = fromJust (lookup src b)
-                         in insert dest p $ delete src b
+calcTurn :: PositionReader Color
+calcTurn = liftM (toggle. turn) ask
 
--- Calculate the square that was captured en passant by a move (if any)
-passantCapture :: Position -> Move -> Maybe Square
-passantCapture pos mv = 
-    if Just dest == passant pos &&
-       Just dest == ahead pos src &&
-       adjacentFiles src dest &&
-       pawnAt pos src &&
-       maybe False (pawnAt pos) captureSquare &&
-       maybe False (enemyAt pos) captureSquare
-    then captureSquare
-    else Nothing
-    where captureSquare = back pos dest
-          src = source mv
-          dest = destination mv
+calcCastling :: Move -> PositionReader (Set CastlingRight)
+calcCastling mv = 
+    let lost = Data.Set.fromList $ 
+            mapMaybe lostCastling [source mv, destination mv]
+    in do
+        c <- liftM castling ask
+        difference c lost
 
+calcBoard :: Move -> PositionReader Board
+calcBoard mv =
+    fromMaybe id delete <$> passantCapture mv 
+                        <*> relocate (source mv) (destination mv)
 
-isEmpty :: Position -> Square -> Bool
-isEmpty pos sq = Nothing == pieceTypeAt pos sq
+------------------------------------
+-- Square Stepping (Construction)
 
-pawnAt :: Position -> Square -> Bool
-pawnAt pos sq = Just Pawn == pieceTypeAt pos sq
+backN :: Int -> Square -> PositionReader (Maybe Square)
+backN n sq = iterate (>>= back) (Just sq) !! n
 
-kingAt :: Position -> Square -> Bool
-kingAt pos sq = Just (Officer King) == pieceTypeAt pos sq
+forward :: Int -> Square -> PositionReader (Maybe Square)
+aheadN n sq = iterate (>>= forward) (Just sq) !! n
 
-enemyAt :: Position -> Square -> Bool
-enemyAt pos sq = Just (enemyColor pos) == colorAt pos sq
+forward :: Square -> PositionReader (Maybe Square)
+forward sq = choice <$> liftM turn ask
+                    <*> up sq
+                    <*> down sq
 
-friendlyAt :: Position -> Square -> Bool
-friendlyAt pos sq = Just (turn pos) == colorAt pos sq
-
-pieceAt :: Position -> Square -> Maybe Piece
-pieceAt = flip lookup. board
-
-pieceTypeAt :: Position -> Square -> Maybe PieceType
-pieceTypeAt pos sq = fmap pieceType (pieceAt pos sq)
-
-colorAt :: Position -> Square -> Maybe Color
-colorAt pos sq = fmap color (pieceAt pos sq)
-
-enemyColor :: Position -> Color
-enemyColor = toggle. turn
-
-findSquare :: (Square -> Bool) -> Position -> Maybe Square
-findSquare pred = find pred. occupiedSquares
-
-occupiedSquares :: Position -> [Square]
-occupiedSquares = keys. board
-
--- What castling right is lost if a piece moves from or to 'sq'?
-lostCastling :: Square -> Maybe CastlingRight
-lostCastling sq = let clr = case rank sq of
-                                1 -> Just White
-                                8 -> Just Black
-                                _ -> Nothing
-
-                      side = case file sq of
-                                'a' -> Just Kingside
-                                'h' -> Just Queenside
-                                _ -> Nothing
-
-                   in Castling <$> side <*> clr
-
-adjacentFiles :: Square -> Square -> Bool
-adjacentFiles sq1 sq2 = 1 == abs (fromEnum (file sq1) - fromEnum (file sq2))
-
-toggle :: Color -> Color
-toggle White = Black
-toggle Black = White
-
-backN :: Position -> Square -> Int -> Maybe Square
-backN pos sq n = iterate (>>= back pos) (Just sq) !! n
-
-aheadN :: Position -> Square -> Int -> Maybe Square
-aheadN pos sq n = iterate (>>= ahead pos) (Just sq) !! n
-
-ahead :: Position -> Square -> Maybe Square
-ahead pos sq = if turn pos == White
-               then up sq
-               else down sq
-
-back :: Position -> Square -> Maybe Square
-back pos sq = if turn pos == Black
-              then up sq
-              else down sq
+back :: Square -> PositionReader (Maybe Square)
+back sq = local toggleTurn forward
+              
 
 up :: Square -> Maybe Square
 down :: Square -> Maybe Square
@@ -379,19 +266,195 @@ newFile f = if validFile f then Just f else Nothing
 validRank r = 1 <= r && r <= 8
 validFile f = 'a' <= f && f <= 'h'
 
-checkSource :: Position -> Move -> Maybe Error
-checkSource pos mv  = let src = source mv
-                          pclr = colorAt pos src
-                       in maybe (Just NoPiece) (checkColorsMatch pos) pclr
+---------------------------------
+-- Checks
 
-checkColorsMatch :: Position -> Color -> Maybe Error
-checkColorsMatch pos clr = if clr /= turn pos
-                           then Just WrongColor
-                           else Nothing
+checkSource :: Move -> PositionReader (Maybe Error)
+checkSource mv = let c = colorAt (source mv)
+                  in checks [liftM (flipMaybe NoPiece) c, 
+                             checkColorsMatch =<< c]
 
-lastRank pos = case turn pos of
-                    White -> 8
-                    Black -> 1
+checkColorsMatch :: Color -> PositionReader (Maybe Error)
+checkColorsMatch clr = choice <$> liftM ((clr /=). turn) ask
+                              <*> pure $ Just WrongColor
+                              <*> pure Nothing
+
+checkPromotion :: Move -> PositionReader (Maybe Error)
+checkPromotion mv = shouldPromote mv >>= checkPromotes should mv
+           
+checkPromotes mv should = 
+    let promo = promotion mv
+    in if should 
+       then flipMaybe promo PromotionRequired 
+       else promo >> Just IllegalPromotion
+
+
+
+checkPromotedPawns :: PositionReader (Maybe Error)
+checkPromotedPawns = if any (onLastRank pos) pawnSquares
+                     then Just PromotionRequired
+                     else Nothing
+    where pawnSquares = filter (pawnAt pos) (friendlySquares pos)
+
+
+checkKingSafe :: PositionReader (Maybe Error)
+checkKingSafe = maybe (Just MissingKing) <$> checkAttacked <*> kingSquare
+
+checkAttacked :: Square -> PositionReader (Maybe Error)
+checkAttacked pos sq = do attacked <- isAttacked sq
+                          return if attacked 
+                                 then Just KingCapturable 
+                                 else Nothing
+
+----------------------------------
+-- Chess Utils
+--
+--
+
+isCapture :: Move -> PositionReader Bool
+isCapture pos mv = everyM [enemyAt (destination mv), isPassantCapture mv]
+
+isPassantCapture :: Move -> PositionReader Bool
+isPassantCapture pos mv = isJust (passantCapture pos mv)
+
+
+enemyPawnAt :: Square -> PositionReader Bool
+enemyPawnAt pos dest = everyM [enemyAt dest, pawnAt dest]
+                                           
+
+shouldPromote :: Move -> PositionReader Bool
+shouldPromote mv = everyM [pawnAt $ source mv, onLastRank $ destination mv]
+
+kingSquare :: PositionReader (Maybe Square)
+kingSquare pos = findSquare (kingAt pos `fAnd` enemyAt pos) pos
+
+isAttacked :: Square -> PositionReader Bool
+isAttacked sq = any <$> couldMove <*> friendlySquares
+    where couldMove :: Square -> Bool
+          couldMove src = canMoveNaive (Move { source = src,
+                                               destination = sq,
+                                               promotion = Nothing })
+
+canMoveNaive :: Move -> PositionReader Bool
+canMoveNaive pos mv = isRight <$> moveNaive mv
+
+friendlySquares :: PositionReader [Square]
+friendlySquares = filterM friendlyAt occupiedSquares
+
+occupiedSquares :: PositionReader [Square]
+occupiedSquares = liftM (keys. board)
+
+isLegal :: PositionReader (Maybe Error)
+isLegal = firstError [checkKingSafe, checkPromotedPawns]
+
+onLastRank sq = do last <- lastRank
+                   rank sq == last
+
+onInitialRank sq = do initial <- initialRank
+                      rank sq == initial
+
+
+initialRank :: PositionReader Int
+initialRank = do clr <- liftM turn ask
+                 case turn pos of
+                    White -> 2
+                    Black -> 7
+
+lastRank :: PositionReader Int
+lastRank = do clr <- liftM turn ask
+              case turn pos of
+                  White -> return 8
+                  Black -> return 1
+
+relocate :: Square -> Square -> PositionReader Board
+relocate src dest = liftM (delete src) (copy src dest)
+
+copy :: Square -> Square -> PositionReader Board
+copy src dest = do let b = liftM board ask
+                   pc <- liftM (lookup src) b
+                   case pc of
+                       Just t -> liftM (insert src t) b
+                       Nothing -> b
+
+-- Calculate the square that was captured en passant by a move (if any)
+passantCapture :: Move -> PositionReader (Maybe Square)
+passantCapture mv = 
+    let src = source mv
+    let dest = destination mv
+    captureSquare <- back dest
+    plausible <- everyM [pawnAt dest,
+                         maybeNot pawnAt captureSquare,
+                         maybeNot pawnAt pos captureSquare,
+                         isPassantSquare dest, 
+                         isAhead src dest]
+    return $ 
+        if adjacentFiles src dest && plausible
+        then captureSquare
+        else Nothing
+
+maybeNot = maybe (return False)
+
+isEmpty :: Square -> PositionReader Bool
+isEmpty sq = liftM isNothing (pieceTypeAt sq)
+
+pawnAt :: Square -> Bool
+pawnAt sq = liftM (Just Pawn ==) (pieceTypeAt sq)
+
+kingAt :: Square -> PositionReader Bool
+kingAt sq = liftM (Just (Officer King) ==) (pieceTypeAt sq)
+
+enemyAt :: Square -> PositionReader Bool
+enemyAt pos sq = liftM2 (==) (colorAt pos sq) enemyColor
+
+friendlyAt :: Square -> PositionReader Bool
+friendlyAt pos sq = liftM2 (==) (turn =<< ask) (colorAt sq)
+
+pieceAt :: Square -> PositionReader (Maybe Piece)
+pieceAt sq = liftM (lookup sq. board) ask
+
+pieceTypeAt :: Square -> PositionReader (Maybe PieceType)
+pieceTypeAt sq = do pc <- pieceAt sq
+                    return $ fmap pieceType pc
+
+colorAt :: Square -> Positionreader (Maybe Color)
+colorAt sq = do pc <- pieceAt sq
+                return $ fmap color pc
+
+enemyColor :: PositionReader Color
+enemyColor = liftM (toggle. turn)
+
+findSquare :: (Square -> PositionReader Bool) -> PositionReader (Maybe Square)
+findSquare pred = fmap safeHead (filterM pred =<< occupiedSquares)
+
+-- What castling right is lost if a piece moves from or to 'sq'?
+lostCastling :: Square -> Maybe CastlingRight
+lostCastling sq = let clr = case rank sq of
+                                1 -> Just White
+                                8 -> Just Black
+                                _ -> Nothing
+
+                      side = case file sq of
+                                'a' -> Just Kingside
+                                'h' -> Just Queenside
+                                _ -> Nothing
+
+                   in Castling <$> side <*> clr
+
+adjacentFiles :: Square -> Square -> Bool
+adjacentFiles sq1 sq2 = 1 == abs (fromEnum (file sq1) - fromEnum (file sq2))
+
+toggle :: Color -> Color
+toggle White = Black
+toggle Black = White
+
+toggleTurn :: Position -> Position
+toggleTurn p = p{turn = toggle $ turn p }
+
+-------------------------------------
+-- General Utils
+
+safeHead [] = Nothing
+safeHead xs = Just $ head xs
 
 maybeError :: Maybe Error -> a -> Either Error a
 maybeError Nothing a = Right a
@@ -400,6 +463,22 @@ maybeError (Just err) _ = Left err
 isRight (Right _) = True
 isRight (Left _) = False
 
-fAnd :: Applicative f => f Bool -> f Bool -> f Bool
-fAnd a b = (&&) <$> a <*> b
+flipMaybe a b = case a of
+    Nothing -> Just b
+    Just _ -> Nothing
+
+firstError :: [PositionReader (Maybe Error)] -> PositionReader (Maybe Error)
+firstError = getFirst. checks First. map (First <$>)
+
+checks :: Monoid m => 
+          m -> [PositionReader (Maybe Error)] -> PositionReader (Maybe Error)
+checks = fmap mconcat. sequence
+
+takeWhileM :: Monad m => (a -> m Bool) -> [a] -> m [a]
+takeWhileM f xs = liftM (flip take xs. length. takeWhile id) $ seqmap f xs
+
+seqmap f = sequence. map f
+
+choice :: Bool -> a -> a
+choice a b c = if a then b else c
 
