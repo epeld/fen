@@ -61,20 +61,29 @@ type PositionReaderT = ReaderT Chess.Position
 
 move :: Move -> PositionReader (Either Error Position)
 move mv = do p <- moveNaivePromote mv
-             let legal = runReader isLegal p
-             maybeError legal p
+             return $ case p of
+                 Right pos -> maybeError (runReader isLegal pos) pos
+                 Left err -> Left err
 
 -- Naive move := move disregarding king safety
 moveNaivePromote :: Move -> PositionReader (Either Error Position)
 moveNaivePromote mv = do checkPromotion mv
                          pos <- moveNaive mv
                          let promo = promotion mv
-                         let promote = insert $ destination mv
-                         return (maybe id promote promo <$> pos)
+                         let dest = destination mv
+                         return $ case promo of
+                             Nothing -> pos
+                             Just pr -> runReader (promote dest pr) <$> pos
 
 moveNaive :: Move -> PositionReader (Either Error Position)
-moveNaive pos mv = maybeError <$> errs <*> performMove pos mv
+moveNaive mv = maybeError <$> errs <*> performMove mv
     where errs = firstError [checkSource mv, checkRange mv]
+
+promote :: Square -> OfficerType -> PositionReader Position
+promote sq pr = do
+    pos <- ask
+    let pc = Piece (Officer pr) (turn pos) 
+    return pos{ board = insert sq pc (board pos) }
 
 -------------------------------------------------------
 -- Move Logic
@@ -93,20 +102,20 @@ data RangeStrategy = TraverseEmpty |
 checkRange :: Move -> PositionReader (Maybe Error)
 checkRange mv = choice <$> isInRange mv 
                        <*> pure Nothing 
-                       <*> pure $ Just NotInRange
+                       <*> pure (Just NotInRange)
 
 isInRange :: Move -> PositionReader Bool
-isInRange mv = elem (destination mv) <$> concat (fromMove mv)
+isInRange mv = elem (destination mv). concat <$> fromMove mv
                     
 
-fromMove :: Move -> Range
-fromMove mv = let pt = pieceTypeAt $ source mv
-              in
-              case pt of
-                 Just t -> fromMove' t mv
-                 Nothing -> []
+fromMove :: Move -> PositionReader Range
+fromMove mv = do
+    pt <- pieceTypeAt $ source mv
+    case pt of
+       Just t -> fromMove' t mv
+       Nothing -> return []
 
-fromMove' :: PieceType -> Move -> Range
+fromMove' :: PieceType -> Move -> PositionReader Range
 fromMove' pt mv = let src = source mv
                   in choice <$> isCapture mv 
                             <*> threats pt src
@@ -121,21 +130,20 @@ moves = applied TraverseEmpty
 
 -- Applied, as opposed to theoretical range. See below
 applied :: RangeStrategy -> PieceType -> RangeProducer
-applied s pt = withStrategy s $ theoretical pt s
+applied s pt sq = withStrategy s =<< theoretical pt s sq
 
 
-withStrategy :: RangeStrategy -> RangeProducer -> RangeProducer
+withStrategy :: RangeStrategy -> Range -> PositionReader Range
 --                 (->)   Reader []
-withStrategy s r = liftM (liftM (liftM (withStrategy' s))) r
+withStrategy s r = sequence $ map (withStrategy' s) r
 
-withStrategy' :: RangeStrategy -> SequenceProducer -> SequenceProducer
-withStrategy' TraverseEmpty pr sq = takeWhileM isEmpty =<< pr sq
+withStrategy' :: RangeStrategy -> Sequence -> PositionReader Sequence
+withStrategy' TraverseEmpty sqs = takeWhileM isEmpty sqs
 
 
 -- TODO handle passant
-withStrategy' FirstCapture pr sq = 
-    do empty <- withStrategy' TraverseEmpty pr sq
-       sqs <- pr sq
+withStrategy' FirstCapture sqs = 
+    do empty <- withStrategy' TraverseEmpty sqs
        let last = safeHead $ drop (length empty) sqs
        case last of
            Nothing -> return empty
@@ -398,7 +406,7 @@ onInitialRank sq = do initial <- initialRank
 
 initialRank :: PositionReader Int
 initialRank = do clr <- liftM turn ask
-                 case clr of
+                 return $ case clr of
                     White -> 2
                     Black -> 7
 
