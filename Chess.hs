@@ -4,11 +4,11 @@ import Control.Applicative ((<|>), (<$>), (<*>), pure, Applicative)
 import Control.Monad (liftM, liftM2, filterM, (>=>), (>>=), (=<<))
 import Control.Monad.Reader (Reader)
 import Control.Monad.Trans.Reader (runReader, ReaderT, ask, local)
-import Data.Monoid (mconcat, First(..), getFirst, Monoid)
+import Data.Monoid (mappend, mconcat, First(..), getFirst, Monoid)
 import Data.Map (insert, delete, keys, Map, lookup)
 import Data.List (find, foldl')
 import Data.Set (fromList, Set, difference)
-import Data.Maybe (catMaybes, fromMaybe, isJust, isNothing, mapMaybe, fromJust)
+import Data.Maybe (catMaybes, fromMaybe, isJust, isNothing, fromJust, mapMaybe)
 
 data Error = KingCapturable | 
              NoPiece |
@@ -125,41 +125,48 @@ applied s pt = withStrategy s $ theoretical pt s
 
 
 withStrategy :: RangeStrategy -> RangeProducer -> RangeProducer
-withStrategy s r sq = map (withStrategy' s sq) <$> r sq
+--                 (->)   Reader []
+withStrategy s r = liftM (liftM (liftM (withStrategy' s))) r
 
 withStrategy' :: RangeStrategy -> SequenceProducer -> SequenceProducer
-withStrategy' TraverseEmpty pr sq = takeWhileM isEmpty (pr sq)
+withStrategy' TraverseEmpty pr sq = takeWhileM isEmpty =<< pr sq
+
 
 -- TODO handle passant
 withStrategy' FirstCapture pr sq = 
     do empty <- withStrategy' TraverseEmpty pr sq
        sqs <- pr sq
        let last = safeHead $ drop (length empty) sqs
-       return $ case last of
-           Nothing -> empty
-           Just sq -> empty ++ (enemyAt sq >>= \y -> if y then [sq] else [])
+       case last of
+           Nothing -> return empty
+           Just sq -> liftM (empty ++) (choice <$> enemyAt sq 
+                                               <*> return [sq]
+                                               <*> return [])
 
 -- Theoretical ranges. That is, 'in the best case'
 theoretical :: PieceType -> RangeStrategy -> RangeProducer
-theoretical Pawn TraverseEmpty = fromSteppers [forward] >>= 
-                                 map (take 2)
-
-theoretical Pawn FirstCapture = fromSteppers [forward >=> left, 
-                                              forward >=> right] >>= 
-                                map (take 1)
-
 theoretical (Officer o) _ = theoretical' o 
 
-theoretical' :: PieceType -> RangeProducer
-theoretical' Bishop = fromSteppers [upLeft, upRight, downLeft, downRight]
-theoretical' Rook = fromSteppers [up, down, left, right]
-theoretical' Queen = concat <$> sequence [theoretical' Bishop, 
-                                          theoretical' Rook]
-theoretical' King = map (take 1) =<< theoretical' Queen
-theoretical' Knight = sequence $ mapMaybe runStepper knightSteppers
+-- TODO clean up this mess..
+theoretical Pawn TraverseEmpty = \s -> 
+    do sqs <- sequence [forwardN 1 s, forwardN 2 s]
+       (:[]). catMaybes <$> takeWhileM (return. isJust) sqs
+       
+theoretical Pawn FirstCapture = \s ->
+    do next <- forward s
+       return $ map (:[]) $ catMaybes [next >>= left, next >>= right]
+
+theoretical' :: OfficerType -> RangeProducer
+theoretical' King = fromSteppersN 1 $ steppers King
+theoretical' Knight = fromSteppersN 1 $ steppers Knight
+theoretical' pt = fromSteppers $ steppers pt
           
-knightSteppers :: [Stepper]
-knightSteppers = foldl' (>=>) return <$>
+steppers :: OfficerType -> [Stepper]
+steppers King = steppers Queen
+steppers Queen = concat $ [steppers Rook, steppers Bishop]
+steppers Rook = [up, down, left, right]
+steppers Bishop = [upLeft, upRight, downLeft, downRight]
+steppers Knight = foldl' (>=>) return <$>
     [[up, up, left], [up, up, right], 
      [up, right, right], [down, right, right],
      [down, down, right], [down, down, left],
@@ -170,6 +177,9 @@ knightSteppers = foldl' (>=>) return <$>
 
 type Stepper = Square -> Maybe Square
 
+runStepperOnce :: Stepper -> Square -> Maybe Square
+runStepperOnce stepper = safeHead. take 1. runStepper stepper
+
 runStepper :: Stepper -> Square -> [Square]
 runStepper stepper sq = 
     case stepper sq of
@@ -177,7 +187,10 @@ runStepper stepper sq =
         Nothing -> []
 
 fromSteppers :: [Stepper] -> RangeProducer
-fromSteppers steppers = sequence (map runStepper steppers)
+fromSteppers steppers = return. sequence (map runStepper steppers)
+
+fromSteppersN :: Int -> [Stepper] -> RangeProducer
+fromSteppersN n steppers = liftM (map $ take n). fromSteppers steppers
 
 ------------------------------------------
 -- Position Construction
@@ -523,3 +536,7 @@ everyM = fmap (all id). sequence
 
 someM :: [PositionReader Bool] -> PositionReader Bool
 someM xs = anyM id xs
+
+-- The holy grail:
+swapM :: (a -> PositionReader b) -> PositionReader (a -> b)
+swapM r = liftM (\x -> liftM (flip runReader x) r) ask
