@@ -70,7 +70,21 @@ moves = applied TraverseEmpty
 
 -- Applied, as opposed to theoretical range. See below
 applied :: RangeStrategy -> PieceType -> RangeProducer
-applied s pt sq = withStrategy s =<< theoretical pt s sq
+applied FirstCapture Pawn sq =
+  let r = applied' FirstCapture Pawn sq
+   in do sqs <- concat <$> theoretical Pawn FirstCapture sq
+         p <- liftM passant ask
+         app <- applied' FirstCapture Pawn sq
+         return $ case p of
+           Nothing -> app
+           Just ps -> if elem ps sqs
+                      then app ++ [[ps]]
+                      else app
+
+applied s pt sq = applied' s pt sq
+
+applied' :: RangeStrategy -> PieceType -> RangeProducer
+applied' s pt sq = withStrategy s =<< theoretical pt s sq
 
 
 withStrategy :: RangeStrategy -> Range -> PositionReader Range
@@ -298,6 +312,9 @@ checkLegal = firstError [checkKingSafe, checkPromotedPawns]
 ----------------------------------
 -- Chess Utils
 --
+
+isLegalMove :: Move -> PositionReader Bool
+isLegalMove mv = isRight <$> move mv
 
 promote :: Square -> OfficerType -> PositionReader Position
 promote sq pr = do
