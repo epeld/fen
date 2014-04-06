@@ -69,33 +69,31 @@ moves :: PieceType -> RangeProducer
 moves = applied TraverseEmpty
 
 -- Applied, as opposed to theoretical range. See below
+-- applied handles passant, applied' does not
 applied :: RangeStrategy -> PieceType -> RangeProducer
 applied FirstCapture Pawn sq =
-  let r = applied' FirstCapture Pawn sq
-   in do sqs <- concat <$> theoretical Pawn FirstCapture sq
-         p <- liftM passant ask
-         app <- applied' FirstCapture Pawn sq
-         return $ case p of
-           Nothing -> app
-           Just ps -> if elem ps sqs
-                      then app ++ [[ps]]
-                      else app
-
+  liftM2 (++) (passantRange sq) (applied' FirstCapture Pawn sq)
 applied s pt sq = applied' s pt sq
 
+-- Note: applied' does not handle the passant rule. See above
 applied' :: RangeStrategy -> PieceType -> RangeProducer
 applied' s pt sq = withStrategy s =<< theoretical pt s sq
 
+passantRange :: RangeProducer
+passantRange sq = do sqs <- concat <$> theoretical Pawn FirstCapture sq
+                     p <- passant <$> ask
+                     return $ case p of
+                       Nothing -> []
+                       Just ps -> if elem ps sqs then [[ps]] else []
+
 
 withStrategy :: RangeStrategy -> Range -> PositionReader Range
---                 (->)   Reader []
 withStrategy s = mapM (withStrategy' s)
 
 withStrategy' :: RangeStrategy -> Sequence -> PositionReader Sequence
 withStrategy' TraverseEmpty sqs = takeWhileM isEmpty sqs
 
 
--- TODO handle passant
 withStrategy' FirstCapture sqs =
     do empty <- withStrategy' TraverseEmpty sqs
        let last = safeHead $ drop (length empty) sqs
