@@ -1,12 +1,13 @@
 module Pgn where
-import Control.Monad ((=<<), filterM, liftM)
+import Control.Monad ((=<<), filterM, liftM, liftM2)
 import Control.Monad.Trans.Reader (ReaderT)
 import Control.Monad.Identity (Identity)
 import Control.Monad.Reader (Reader, ask)
 import Control.Applicative ((<$>), (<*>), pure)
+import Data.Maybe (fromJust)
 import qualified Chess
 import qualified Types as Chess
-import Utils (everyM, anyM)
+import Utils (everyM, anyM, ifM1)
 
 data Move = PieceMove {
                 pieceType :: Chess.PieceType,
@@ -33,16 +34,68 @@ data Error = CaptureNotPossible |
              deriving (Show, Eq)
 
 
-resolve :: Pgn.Move -> Chess.PositionReader (Either Error Chess.Move)
-resolve mv = move <$> implied mv
+encode :: Chess.Move -> Chess.PositionReader (Either Chess.Error Pgn.Move)
+encode mv = do
+  legalPos <- Chess.move mv
+  pgn <- encode' mv
+  return (legalPos >> pgn)
 
-move :: [Chess.Move] -> Either Error Chess.Move
-move [] = Left NoCandidate
-move [mv] = Right mv
-move moves = Left $ AmbigousMove moves
+encode' mv = do
+  let src = Chess.source mv
+  pt <- liftM fromJust $ Chess.pieceTypeAt src
+  indicator <- distinguish src <$> findSimilarSources mv
+  mt <- inferMoveType mv
+  let pgn = PieceMove { pieceType = pt,
+                        source = indicator,
+                        moveType = mt,
+                        destination = Chess.destination mv,
+                        promotion = Chess.promotion mv }
+  return (Right pgn)
+
+
+findSimilarSources :: Chess.Move -> Chess.PositionReader [Chess.Square]
+findSimilarSources mv = do
+  pt <- liftM fromJust $ Chess.pieceTypeAt (Chess.source mv)
+  let canMove sq = Chess.isLegalMove $
+                   Chess.Move sq (Chess.destination mv) (Chess.promotion mv)
+  filterM canMove =<< findFriendly pt
+
+
+-- TODO move this to Chess module
+findFriendly :: Chess.PieceType -> Chess.PositionReader [Chess.Square]
+findFriendly pt = filterM matchingPieceType =<< Chess.friendlySquares
+  where matchingPieceType sq = liftM (Just pt ==) (Chess.pieceTypeAt sq)
+
+distinguish :: Chess.Square -> [Chess.Square] -> Maybe SourceIndicator
+distinguish sq xs = if elem sq xs
+                    then distinguish' sq xs
+                    else error "Fatal error in chess logic" -- sanity check
+
+distinguish' :: Chess.Square -> [Chess.Square] -> Maybe SourceIndicator
+distinguish' sq [x] = Nothing
+distinguish' sq sqs =
+  let r = Chess.rank sq
+      f = Chess.file sq
+      ranks = map Chess.rank sqs
+      files = map Chess.file sqs in
+  case (any (f ==) files, any (r ==) ranks) of
+    (True, True) -> Just $ Square sq
+    (True, False) -> Just $ Rank r
+    _ -> Just $ File f
+
+inferMoveType :: Chess.Move -> Chess.PositionReader MoveType
+inferMoveType mv = ifM1 (Chess.isCapture mv) Captures Moves
+
+resolve :: Pgn.Move -> Chess.PositionReader (Either Error Chess.Move)
+resolve mv = onlyMove <$> implied mv
+
+onlyMove :: [Chess.Move] -> Either Error Chess.Move
+onlyMove [] = Left NoCandidate
+onlyMove [mv] = Right mv
+onlyMove moves = Left $ AmbigousMove moves
 
 implied :: Pgn.Move -> Chess.PositionReader [Chess.Move]
-implied mv = filterM Chess.isLegal =<< moves mv
+implied mv = filterM Chess.isLegalMove =<< moves mv
 
 moves :: Pgn.Move -> Chess.PositionReader [Chess.Move]
 moves mv =  map makeMove <$> sources mv
