@@ -121,6 +121,12 @@ theoretical' King = fromSteppersN 1 $ steppers King
 theoretical' Knight = fromSteppersN 1 $ steppers Knight
 theoretical' pt = fromSteppers $ steppers pt
 
+
+---------------------
+-- Steppers
+
+type Stepper = Square -> Maybe Square
+
 steppers :: OfficerType -> [Stepper]
 steppers King = steppers Queen
 steppers Queen = steppers Rook ++ steppers Bishop
@@ -131,11 +137,6 @@ steppers Knight = foldl' (>=>) return <$>
      [up, right, right], [down, right, right],
      [down, down, right], [down, down, left],
      [down, left, left], [up, left, left]]
-
----------------------
--- Steppers
-
-type Stepper = Square -> Maybe Square
 
 runStepperOnce :: Stepper -> Square -> Maybe Square
 runStepperOnce stepper = safeHead. take 1. runStepper stepper
@@ -175,9 +176,7 @@ calcPassant mv =
     let src = source mv
         dest = destination mv
     in
-    if_ <$> everyM [pawnAt src,
-                    isForward 2 src dest,
-                    onInitialRank src]
+    if_ <$> everyM [pawnAt src, isForward 2 src dest, onInitialRank src]
         <*> back src
         <*> pure Nothing
 
@@ -306,6 +305,7 @@ checkKingSafe = do
 
 checkLegal :: PositionReader (Maybe Error)
 checkLegal = firstError [checkKingSafe, checkPromotedPawns]
+
 
 ----------------------------------
 -- Chess Utils
