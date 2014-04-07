@@ -37,21 +37,17 @@ data Error = CaptureNotPossible |
 encode :: Chess.Move -> Chess.PositionReader (Either Chess.Error Pgn.Move)
 encode mv = do
   legalPos <- Chess.move mv
-  pgn <- encode' mv
-  return (legalPos >> pgn)
+  pgn <- encodeLegal mv
+  return (legalPos >> Right pgn)
 
-encode' mv = do
-  let src = Chess.source mv
-  pt <- liftM fromJust $ Chess.pieceTypeAt src
-  indicator <- distinguish src <$> findSimilarSources mv
-  mt <- inferMoveType mv
-  let pgn = PieceMove { pieceType = pt,
-                        source = indicator,
-                        moveType = mt,
-                        destination = Chess.destination mv,
-                        promotion = Chess.promotion mv }
-  return (Right pgn)
-
+encodeLegal :: Chess.Move -> Chess.PositionReader Pgn.Move
+encodeLegal mv =
+  PieceMove <$> liftM fromJust (Chess.pieceTypeAt src)
+            <*> liftM (distinguish src) (findSimilarSources mv)
+            <*> inferMoveType mv
+            <*> pure (Chess.destination mv)
+            <*> pure (Chess.promotion mv)
+  where src = Chess.source mv
 
 findSimilarSources :: Chess.Move -> Chess.PositionReader [Chess.Square]
 findSimilarSources mv = do
@@ -83,6 +79,7 @@ distinguish' sq sqs =
     (True, False) -> Just $ Rank r
     _ -> Just $ File f
 
+-- TODO move this to Chess module?
 inferMoveType :: Chess.Move -> Chess.PositionReader MoveType
 inferMoveType mv = ifM1 (Chess.isCapture mv) Captures Moves
 
