@@ -29,10 +29,17 @@ data SourceIndicator = File Char |
 
 data Error = CaptureNotPossible |
              CaptureRequired |
-             AmbigousMove [Chess.Move] |
+             AmbigousMove [Chess.Move] | -- TODO use Pgn.Move here
              NoCandidate
              deriving (Show, Eq)
 
+move :: Move -> Chess.PositionReader (Either Error Chess.Position)
+move mv = do
+  r <- resolve mv
+  case r of
+    Left err -> return $ Left err
+    Right cmv -> do p <- Chess.move cmv
+                    return $ either (error. show) Right p
 
 encode :: Chess.Move -> Chess.PositionReader (Either Chess.Error Pgn.Move)
 encode mv = do

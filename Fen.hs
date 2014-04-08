@@ -2,10 +2,10 @@ module Fen where
 import Prelude hiding (lookup)
 import Data.List (groupBy, intersperse, sort)
 import Data.Maybe
-import Data.Char ( toUpper, 
-                   toLower, 
-                   isUpper, 
-                   isDigit, 
+import Data.Char ( toUpper,
+                   toLower,
+                   isUpper,
+                   isDigit,
                    intToDigit,
                    isDigit,
                    digitToInt )
@@ -13,16 +13,17 @@ import Data.Map (fromList, lookup, unions)
 import qualified Data.Set (toList, fromList, Set(..))
 import Data.List.Split (splitOn, chunksOf)
 import Control.Applicative ((<*>), (<$>), pure)
-import Chess ( Position(..),
+import Types ( Position(..),
                Board,
                Square(..),
                Color(..),
-               Side(..), 
-               Piece(..), 
+               Side(..),
+               Piece(..),
                PieceType(..),
                OfficerType(..),
-               CastlingRight(..),
-               newRank, newFile )
+               CastlingRight(..) )
+import Chess (newRank, newFile)
+
 
 decodeChar :: FEN f => Char -> Maybe f
 decodeChar c = decode [c]
@@ -72,12 +73,12 @@ encodeBoard :: Board -> String
 encodeBoard b = let pieces = map (flip lookup b) fenSquares
                     rows = chunksOf 8 pieces
                 in concat $ intersperse "/" (map encodeRow rows)
-                
+
 decodeBoard :: String -> Maybe Board
 decodeBoard s = do
     rows <- fmap concat $ sequence $ map decodeRow $ splitOn "/" s
 
-    let assocs :: [Maybe (Square, Piece)] 
+    let assocs :: [Maybe (Square, Piece)]
         assocs = zipWith (\a b -> fmap ((,) a) b) fenSquares rows
 
     Just $ fromList $ catMaybes $ assocs
@@ -124,7 +125,7 @@ instance FEN CastlingRight where
 
     decode "K" = Just $ Castling Kingside White
     decode "Q" = Just $ Castling Queenside White
-    decode "k" = Just $ Castling Kingside Black 
+    decode "k" = Just $ Castling Kingside Black
     decode "q" = Just $ Castling Queenside Black
     decode _ = Nothing
 

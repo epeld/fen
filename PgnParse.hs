@@ -5,6 +5,7 @@ import Control.Applicative ((<$>), (<*>))
 import Text.ParserCombinators.Parsec
 import qualified Pgn
 import qualified Chess
+import qualified Types as Chess
 import qualified Fen
 
 square :: Parser Chess.Square
@@ -21,7 +22,7 @@ queenside = string "O-O-O" >> return Chess.Queenside
 kingside = string "O-O" >> return Chess.Kingside
 
 pieceMove :: Parser Pgn.Move
-pieceMove = (try longPieceMove) <|> shortPieceMove
+pieceMove = try longPieceMove <|> shortPieceMove
 
 move :: Parser Pgn.Move
 move = try pawnMove <|> try pieceMove <|> castles
@@ -43,7 +44,7 @@ longPieceMove = Pgn.PieceMove <$> fmap Chess.Officer officerType
 officerType :: Parser Chess.OfficerType
 officerType = fmap (fromJust. Fen.decodeChar) (oneOf "RNBQ")
 
-moveType = option Pgn.Moves (string "x" >> return Pgn.Takes)
+moveType = option Pgn.Moves (string "x" >> return Pgn.Captures)
 
 pawnMove :: Parser Pgn.Move
 pawnMove = try longPawnMove <|> shortPawnMove
@@ -62,11 +63,11 @@ longPawnMove :: Parser Pgn.Move
 longPawnMove = try longPawnMoves <|> pawnTakes
 
 longPawnMoves :: Parser Pgn.Move
-longPawnMoves = movePawnFromTo <$> squareIndicator 
-                               <*> square 
+longPawnMoves = movePawnFromTo <$> squareIndicator
+                               <*> square
                                <*> maybePromotion
 
-movePawnFromTo :: Pgn.SourceIndicator -> Chess.Square -> 
+movePawnFromTo :: Pgn.SourceIndicator -> Chess.Square ->
                   Maybe Chess.OfficerType -> Pgn.Move
 movePawnFromTo src sq promo = Pgn.PieceMove {
     Pgn.pieceType = Chess.Pawn,
@@ -77,7 +78,7 @@ movePawnFromTo src sq promo = Pgn.PieceMove {
 
 -- exd3=R
 pawnTakes :: Parser Pgn.Move
-pawnTakes = movePawnTakes <$> pawnSourceIndicator 
+pawnTakes = movePawnTakes <$> pawnSourceIndicator
                           <*> (char 'x' >> square)
                           <*> maybePromotion
 
@@ -91,11 +92,11 @@ maybePromotion = fmap Just promotion <|> return Nothing
 movePawnTakes src sq promo = Pgn.PieceMove {
     Pgn.pieceType = Chess.Pawn,
     Pgn.source = Just src,
-    Pgn.moveType = Pgn.Takes,
+    Pgn.moveType = Pgn.Captures,
     Pgn.destination = sq,
     Pgn.promotion = promo }
 
-                                
+
 
 sourceIndicator :: Parser Pgn.SourceIndicator
 sourceIndicator = pawnSourceIndicator <|> rankIndicator
