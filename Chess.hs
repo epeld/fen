@@ -245,7 +245,7 @@ downRight = down >=> right
 
 inc :: Enum a => a -> Int -> a
 inc x n = let op = if n < 0 then pred else succ
-          in iterate op x !! n
+          in iterate op x !! abs n
 
 mv :: Square -> Int -> Int -> Maybe Square
 mv sq v h = let r' = inc (rank sq) v
