@@ -7,7 +7,7 @@ import Control.Monad.Trans.Reader (runReader, ReaderT, ask, local)
 import Data.Monoid (mappend, mconcat, First(..), getFirst, Monoid)
 import Data.Map (insert, delete, keys, Map, lookup)
 import Data.List (find, foldl')
-import Data.Set (fromList, Set, difference)
+import Data.Set (fromList, union, Set, difference)
 import Data.Maybe (catMaybes, fromMaybe, isJust, isNothing, fromJust, mapMaybe)
 import Types
 import Utils
@@ -189,8 +189,7 @@ calcTurn = liftM (toggle. turn) ask
 
 calcCastling :: Move -> PositionReader (Set CastlingRight)
 calcCastling mv =
-    let lost = Data.Set.fromList $
-            mapMaybe lostCastling [source mv, destination mv]
+    let lost = union (lostCastling $ source mv) (lostCastling $ destination mv)
     in do
         c <- liftM castling ask
         return $ difference c lost
@@ -420,17 +419,25 @@ kingAt :: Square -> PositionReader Bool
 kingAt sq = liftM (Just (Officer King) ==) (pieceTypeAt sq)
 
 enemyAt :: Square -> PositionReader Bool
-enemyAt sq = liftM2 (==) (Just <$> enemyColor) (colorAt sq)
+enemyAt sq = do
+  clr <- colorAt sq
+  clr2 <- enemyColor
+  return $ clr == Just clr2
 
 friendlyAt :: Square -> PositionReader Bool
-friendlyAt sq = liftM2 (==) (Just. turn <$> ask) (colorAt sq)
+friendlyAt sq = do
+  clr <- colorAt sq
+  clr2 <- liftM turn ask
+  return $ clr == Just clr2
 
 pieceAt :: Square -> PositionReader (Maybe Piece)
-pieceAt sq = liftM (lookup sq. board) ask
+pieceAt sq = do
+  pos <- ask
+  return $ lookup sq (board pos)
 
 pieceTypeAt :: Square -> PositionReader (Maybe PieceType)
 pieceTypeAt sq = do pc <- pieceAt sq
-                    return $ fmap pieceType pc
+                    return $ liftM pieceType pc
 
 colorAt :: Square -> PositionReader (Maybe Color)
 colorAt sq = do pc <- pieceAt sq
@@ -443,21 +450,24 @@ findSquare :: (Square -> PositionReader Bool) -> PositionReader (Maybe Square)
 findSquare pred = fmap safeHead (filterM pred =<< occupiedSquares)
 
 -- What castling right is lost if a piece moves from or to 'sq'?
-lostCastling :: Square -> Maybe CastlingRight
-lostCastling sq = let clr = case rank sq of
-                                1 -> Just White
-                                8 -> Just Black
-                                _ -> Nothing
+lostCastling :: Square -> Set CastlingRight
+lostCastling (Square f r) = fromList $
+  Castling <$> lostCastlingSide f <*> lostCastlingColor r
 
-                      side = case file sq of
-                                'a' -> Just Kingside
-                                'h' -> Just Queenside
-                                _ -> Nothing
+lostCastlingColor :: Int -> [Color]
+lostCastlingColor 1 = [White]
+lostCastlingColor 8 = [Black]
+lostCastlingColor _ = []
 
-                   in Castling <$> side <*> clr
+lostCastlingSide :: Char -> [Side]
+lostCastlingSide 'a' = [Queenside]
+lostCastlingSide 'h' = [Kingside]
+lostCastlingSide 'e' = [Kingside, Queenside]
+lostCastlingSide _ = []
 
 adjacentFiles :: Square -> Square -> Bool
-adjacentFiles sq1 sq2 = 1 == abs (fromEnum (file sq1) - fromEnum (file sq2))
+adjacentFiles sq1 sq2 = 1 == abs ( fileEnum sq1 - fileEnum sq2 )
+  where fileEnum = fromEnum. file
 
 toggle :: Color -> Color
 toggle White = Black
