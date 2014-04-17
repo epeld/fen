@@ -29,8 +29,8 @@ data PieceType = Pawn |
                  Officer OfficerType
                  deriving (Show, Eq)
 
-data OfficerType = Bishop | Rook | King | Queen | Knight
-                   deriving (Show, Eq)
+data OfficerType = Knight | Bishop | Rook | Queen | King
+                   deriving (Show, Eq, Ord, Enum)
 
 data Square = Square { file :: Char, rank :: Int }
               deriving (Show, Eq, Ord)
