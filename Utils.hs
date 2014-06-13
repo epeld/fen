@@ -5,6 +5,8 @@ import Control.Applicative ((<$>), (<*>), pure, Applicative)
 import Data.Monoid (mappend, mconcat, First(..), getFirst, Monoid)
 import Types (PositionReader, Error)
 
+findElem :: a -> [a] -> Maybe a
+findElem a = find (== a)
 
 maybeNot :: Monad m => (a -> m Bool) -> Maybe a -> m Bool
 maybeNot = maybe (return False)

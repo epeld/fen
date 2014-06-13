@@ -223,43 +223,10 @@ forward sq = ifM1 (liftM ((White ==). turn) ask)
 back :: Square -> PositionReader (Maybe Square)
 back = local toggleTurn. forward
 
-
-up :: Square -> Maybe Square
-down :: Square -> Maybe Square
-left :: Square -> Maybe Square
-right :: Square -> Maybe Square
-upLeft :: Square -> Maybe Square
-upRight :: Square -> Maybe Square
-downLeft :: Square -> Maybe Square
-downRight :: Square -> Maybe Square
-
-up sq = mv sq 1 0
-down sq = mv sq (-1) 0
-right sq = mv sq 0 1
-left sq = mv sq 0 (-1)
-upLeft = up >=> left
-upRight = up >=> right
-downLeft = down >=> left
-downRight = down >=> right
-
 inc :: Enum a => a -> Int -> a
 inc x n = let op = if n < 0 then pred else succ
           in iterate op x !! abs n
 
-mv :: Square -> Int -> Int -> Maybe Square
-mv sq v h = let r' = inc (rank sq) v
-                f' = inc (file sq) h
-             in liftM2 Square (newFile f') (newRank r')
-
-
-newRank :: Int -> Maybe Int
-newRank r = if validRank r then Just r else Nothing
-
-newFile :: Char -> Maybe Char
-newFile f = if validFile f then Just f else Nothing
-
-validRank r = 1 <= r && r <= 8
-validFile f = 'a' <= f && f <= 'h'
 
 ---------------------------------
 -- Checks
@@ -364,18 +331,6 @@ onInitialRank sq = do initial <- initialRank
                       return $ rank sq == initial
 
 
-initialRank :: PositionReader Int
-initialRank = do clr <- liftM turn ask
-                 return $ case clr of
-                    White -> 2
-                    Black -> 7
-
-lastRank :: PositionReader Int
-lastRank = do clr <- liftM turn ask
-              case clr of
-                  White -> return 8
-                  Black -> return 1
-
 relocate :: Square -> Square -> PositionReader Board
 relocate src dest = liftM (delete src) (copy src dest)
 
@@ -401,77 +356,3 @@ passantCapture mv = do
         if adjacentFiles src dest && plausible
         then captureSquare
         else Nothing
-
-isPassantSquare :: Square -> PositionReader Bool
-isPassantSquare sq = liftM ((Just sq ==). passant) ask
-
-isForward :: Int -> Square -> Square -> PositionReader Bool
-isForward n src dst = liftM (Just dst ==) (forwardN n src)
-
-
-isEmpty :: Square -> PositionReader Bool
-isEmpty sq = liftM isNothing (pieceTypeAt sq)
-
-pawnAt :: Square -> PositionReader Bool
-pawnAt sq = liftM (Just Pawn ==) (pieceTypeAt sq)
-
-kingAt :: Square -> PositionReader Bool
-kingAt sq = liftM (Just (Officer King) ==) (pieceTypeAt sq)
-
-enemyAt :: Square -> PositionReader Bool
-enemyAt sq = do
-  clr <- colorAt sq
-  clr2 <- enemyColor
-  return $ clr == Just clr2
-
-friendlyAt :: Square -> PositionReader Bool
-friendlyAt sq = do
-  clr <- colorAt sq
-  clr2 <- liftM turn ask
-  return $ clr == Just clr2
-
-pieceAt :: Square -> PositionReader (Maybe Piece)
-pieceAt sq = do
-  pos <- ask
-  return $ lookup sq (board pos)
-
-pieceTypeAt :: Square -> PositionReader (Maybe PieceType)
-pieceTypeAt sq = do pc <- pieceAt sq
-                    return $ liftM pieceType pc
-
-colorAt :: Square -> PositionReader (Maybe Color)
-colorAt sq = do pc <- pieceAt sq
-                return $ fmap color pc
-
-enemyColor :: PositionReader Color
-enemyColor = liftM (toggle. turn) ask
-
-findSquare :: (Square -> PositionReader Bool) -> PositionReader (Maybe Square)
-findSquare pred = fmap safeHead (filterM pred =<< occupiedSquares)
-
--- What castling right is lost if a piece moves from or to 'sq'?
-lostCastling :: Square -> Set CastlingRight
-lostCastling (Square f r) = fromList $
-  Castling <$> lostCastlingSide f <*> lostCastlingColor r
-
-lostCastlingColor :: Int -> [Color]
-lostCastlingColor 1 = [White]
-lostCastlingColor 8 = [Black]
-lostCastlingColor _ = []
-
-lostCastlingSide :: Char -> [Side]
-lostCastlingSide 'a' = [Queenside]
-lostCastlingSide 'h' = [Kingside]
-lostCastlingSide 'e' = [Kingside, Queenside]
-lostCastlingSide _ = []
-
-adjacentFiles :: Square -> Square -> Bool
-adjacentFiles sq1 sq2 = 1 == abs ( fileEnum sq1 - fileEnum sq2 )
-  where fileEnum = fromEnum. file
-
-toggle :: Color -> Color
-toggle White = Black
-toggle Black = White
-
-toggleTurn :: Position -> Position
-toggleTurn p = p{turn = toggle $ turn p }
