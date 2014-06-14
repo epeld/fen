@@ -216,17 +216,10 @@ forwardN n sq = do next <- forward sq
                        Nothing -> return Nothing
 
 forward :: Square -> PositionReader (Maybe Square)
-forward sq = ifM1 (liftM ((White ==). turn) ask)
-                  (up sq)
-                  (down sq)
-
 back :: Square -> PositionReader (Maybe Square)
-back = local toggleTurn. forward
 
-inc :: Enum a => a -> Int -> a
-inc x n = let op = if n < 0 then pred else succ
-          in iterate op x !! abs n
-
+forward sq = flip Position.forward sq <$> ask
+back sq = flip Position.back sq <$> ask
 
 ---------------------------------
 -- Checks

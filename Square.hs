@@ -42,4 +42,14 @@ square f r = liftM2 Square (findElem f files) (findElem r ranks)
 mv :: (Int, Int) -> Square -> Maybe Square
 mv x = uncurry square. inc2 x
 
+
+inc :: Enum a => Int -> a -> a
+inc x n = iterate (op n) x !! abs n
+
+op :: Enum a => Int -> (a -> a)
+op n = if n < 0
+       then pred
+       else succ
+
+inc2 :: Enum a, Enum b => (Int, Int) -> (a, b) -> (a, b)
 inc2 (x,y) (a,b) = (inc x a, inc y b)

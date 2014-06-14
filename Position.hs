@@ -1,5 +1,7 @@
 module Position where
-import Color
+import Color (Color)
+import Move (Move(Move), Promotion)
+import Piece (pieceType, color)
 
 type Board = Map Square Piece
 
@@ -11,6 +13,8 @@ data Position = Position { board :: Board,
                            castling :: Set CastlingRight }
                            deriving (Show, Eq)
 
+data Move = Valid Piece Square Promotion
+
 lastRank :: Position -> Int
 lastRank = Color.lastRank. turn
 
@@ -20,18 +24,44 @@ nextTurn p = p{turn = enemyColor p }
 enemyColor :: Position -> Color
 enemyColor = Color.toggle. turn
 
--- Calculate the square that was captured en passant by a move (if any)
-passantCapture :: Move -> Position -> Maybe Square
-passantCapture mv p =
-    let src = source mv
-        dest = destination mv
-    captureSquare <- back dest
-    plausible <- everyM [pawnAt dest,
-                         maybeNot pawnAt captureSquare,
-                         maybeNot enemyAt captureSquare,
-                         isPassantSquare dest,
-                         isForward 1 src dest]
-    return $
-        if adjacentFiles src dest && plausible
-        then captureSquare
-        else Nothing
+lookup :: Square -> Position -> Maybe Piece
+lookup sq = Map.lookup sq. board
+
+isEmpty :: Square -> Position -> Bool
+isEmpty sq p = isNothing. lookup sq
+
+--
+-- Move Binding
+--
+move :: Piece -> Square -> Promotion -> Either Error Move
+move pc dst pm =
+  let mv = Move pc dst pm
+      check = first. sequence moveCheckers
+  in case check mv of
+    Just err -> Left err
+    Nothing -> Right mv
+
+moveCheckers = [colorChecker, promotionChecker, rangeChecker, checkChecker]
+
+type MoveChecker = (Move -> Maybe Error)
+
+colorChecker :: MoveChecker
+colorChecker (Move p _ _) = checker WrongColor isFriendly
+
+promotionChecker :: MoveChecker
+promotionChecker = checker IllegalPromotion $
+                   liftM2 (==) shouldPromote hasPromotion
+
+shouldPromote :: Move -> Bool
+shouldPromote mv = pieceType p == Pawn && isLastRankDestination mv
+
+hasPromotion :: Move -> Bool
+hasPromotion (Valid _ _ pm) = isJust pm
+
+type Checker = (a -> Maybe Error)
+
+checker :: (a -> Bool) -> Error -> Checker
+checker pred err a = if pred a then Nothing else Just err
+
+first :: [Maybe a] -> Maybe a
+first = getFirst. mconcat. map First

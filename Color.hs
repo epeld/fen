@@ -1,4 +1,6 @@
 module Color where
+import Square
+
 data Color = White | Black
            deriving (Show, Eq, Ord)
 
@@ -12,3 +14,6 @@ lastRank Black = 1
 
 initialRank White = 2
 initialRank Black = 7
+
+forward White = up
+forward Black = down
