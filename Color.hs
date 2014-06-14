@@ -12,8 +12,6 @@ lastRank :: Color -> Int
 lastRank White = 8
 lastRank Black = 1
 
+initialRank :: Color -> Int
 initialRank White = 2
 initialRank Black = 7
-
-forward White = up
-forward Black = down

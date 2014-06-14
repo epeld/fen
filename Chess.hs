@@ -123,35 +123,7 @@ theoretical' pt = fromSteppers $ steppers pt
 
 
 ---------------------
--- Steppers
 
-type Stepper = Square -> Maybe Square
-
-steppers :: OfficerType -> [Stepper]
-steppers King = steppers Queen
-steppers Queen = steppers Rook ++ steppers Bishop
-steppers Rook = [up, down, left, right]
-steppers Bishop = [upLeft, upRight, downLeft, downRight]
-steppers Knight = foldl' (>=>) return <$>
-    [[up, up, left], [up, up, right],
-     [up, right, right], [down, right, right],
-     [down, down, right], [down, down, left],
-     [down, left, left], [up, left, left]]
-
-runStepperOnce :: Stepper -> Square -> Maybe Square
-runStepperOnce stepper = safeHead. take 1. runStepper stepper
-
-runStepper :: Stepper -> Square -> [Square]
-runStepper stepper sq =
-    case stepper sq of
-        Just sq' -> sq' : runStepper stepper sq'
-        Nothing -> []
-
-fromSteppers :: [Stepper] -> RangeProducer
-fromSteppers steppers = return. mapM runStepper steppers
-
-fromSteppersN :: Int -> [Stepper] -> RangeProducer
-fromSteppersN n steppers = liftM (map $ take n). fromSteppers steppers
 
 ------------------------------------------
 -- Position Construction

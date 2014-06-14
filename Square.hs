@@ -15,41 +15,5 @@ adjacent a b = let a' = fromEnum a
 ranks = [1..8]
 files = ['a'..'h']
 
-
-up :: Square -> Maybe Square
-down :: Square -> Maybe Square
-left :: Square -> Maybe Square
-right :: Square -> Maybe Square
-
-up = mv (1, 0)
-down = mv (-1, 0)
-right = mv (0, 1)
-left = mv (0, -1)
-
-upLeft :: Square -> Maybe Square
-upRight :: Square -> Maybe Square
-downLeft :: Square -> Maybe Square
-downRight :: Square -> Maybe Square
-
-upLeft = up >=> left
-upRight = up >=> right
-downLeft = down >=> left
-downRight = down >=> right
-
 square :: Char -> Int -> Maybe Square
 square f r = liftM2 Square (findElem f files) (findElem r ranks)
-
-mv :: (Int, Int) -> Square -> Maybe Square
-mv x = uncurry square. inc2 x
-
-
-inc :: Enum a => Int -> a -> a
-inc x n = iterate (op n) x !! abs n
-
-op :: Enum a => Int -> (a -> a)
-op n = if n < 0
-       then pred
-       else succ
-
-inc2 :: Enum a, Enum b => (Int, Int) -> (a, b) -> (a, b)
-inc2 (x,y) (a,b) = (inc x a, inc y b)
