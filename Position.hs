@@ -27,5 +27,5 @@ enemyColor = Color.toggle. turn
 lookup :: Square -> Position -> Maybe Piece
 lookup sq = Map.lookup sq. board
 
-isEmpty :: Square -> Position -> Bool
-isEmpty sq p = isNothing. lookup sq
+isEmpty :: Position -> Square -> Bool
+isEmpty = isNothing. flip lookup
