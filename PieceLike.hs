@@ -2,6 +2,8 @@ module PieceLike where
 import qualified Piece
 import qualified Square
 import qualified Position
+import qualified Stepping
+import qualified Color
 
 class PieceLike a where
   piece :: a -> Piece.Piece
@@ -9,19 +11,19 @@ class PieceLike a where
   position :: a -> Position.Position
 
 pieceType :: PieceLike p => p -> Piece.PieceType
-pieceType = pieceType. boundPiece
+pieceType = Piece.pieceType. piece
 
-color :: PieceLike p => p -> Piece.PieceType
-color = color. piece
+color :: PieceLike p => p -> Color.Color
+color = Piece.color. piece
 
 isFriendly :: PieceLike p => p -> Bool
-isFriendly p = turn (position p) == color p
+isFriendly p = Position.turn (position p) == color p
 
 isPawn :: PieceLike p => p -> Bool
-isPawn p = pieceType p == Pawn
+isPawn p = pieceType p == Piece.Pawn
 
 isInitialRank :: PieceLike p => p -> Bool
-isInitialRank p = initialRank (color p) == rank (square p)
+isInitialRank p = Color.initialRank (color p) == Square.rank (square p)
 
-forward :: PieceLike p => p -> Stepper
-forward p = Stepping.forward. color
+forward :: PieceLike p => p -> Stepping.Stepper
+forward = Stepping.forward. color

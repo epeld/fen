@@ -1,17 +1,19 @@
 module Stepping where
-import Control.Monad ((>>=))
-import Data.Maybe (isJust, catMaybe)
+import Control.Monad ((>>=), (>=>))
 
-import Square (Square(Square), square)
+import Data.List (scanl, foldl')
+import Data.Maybe (isJust, catMaybes)
+
+import Square (Square(Square), square, coords)
 import Color (Color(White, Black))
-import Piece (Piece, PieceType, Officer(..))
+import Piece (Piece, PieceType(..), OfficerType(..))
+
+import Utils
 
 type Stepper = Square -> Maybe Square
 
 run :: Stepper -> Square -> [Square]
-run step sq = catMaybe $ takeWhile isJust $ iterateM step sq
-
-stepper :: OfficerType -> Square -> [Square]
+run step sq = catMaybes $ takeWhile isJust $ iterateM step sq
 
 steppers :: OfficerType -> [Stepper]
 steppers King = steppers Queen
@@ -45,21 +47,4 @@ right = mv (0, 1)
 left = mv (0, -1)
 
 mv :: (Int, Int) -> Square -> Maybe Square
-mv x = uncurry square. inc2 x
-
---
--- Very general functions
---
-inc :: Enum a => Int -> a -> a
-inc x n = iterate (op n) x !! abs n
-
-op :: Enum a => Int -> (a -> a)
-op n = if n < 0
-       then pred
-       else succ
-
-inc2 :: Enum a, Enum b => (Int, Int) -> (a, b) -> (a, b)
-inc2 (x,y) (a,b) = (inc x a, inc y b)
-
-iterateM f x = let x' = f x
-               in x' : x' >>= iterate f
+mv x = uncurry square. inc2 x. coords

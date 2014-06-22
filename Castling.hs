@@ -1,6 +1,13 @@
 module Castling where
-import Color (Color(White, Black))
 import Data.Set (Set)
+import Data.Maybe (catMaybes)
+import Data.Set (Set, fromList)
+
+import Control.Applicative ((<$>), (<*>))
+
+import Square (Square(Square))
+import Color (Color(White, Black))
+
 
 data Side = Queenside | Kingside
             deriving (Show, Eq, Ord)

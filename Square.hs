@@ -1,9 +1,12 @@
 module Square where
-import Control.Arrow
+import Control.Monad (liftM2)
+
+import Utils (findElem)
 
 data Square = Square { file :: Char, rank :: Int }
               deriving (Show, Eq, Ord)
 
+coords (Square f r) = (f, r)
 
 adjacentFiles :: Square -> Square -> Bool
 adjacentFiles sq1 sq2 = adjacent (file sq1) (file sq2)
