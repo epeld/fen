@@ -41,10 +41,10 @@ down :: Square -> Maybe Square
 left :: Square -> Maybe Square
 right :: Square -> Maybe Square
 
-up = mv (1, 0)
-down = mv (-1, 0)
-right = mv (0, 1)
-left = mv (0, -1)
+right = mv (1, 0)
+left = mv (-1, 0)
+up = mv (0, 1)
+down = mv (0, -1)
 
 mv :: (Int, Int) -> Square -> Maybe Square
 mv x = uncurry square. inc2 x. coords

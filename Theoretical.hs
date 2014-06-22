@@ -8,6 +8,8 @@ import qualified Square
 import qualified Piece
 import qualified Color
 
+import Utils (forEach)
+
 type Sequence = [Square.Square]
 type Range = [Sequence]
 
@@ -40,6 +42,3 @@ officerRange officer sq = Stepping.steppers officer `forEach` stepAs officer
 
 step :: Square.Square -> Stepping.Stepper -> [Square.Square]
 step = flip Stepping.run
-
-forEach :: [a] -> (a -> b) -> [b]
-forEach = flip map

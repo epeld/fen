@@ -1,11 +1,13 @@
 module Utils where
-import Prelude ((==), Eq, Show, Int, Enum, pred, succ, (<), abs, (!!), ($))
+import Prelude ((==), Eq, Show, Int, Enum, pred, succ, (<), abs, (!!), ($), flip)
 import Control.Monad (return, Monad, (>>=), (>=>))
 
 import Data.List (scanl, foldl', find, map, repeat, iterate)
 import Data.Maybe (isJust, catMaybes, Maybe, maybe)
 import Data.Bool (Bool(False))
 
+forEach :: [a] -> (a -> b) -> [b]
+forEach = flip map
 
 findElem :: Eq a => a -> [a] -> Maybe a
 findElem a = find (== a)
