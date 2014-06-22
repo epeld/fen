@@ -12,7 +12,7 @@ adjacentFiles :: Square -> Square -> Bool
 adjacentFiles sq1 sq2 = adjacent (file sq1) (file sq2)
 
 adjacent a b = let a' = fromEnum a
-                   b' = fromEnum b'
+                   b' = fromEnum b
                in  abs (a' - b') == 1
 
 ranks = [1..8]
