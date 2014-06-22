@@ -28,7 +28,7 @@ lastRank :: Position -> Int
 lastRank = Color.lastRank. turn
 
 nextTurn :: Position -> Position
-nextTurn p = p{turn = enemyColor p }
+nextTurn p = p{ turn = enemyColor p }
 
 enemyColor :: Position -> Color
 enemyColor = Color.toggle. turn
