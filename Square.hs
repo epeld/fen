@@ -1,10 +1,12 @@
 module Square where
 import Control.Monad (liftM2)
 
+import Data.Char (intToDigit)
+
 import Utils (findElem)
 
 data Square = Square { file :: Char, rank :: Int }
-              deriving (Show, Eq, Ord)
+              deriving (Eq, Ord)
 
 coords (Square f r) = (f, r)
 
@@ -20,3 +22,10 @@ files = ['a'..'h']
 
 square :: Char -> Int -> Maybe Square
 square f r = liftM2 Square (findElem f files) (findElem r ranks)
+
+string :: Square -> String
+string (Square f r) = f : intToDigit r : []
+
+
+instance Show Square where
+  show = string
