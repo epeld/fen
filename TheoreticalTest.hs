@@ -2,9 +2,14 @@ module TheoreticalTest where
 import Test.HUnit.Base
 import Test.HUnit.Text
 
+import Data.List (partition)
+
+import TestUtils
+
 import qualified Stepping
 import qualified Piece
 import qualified Color
+
 import Square (Square(Square), string)
 import Theoretical
 
@@ -21,13 +26,58 @@ testList = TestList [testStep, testOfficerRange, testPawnRange]
 testStep :: Test
 testStep = let squares = step a1 Stepping.right
            in TestLabel "test step" $ TestCase $ do
-             assertEqual "7 steps" 7 (length squares)
-             assertBool "c1 in steps" (elem c1 squares)
-             assertBool "last step = h1" (last squares == h1)
+             assertEqual "num steps" 7 (length squares)
+             assertElem "element of squares" c1 squares
+             assertBool "last step" (last squares == h1)
 
 testOfficerRange :: Test
 testOfficerRange = TestLabel "officer range" $
-                   TestList [testKingRange, testBishopRange]
+                   TestList [testKingRange,
+                             testBishopRange,
+                             testKnightRange,
+                             testRookRange,
+                             testQueenRange]
+
+testQueenRange :: Test
+testQueenRange = TestLabel "queen range" $ TestCase $ do
+  let r = officerRange Piece.Queen e4
+  let sqs = concat r
+  assertEqual "number of directions" 8 (length r)
+  assertEqual "number of squares" (3 + 4 + 3 + 4 + 3 + 4 + 3 + 3) (length sqs)
+  assertBool "initial square not in range" $ not $ elem e4 sqs
+  assertElem "" a4 sqs
+  assertElem "" c2 sqs
+  assertElem "" h1 sqs
+
+testRookRange :: Test
+testRookRange = TestLabel "rook range" $ TestCase $ do
+  let r = officerRange Piece.Rook a1
+  let (empty, nonempty) = partition (== []) r
+  assertEqual "number of empty directions" 2 (length empty)
+  assertEqual "number of valid directions" 2 (length nonempty)
+  let sqs = concat nonempty
+  assertElem "" a4 sqs
+  assertElem "" h1 sqs
+  assertBool "reaches full rank/file" $ all (\x -> length x == 7) nonempty
+
+testKnightRange :: Test
+testKnightRange = TestLabel "knight range" $
+                  TestList [testKnightCenter, testKnightEdge, testKnightCorner]
+
+testKnightCenter :: Test
+testKnightCenter = makeKnightTest e4 [c3,d2,f2,g3,g5,f6,d6,c5]
+
+testKnightCorner :: Test
+testKnightCorner = makeKnightTest a4 [b2,c3,c5,b6]
+
+testKnightEdge :: Test
+testKnightEdge = makeKnightTest a1 [b3,c2]
+
+makeKnightTest :: Square -> [Square] -> Test
+makeKnightTest sq sqs = TestCase $ do
+  let r = concat $ officerRange Piece.Knight sq
+  assertEqual "number of squares" (length sqs) (length r)
+  assertElems "reached squares" sqs r
 
 testPawnRange :: Test
 testPawnRange = TestLabel "pawn range" $
@@ -64,11 +114,6 @@ makeTestPawnRange mt clr src sqs =
     sequence_ [assertElem "square in range" sq r | sq <- sqs]
     assertEqual "square count " (length sqs) (length r)
 
-assertElem :: (Show a, Eq a) => String -> a -> [a] -> Assertion
-assertElem s a as =
-  let s' = unwords [s, ". Expected:", show a, "in", show as]
-  in assertBool s' (elem a as)
-
 testKingRange :: Test
 testKingRange = let r = officerRange Piece.King e4
                 in TestLabel "king range" $ TestCase $ do
@@ -80,6 +125,20 @@ testBishopRange = let r = officerRange Piece.Bishop a1
                     assertEqual "bishop can go in one direction from a1" 1 (length r')
                     assertEqual "bishop reaches h8 from a1" h8 (last (head r'))
                     assertEqual "bishop reaches 7 squares from a1" 7 (length $ head r')
+
+
+b2 = Square 'b' 2
+b6 = Square 'b' 6
+c2 = Square 'c' 2
+c3 = Square 'c' 3
+d2 = Square 'd' 2
+f2 = Square 'f' 2
+g3 = Square 'g' 3
+g5 = Square 'g' 5
+f6 = Square 'f' 6
+d6 = Square 'd' 6
+c5 = Square 'c' 5
+
 
 a4 = Square 'a' 4
 b3 = Square 'b' 3

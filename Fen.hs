@@ -22,7 +22,6 @@ import Types ( Position(..),
                PieceType(..),
                OfficerType(..),
                CastlingRight(..) )
-import Chess (newRank, newFile)
 
 
 decodeChar :: FEN f => Char -> Maybe f
@@ -105,7 +104,7 @@ instance FEN Square where
     encode (Square f r) = [f, intToDigit r]
 
     decode (f:r:[]) = let r' = digitToInt r
-                       in Square <$> newFile f <*> newRank r'
+                       in square f r'
     decode _ = Nothing
 
 
