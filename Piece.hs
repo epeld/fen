@@ -1,5 +1,8 @@
 module Piece where
-import Color(Color)
+import Control.Applicative ((<*>), (<$>), pure)
+import Data.Char (isUpper, toUpper, toLower)
+
+import Color(Color(White, Black))
 import FEN (FEN, encode, decode)
 
 data Piece = Piece { pieceType :: PieceType, color :: Color }
