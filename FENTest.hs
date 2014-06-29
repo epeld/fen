@@ -3,11 +3,13 @@ import Test.HUnit.Base
 import Test.HUnit.Text
 
 import Data.Maybe (fromJust)
+import Data.Set as Set
 
 import Color
 import Square
 import FEN
 import Position
+import Castling
 import FENPosition
 
 
@@ -18,7 +20,7 @@ tests :: Test
 tests = TestLabel "FEN Tests" testList
 
 testList :: Test
-testList = TestList [testSquare, testColor, testPosition]
+testList = TestList [testSquare, testColor, testPosition, testCastling]
 
 
 testSquare :: Test
@@ -29,8 +31,15 @@ testColor = TestCase $ do
   assertEqual "white" (Just White) (decode "w")
   assertEqual "black" (Just Black) (decode "b")
 
+testCastling :: Test
+testCastling = TestList [testNoCastling]
+
+testNoCastling :: Test
+testNoCastling = TestLabel "parsing '-' as castling rights" $
+               TestCase (assertBool "empty" $ Set.null $ fromJust $ decodeCastlingRights "-")
+
 testPosition :: Test
-testPosition = TestLabel ("decoding of " ++ sampleFen) $ TestCase $ do
+testPosition = TestLabel (unwords ["decoding of ", sampleFen]) $ TestCase $ do
                  let p = fromJust $ decode sampleFen
                  assertColorAt White (Square 'c' 6) p
                  assertColorAt White (Square 'c' 7) p
