@@ -1,8 +1,9 @@
 module Square where
 import Control.Monad (liftM2)
 
-import Data.Char (intToDigit)
+import Data.Char (intToDigit, digitToInt)
 
+import FEN (FEN, encode, decode)
 import Utils (findElem)
 
 data Square = Square { file :: Char, rank :: Int }
@@ -29,3 +30,10 @@ string (Square f r) = f : intToDigit r : []
 
 instance Show Square where
   show = string
+
+instance FEN Square where
+    encode (Square f r) = [f, intToDigit r]
+
+    decode (f:r:[]) = let r' = digitToInt r
+                       in square f r'
+    decode _ = Nothing

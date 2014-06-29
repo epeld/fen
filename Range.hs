@@ -1,5 +1,4 @@
 module Range where
-import qualified Data.Set as Set
 import qualified Data.List as List
 
 import Theoretical (MoveType(..))
@@ -8,7 +7,7 @@ import qualified Position
 import qualified Square
 import qualified PieceLike
 
-type Range = Set.Set Square.Square
+type Range = [Square.Square]
 
 range :: PieceLike.PieceLike p =>
          p -> Theoretical.MoveType -> Range
@@ -17,7 +16,7 @@ range p mt = let theory = Theoretical.range p mt
 
 applied :: PieceLike.PieceLike p =>
            p -> Theoretical.MoveType -> Theoretical.Range -> Range
-applied p mt = Set.fromList. concat. map (applySeq p mt)
+applied p mt = concat. map (applySeq p mt)
 
 applySeq :: PieceLike.PieceLike p =>
             p -> Theoretical.MoveType -> Theoretical.Sequence -> [Square.Square]
@@ -27,5 +26,4 @@ applySeq p Takes seq =
                         (PieceLike.isPawn p && Position.isPassant pos sq)
   in take 1 $ List.filter isCapturable $ dropWhile (Position.isEmpty pos) seq
 
-applySeq p Moves seq =
-  takeWhile (Position.isEmpty $ PieceLike.position p) seq
+applySeq p Moves seq = takeWhile (Position.isEmpty $ PieceLike.position p) seq

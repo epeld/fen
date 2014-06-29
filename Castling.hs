@@ -29,3 +29,15 @@ associatedSides 'a' = [Queenside]
 associatedSides 'h' = [Kingside]
 associatedSides 'e' = [Kingside, Queenside]
 associatedSides _ = []
+
+instance FEN CastlingRight where
+    encode (Castling Kingside White) = "K"
+    encode (Castling Queenside White) = "Q"
+    encode (Castling Kingside Black) = "k"
+    encode (Castling Queenside Black) = "q"
+
+    decode "K" = Just $ Castling Kingside White
+    decode "Q" = Just $ Castling Queenside White
+    decode "k" = Just $ Castling Kingside Black
+    decode "q" = Just $ Castling Queenside Black
+    decode _ = Nothing
