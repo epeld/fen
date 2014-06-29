@@ -25,15 +25,13 @@ square :: Char -> Int -> Maybe Square
 square f r = liftM2 Square (findElem f files) (findElem r ranks)
 
 string :: Square -> String
-string (Square f r) = f : intToDigit r : []
+string (Square f r) = [f, intToDigit r]
 
 
 instance Show Square where
   show = string
 
 instance FEN Square where
-    encode (Square f r) = [f, intToDigit r]
-
-    decode (f:r:[]) = let r' = digitToInt r
-                       in square f r'
+    encode = string
+    decode [f,r] = square f (digitToInt r)
     decode _ = Nothing
