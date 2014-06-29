@@ -1,5 +1,6 @@
 module Piece where
 import Color(Color)
+import FEN (FEN, encode, decode)
 
 data Piece = Piece { pieceType :: PieceType, color :: Color }
              deriving (Show, Eq)

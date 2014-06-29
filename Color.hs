@@ -1,5 +1,6 @@
 module Color where
 import Square
+import FEN
 
 data Color = White | Black
            deriving (Show, Eq, Ord)
