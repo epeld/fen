@@ -34,6 +34,7 @@ instance FEN Position where
                             <*> decodeCastlingRights (parts !! 2)
 
 decodeCastlingRights :: String -> Maybe (Set.Set CastlingRight)
+decodeCastlingRights "-" = Just $ Set.empty
 decodeCastlingRights s = let r = sequence $ map (\x -> decode [x]) s
                          in fmap Set.fromList r
 
@@ -92,4 +93,5 @@ digitToNothings :: Char -> [Maybe a]
 digitToNothings c = let n = read [c]
                     in replicate n Nothing
 
-fenSquares = Square <$> files <*> reverse ranks
+-- Flipped to get the right order for FEN encoding/decoding
+fenSquares = flip Square <$> reverse ranks <*> files

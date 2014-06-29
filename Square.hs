@@ -7,7 +7,7 @@ import FEN (FEN, encode, decode)
 import Utils (findElem)
 
 data Square = Square { file :: Char, rank :: Int }
-              deriving (Eq, Ord)
+              deriving (Show, Eq, Ord)
 
 coords (Square f r) = (f, r)
 
@@ -26,10 +26,6 @@ square f r = liftM2 Square (findElem f files) (findElem r ranks)
 
 string :: Square -> String
 string (Square f r) = [f, intToDigit r]
-
-
-instance Show Square where
-  show = string
 
 instance FEN Square where
     encode = string

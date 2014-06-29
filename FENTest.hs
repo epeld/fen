@@ -32,7 +32,12 @@ testColor = TestCase $ do
   assertEqual "black" (Just Black) (decode "b")
 
 testCastling :: Test
-testCastling = TestList [testNoCastling]
+testCastling = TestList [testNoCastling, testCastlingWhite]
+
+testCastlingWhite :: Test
+testCastlingWhite = TestLabel "parsing 'K' as castling right" $ TestCase $ do
+  let parsed = fromJust $ decodeCastlingRights "K"
+  assertBool "White kingside" $ Set.member (Castling Kingside White) parsed
 
 testNoCastling :: Test
 testNoCastling = TestLabel "parsing '-' as castling rights" $
@@ -41,6 +46,7 @@ testNoCastling = TestLabel "parsing '-' as castling rights" $
 testPosition :: Test
 testPosition = TestLabel (unwords ["decoding of ", sampleFen]) $ TestCase $ do
                  let p = fromJust $ decode sampleFen
+                 putStrLn $ show p
                  assertColorAt White (Square 'c' 6) p
                  assertColorAt White (Square 'c' 7) p
                  assertColorAt Black (Square 'f' 3) p
