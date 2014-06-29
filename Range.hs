@@ -22,8 +22,10 @@ applySeq :: PieceLike.PieceLike p =>
             p -> Theoretical.MoveType -> Theoretical.Sequence -> [Square.Square]
 applySeq p Takes seq =
   let pos = PieceLike.position p
-      isCapturable sq = Position.isEnemyAt pos sq ||
-                        (PieceLike.isPawn p && Position.isPassant pos sq)
-  in take 1 $ List.filter isCapturable $ dropWhile (Position.isEmpty pos) seq
+      enemies = filter (Position.isEnemyAt pos) seq
+      passant = filter (Position.isPassant pos) seq
+  in if PieceLike.isPawn p
+     then take 1 $ enemies ++ passant
+     else take 1 enemies
 
 applySeq p Moves seq = takeWhile (Position.isEmpty $ PieceLike.position p) seq
