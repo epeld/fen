@@ -1,5 +1,6 @@
 module Castling where
-import Data.Set (Set)
+import FEN (FEN, encode, decode)
+
 import Data.Maybe (catMaybes)
 import Data.Set (Set, fromList)
 
