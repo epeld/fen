@@ -6,7 +6,7 @@ import Text.ParserCombinators.Parsec
 import qualified Pgn
 import qualified Chess
 import qualified Types as Chess
-import qualified Fen
+import qualified FEN
 
 square :: Parser Chess.Square
 square = Chess.Square <$> file <*> rank
@@ -42,7 +42,7 @@ longPieceMove = Pgn.PieceMove <$> fmap Chess.Officer officerType
                               <*> return Nothing
 
 officerType :: Parser Chess.OfficerType
-officerType = fmap (fromJust. Fen.decodeChar) (oneOf "RNBQ")
+officerType = fmap (fromJust. FEN.decodeChar) (oneOf "RNBQ")
 
 moveType = option Pgn.Moves (string "x" >> return Pgn.Captures)
 

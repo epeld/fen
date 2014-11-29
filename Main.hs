@@ -7,7 +7,7 @@ import Data.Maybe (fromJust)
 import qualified Chess
 import qualified Types as Chess
 import qualified PgnParse
-import qualified Fen
+import qualified FEN
 import qualified Pgn
 import Pgn (Error(..))
 
@@ -39,7 +39,7 @@ moveAll pos (mv:mvs) =
     Left err -> putErrLn pos err
 
 putPosLn :: Chess.Position -> IO ()
-putPosLn = putStrLn. Fen.encode
+putPosLn = putStrLn. FEN.encode
 
 putErrLn :: Chess.Position -> Pgn.Error -> IO ()
 putErrLn pos err = putStrLn ("Error: " ++ readable pos err)
@@ -73,4 +73,4 @@ printGoodbye = putStrLn "Bye."
 startPos :: Chess.Position
 startPos =
   fromJust $
-  Fen.decode "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"
+  FEN.decode "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"

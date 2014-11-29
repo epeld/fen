@@ -6,7 +6,7 @@ import Test.HUnit.Text
 import Data.Set (fromList)
 import Data.Maybe (fromJust)
 import Types as Chess
-import qualified Fen
+import qualified FEN
 import Chess
 
 predefined :: String -> Chess.Position
