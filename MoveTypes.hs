@@ -4,7 +4,7 @@ import Data.Eq
 import Text.Show
 
 import Square
-
+import Piece
 
 data Move = Move deriving (Show, Eq)
 
@@ -22,4 +22,7 @@ newtype SpecifiedPawnMove = PawnMove SpecifiedMove
 
 -- SpecifiedOfficerMove: guarantees that the moved piece is an officer
 newtype SpecifiedOfficerMove = OfficerMove SpecifiedMove
+
+
+-- TODO move:
 
