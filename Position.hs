@@ -3,21 +3,24 @@ import Prelude ()
 import Data.Bool
 import Data.Eq
 import Data.Maybe
+import Data.Map
+import Data.Function
+
+import Text.Show
 import Control.Monad.Reader
 
 import MoveTypes
 import Piece
 import Square
 
-data Position = Position
+type Board = Map Square Piece
+
+data Position = Position Board Color deriving (Show)
 
 type PReader = Reader Position
 
 legal :: Position -> Bool
-legal _ = True
-
-turn :: PReader Color
-turn = return White -- TODO
+legal _ = True -- TODO
 
 
 filterPieces :: Piece -> PReader [Square]
@@ -31,7 +34,22 @@ hasPiece pc sq = do
     return (mpc == Just pc)
 
 pieceAt :: Square -> PReader (Maybe Piece)
-pieceAt sq = return Nothing
+pieceAt sq = fmap (lookup sq) board
 
-pieceSquares :: PReader [Square] -- TODO
-pieceSquares = return []
+pieceSquares :: PReader [Square]
+pieceSquares = fmap keys board
+
+--
+-- Accessors
+--
+
+board :: PReader Board
+board = do
+    Position b _ <- ask
+    return b
+
+turn :: PReader Color
+turn = do
+    Position _ c <- ask
+    return c
+
