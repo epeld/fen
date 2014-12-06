@@ -1,17 +1,21 @@
 module Move where
-import Control.Monad.Reader
+import Prelude ()
+import Control.Monad as M
+import Data.Either
 
-data Position
-data Move
+import qualified Position
+import MonadUtils
 
-type PositionReader = Reader Position
+data Move = Move
+
 data MoveError = Ambiguous [SpecifiedMove] | Invalid deriving (Show, Eq)
 
 -- Specified Move: guarantees that there is a piece at its source square
 data SpecifiedMove = Specified Move Square deriving (Show, Eq)
 
 -- LegalMove: guarantees that the move is legal and results in a legal position
-newtype LegalMove = Legal SpecifiedMove
+data Legal a = Legal a
+type LegalMove = Legal SpecifiedMove
 
 -- SpecifiedPawnMove: guarantees that the moved piece is a pawn
 newtype SpecifiedPawnMove = PawnMove SpecifiedMove
@@ -20,19 +24,27 @@ newtype SpecifiedPawnMove = PawnMove SpecifiedMove
 newtype SpecifiedOfficerMove = OfficerMove SpecifiedMove
 
 
-legalize :: Move -> PositionReader (Either MoveError LegalMove)
+legalize :: Move -> Position.PReader (Either MoveError LegalMove)
 legalize mv = do
-    cands <- candidates mv
-    let lgl smv = fmap legal $ after smv
-    fmap oneValid $ filterM smvs lgl
+    mvs <- legalize' mv
+    case mvs of
+        [mv] -> Right mv
+        [] -> Left Invalid
+        mvs -> Left $ Ambiguous mvs
 
-oneValid :: [SpecifiedMove] -> Either MoveError LegalMove
-oneValid [mv] = Right mv
-oneValid [] = Left Invalid
-oneValid mvs = Left $ Ambiguous mvs
+legalize' :: Move -> Position.PReader [LegalMove]
+legalize' = specify >=> mapMaybeM legalize
+
+legalize :: SpecifiedMove -> Position.PReader (Maybe LegalMove)
+legalize smv = do
+    p <- legalAfter smv
+    case p of
+        Nothing -> Nothing
+        Just _ -> Just (Legal smv)
     
-candidates :: Move -> PositionReader [SpecifiedMove]
-candidates mv = do
+
+specify :: Move -> PositionReader [SpecifiedMove]
+specify mv = do
     sqs <- findPieces mv
     let smvs = fmap (Specified mv) sqs
     filterM valid smvs
@@ -65,8 +77,9 @@ piece :: Move -> PositionReader Piece
 
 filterPieces :: Piece -> PositionReader [Square]
 
-legal :: Position -> Bool
+legal :: SpecifiedMove -> PositionReader Bool
+legal = fmap legal. after
 
-after :: SpecifiedMove -> PositionReader PositionReader
+after :: SpecifiedMove -> PositionReader Position
 
 move :: LegalMove -> PositionReader Position
