@@ -17,3 +17,8 @@ classify smv = case first of
     _ -> error "Invalid Specified Move; couldn't classify"
     where first = getFirst $ mconcat $ fmap First $ [pawnMove, officerMove] <*> [smv]
 
+
+legal :: SpecifiedMove -> PReader Bool
+legal = fmap legal. after
+
+move :: LegalMove -> PReader Position

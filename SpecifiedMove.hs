@@ -1,27 +1,24 @@
 module SpecifiedMove where
 import Prelude ()
+import Data.Bool
+import Control.Monad
 
+import Square
 import MoveTypes
+import MoveUtils
 import Position
 
-specify :: Move -> PositionReader [SpecifiedMove]
+specify :: Move -> PReader [SpecifiedMove]
 specify mv = do
     sqs <- findPieces mv
-    let smvs = fmap (Specified mv) sqs
-    filterM valid smvs
+    filterM valid (Specified mv `fmap` sqs)
 
-findPieces :: Move -> PositionReader [Square]
-findPieces = piece >=> filterPieces
 
-valid :: SpecifiedMove -> PositionReader Bool
+valid :: SpecifiedMove -> PReader Bool
 valid smv = case classify smv of
     Left pmv -> validPawnMove pmv
     Right omv -> validOfficerMove omv
 
 
-legal :: SpecifiedMove -> PositionReader Bool
-legal = fmap legal. after
+after :: SpecifiedMove -> PReader Position
 
-after :: SpecifiedMove -> PositionReader Position
-
-move :: LegalMove -> PositionReader Position
