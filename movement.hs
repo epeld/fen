@@ -1,4 +1,6 @@
 module Movement where
+import Data.Maybe
+
 import Square (Square, Offset)
 
 data KnightsJump = OneOClock | TwoOClock | FourOClock | FiveOClock |
@@ -19,6 +21,10 @@ data StraightDirection = Vertical VerticalDirection | Horizontal HorizontalDirec
 
 data Direction = Diagonal DiagonalDirection | LShaped KnightsJump | Straight StraightDirection
                  deriving (Show, Eq)
+
+diagonalSquares :: Square -> [DiagonalDirection] -> [Square]
+diagonalSquares sq ds = mapMaybe (add sq) (fmap doffset ds)
+
 
 soffset :: StraightDirection -> Offset
 soffset (Vertical v) = voffset v
@@ -47,4 +53,8 @@ doffset NorthWest = (-1, 1)
 doffset NorthEast = (1,1)
 doffset SouthEast = (1,-1)
 doffset SouthWest = (-1, -1)
+
+pawnAttackDiagonals :: Color -> [DiagonalDirection]
+pawnAttackDiagonals White = [NorthWest, NorthEast]
+pawnAttackDiagonals Black = [SouthWest, SouthEast]
 
