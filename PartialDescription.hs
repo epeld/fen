@@ -15,3 +15,5 @@ data Description = Description {
 instance MoveDescription Description where
     destination = PartialDescription.destination
     moveType = PartialDescription.moveType
+
+newtype PartialMove = Move Description

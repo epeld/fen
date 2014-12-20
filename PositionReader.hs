@@ -12,28 +12,15 @@ import Control.Monad.Reader
 import Control.Applicative
 
 import qualified Position as P
-import MoveTypes
+import MoveType
 import Piece
 import Square
 
 type PReader = Reader P.Position
 
-allAssailants :: Color -> Square -> PReader [Square]
-allAssailants c sq = do
-    pieces <- Piece <$> [Pawn ..] <*> [c]
-    as <- sequence $ assailants <$> pieces <*> [sq]
-    return (mconcat as)
-
-assailants :: Piece -> Square -> PReader [Square]
-assailants pawn@(Piece Pawn c) sq = 
-    let fromDirs = pawnAttackDiagonals $ otherColor c
-     in filterM (hasPiece pawn) (diagonalSquares sq fromDirs)
-
-assailants knight@(Piece (Officer Knight) c) sq = filterM (hasPiece knight) (knightSquares sq)
-assailants piece sq = firstPiece piece sq (movePattern piece)
-
 kingSquares :: Color -> PReader [Square]
-kingSquares c = filterPieces (Piece (Officer King) c)
+kingSquares c = filterPieces king
+    where king = Piece (Officer King) c
 
 filterPieces :: Piece -> PReader [Square]
 filterPieces pc = do
@@ -51,6 +38,13 @@ hasPiece pc sq = do
 
 pieceAt :: Square -> PReader (Maybe Piece)
 pieceAt sq = boardAccessor (lookup sq)
+
+emptyAt :: Square -> PReader Bool
+emptyAt sq = boardAccessor (notMember sq)
+
+occupiedAt :: Square -> PReader Bool
+occupiedAt sq = boardAccessor (member sq)
+
 
 pieceSquares :: PReader [Square]
 pieceSquares = boardAccessor keys

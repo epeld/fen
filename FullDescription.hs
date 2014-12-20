@@ -1,11 +1,13 @@
 module FullDescription where
-import Prelude ()
+import Prelude (undefined)
 import Data.Eq
 import Text.Show
 
 import MoveDescription
+import qualified PartialDescription as Partial
 import Square
 import MoveType
+import PositionReader
 
 data MoveError = Ambiguous [FullMove] | Invalid
 
@@ -19,3 +21,6 @@ instance MoveDescription Description where
     moveType = FullDescription.moveType
 
 newtype FullMove = Move Description
+
+specify :: Partial.PartialMove -> PReader [FullMove]
+specify = undefined

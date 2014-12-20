@@ -1,7 +1,14 @@
 module Movement where
+import Prelude (Enum)
 import Data.Maybe
+import Data.Functor
+import Data.List
+import Data.Int
+import Data.Eq
+import Text.Show
 
-import Square (Square, Offset)
+import Square (Square, Offset, add)
+import Piece
 
 data KnightsJump = OneOClock | TwoOClock | FourOClock | FiveOClock |
                    SevenOClock | EightOClock | TenOClock | ElevenOClock
@@ -22,9 +29,36 @@ data StraightDirection = Vertical VerticalDirection | Horizontal HorizontalDirec
 data Direction = Diagonal DiagonalDirection | LShaped KnightsJump | Straight StraightDirection
                  deriving (Show, Eq)
 
-diagonalSquares :: Square -> [DiagonalDirection] -> [Square]
-diagonalSquares sq ds = mapMaybe (add sq) (fmap doffset ds)
+directions :: OfficerType -> [Direction]
+directions Bishop = fmap Diagonal [NorthWest .. SouthEast]
+directions Rook = fmap Straight (fmap Horizontal [West, East] ++ fmap Vertical [North, South])
+directions Knight = fmap LShaped [OneOClock .. ElevenOClock ]
+directions Queen = directions Bishop ++ directions Rook
+directions King = directions Queen
 
+pawnAttackSources :: Color -> [Direction]
+pawnAttackSources White = fmap Diagonal [SouthWest, SouthEast]
+pawnAttackSources Black = fmap Diagonal [NorthWest, NorthEast]
+
+seq :: Square -> Direction -> [Square]
+seq sq d = 
+    case add sq (offset d) of
+        Just sq' -> (sq' : seq sq' d)
+        Nothing -> []
+
+apply :: Square -> [Direction] -> [[Square]]
+apply sq ds = fmap (seq sq) ds
+
+applyN :: Square -> [Direction] -> Int -> [[Square]]
+applyN sq ds n = fmap (take n) (apply sq ds)
+
+apply1 :: Square -> [Direction] -> [[Square]]
+apply1 sq ds = applyN sq ds 1
+
+offset :: Direction -> Offset
+offset (Straight s) = soffset s
+offset (Diagonal d) = doffset d
+offset (LShaped k) = koffset k
 
 soffset :: StraightDirection -> Offset
 soffset (Vertical v) = voffset v
@@ -53,8 +87,3 @@ doffset NorthWest = (-1, 1)
 doffset NorthEast = (1,1)
 doffset SouthEast = (1,-1)
 doffset SouthWest = (-1, -1)
-
-pawnAttackDiagonals :: Color -> [DiagonalDirection]
-pawnAttackDiagonals White = [NorthWest, NorthEast]
-pawnAttackDiagonals Black = [SouthWest, SouthEast]
-

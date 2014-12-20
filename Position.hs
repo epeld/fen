@@ -9,7 +9,7 @@ import Data.Function
 import Text.Show
 import Control.Monad.Reader
 
-import MoveTypes
+import MoveType
 import Piece
 import Square
 
