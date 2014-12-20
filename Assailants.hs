@@ -10,6 +10,7 @@ import Data.Eq
 import Control.Monad.Reader
 
 import PositionReader
+import qualified Position
 import Piece
 import Square
 import Movement
@@ -31,18 +32,22 @@ assailants pawn@(Piece Pawn c) sq =
 -- TODO king can only go 1 square
 assailants piece@(Piece (Officer officer) c) sq = fmap catMaybes $ sequence $ fmap (firstPiece piece) $ apply sq (directions officer)
 
-lookupSquare pos sq = runReader (pieceAt sq) pos
 
 firstPiece :: Piece -> [Square] -> PReader (Maybe Square)
 firstPiece p sqs = do
     pos <- ask
-    -- TODO FIX
-    firstNonEmpty sqs
+    msq <- firstNonEmpty sqs
+    return $ mfilter (Position.hasPiece pos p) msq
 
 firstNonEmpty :: [Square] -> PReader (Maybe Square)
 firstNonEmpty sqs = do
     pos <- ask
     return $ safeHead $ dropWhile (isNothing. lookupSquare pos) sqs
 
+
+
+
 safeHead [] = Nothing
 safeHead xs = Just (head xs)
+
+lookupSquare pos sq = runReader (pieceAt sq) pos

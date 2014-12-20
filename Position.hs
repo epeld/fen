@@ -20,3 +20,9 @@ data Position = Position {
     turn :: Color
     } deriving (Show)
 
+hasPiece :: Position -> Piece -> Square -> Bool
+hasPiece pos pc sq = pieceAt pos sq == Just pc
+
+pieceAt :: Position -> Square -> Maybe Piece
+pieceAt pos sq = lookup sq (board pos)
+
