@@ -2,12 +2,14 @@ module Movement where
 import Prelude (Enum)
 import Data.Maybe
 import Data.Functor
+import Data.Function
 import Data.List
 import Data.Int
 import Data.Eq
 import Text.Show
 
 import Square (Square, Offset, add)
+import ListUtils
 import Piece
 
 data KnightsJump = OneOClock | TwoOClock | FourOClock | FiveOClock |
@@ -41,10 +43,8 @@ pawnAttackSources White = fmap Diagonal [SouthWest, SouthEast]
 pawnAttackSources Black = fmap Diagonal [NorthWest, NorthEast]
 
 seq :: Square -> Direction -> [Square]
-seq sq d = 
-    case add sq (offset d) of
-        Just sq' -> (sq' : seq sq' d)
-        Nothing -> []
+seq sq d = iterateMaybe add' sq
+    where add' = flip add (offset d)
 
 apply :: Square -> [Direction] -> [[Square]]
 apply sq ds = fmap (seq sq) ds
