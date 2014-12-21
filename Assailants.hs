@@ -14,13 +14,16 @@ import qualified Position
 import Piece
 import Square
 import Movement
+import SquareListUtils
+import Directions
 
-piecesColored c = Piece <$> [Pawn ..] <*> [c]
 
 allAssailants :: Color -> Square -> PReader [Square]
+
 allAssailants c sq = do
-    as <- sequence $ assailants <$> piecesColored c <*> [sq]
+    as <- sequence $ assailants <$> allPiecesColored c <*> [sq]
     return (mconcat as)
+
 
 
 assailants :: Piece -> Square -> PReader [Square]
@@ -29,25 +32,10 @@ assailants pawn@(Piece Pawn c) sq =
     let ds = pawnAttackSources c
      in filterM (hasPiece pawn) (concat $ apply1 sq ds)
 
--- TODO king can only go 1 square
-assailants piece@(Piece (Officer officer) c) sq = fmap catMaybes $ sequence $ fmap (firstPiece piece) $ apply sq (directions officer)
-
-
-firstPiece :: Piece -> [Square] -> PReader (Maybe Square)
-firstPiece p sqs = do
-    pos <- ask
-    msq <- firstNonEmpty sqs
-    return $ mfilter (Position.hasPiece pos p) msq
-
-firstNonEmpty :: [Square] -> PReader (Maybe Square)
-firstNonEmpty sqs = do
-    pos <- ask
-    return $ safeHead $ dropWhile (isNothing. lookupSquare pos) sqs
+assailants piece@(Piece (Officer officer) c) sq = do
+    first <- mapM (firstPiece piece) (officerSquares officer sq)
+    return (catMaybes first)
 
 
 
-
-safeHead [] = Nothing
-safeHead xs = Just (head xs)
-
-lookupSquare pos sq = runReader (pieceAt sq) pos
+allPiecesColored c = Piece <$> [Pawn ..] <*> [c]
