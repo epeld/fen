@@ -22,3 +22,4 @@ add (Square (a, b)) (x, y) =
         then Just $ Square (a', b')
         else Nothing
                                  
+rank (Square (_, b)) = b

@@ -32,3 +32,6 @@ data Color = White | Black deriving (Show, Eq)
 
 otherColor White = Black
 otherColor Black = White
+
+firstRank White = 2
+firstRank Black = 7

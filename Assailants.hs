@@ -33,6 +33,12 @@ allReachers c sq = do
 
 
 
+pawnReaching :: Color -> Square -> PReader (Maybe Square)
+pawnReaching c sq = firstPiece pawn (pawnMoveSquares c sq)
+    where pawn = Piece Pawn c
+
+
+
 assailants :: Piece -> Square -> PReader [Square]
 
 assailants pawn@(Piece Pawn c) sq = filterM (hasPiece pawn) (pawnAttackSquares c sq)
@@ -42,9 +48,6 @@ assailants piece@(Piece (Officer officer) c) sq = do
     return (catMaybes first)
 
 
-pawnReaching :: Color -> Square -> PReader (Maybe Square)
-pawnReaching c sq = firstPiece pawn (pawnMoveSquares c sq)
-    where pawn = Piece Pawn c
 
 allPiecesColored :: Color -> [Piece]
 allPiecesColored c = Piece <$> [Pawn ..] <*> [c]

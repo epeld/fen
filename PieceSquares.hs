@@ -16,6 +16,8 @@ officerSquares officer sq = applyFn officer sq (directions officer)
 -- Returns the squares that a pawn could stand TO MOVE TO sq
 pawnMoveSquares :: Color -> Square -> [Square]
 pawnMoveSquares c sq = concat $ applyN 2 sq [pawnMoveSource c]
+    where n = if rank sq == firstRank c
+              then 2 else 1
 
 -- Returns the squares that a pawn could stand TO CAPTURE ON sq
 pawnAttackSquares :: Color -> Square -> [Square]
