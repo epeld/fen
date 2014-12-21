@@ -40,3 +40,7 @@ directions King = directions Queen
 pawnAttackSources :: Color -> [Direction]
 pawnAttackSources White = fmap Diagonal [SouthWest, SouthEast]
 pawnAttackSources Black = fmap Diagonal [NorthWest, NorthEast]
+
+pawnMoveSource :: Color -> Direction
+pawnMoveSource White = Straight $ Vertical South
+pawnMoveSource Black = Straight $ Vertical North

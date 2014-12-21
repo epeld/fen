@@ -1,4 +1,4 @@
-module Movement (officerSquares, applyFn, ApplyFn, apply, apply1) where
+module Movement where
 import Prelude (Enum)
 import Data.Maybe
 import Data.Functor
@@ -15,9 +15,6 @@ import Directions
 import SquareOffsets
 
 type ApplyFn = (Square -> [Direction] -> [[Square]])
-
-officerSquares :: OfficerType -> Square -> [[Square]]
-officerSquares officer sq = applyFn officer sq (directions officer)
 
 apply :: ApplyFn
 apply sq ds = fmap (seq sq) ds
