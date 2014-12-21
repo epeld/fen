@@ -21,9 +21,8 @@ import Directions
 allAssailants :: Color -> Square -> PReader [Square]
 
 allAssailants c sq = do
-    as <- sequence $ assailants <$> allPiecesColored c <*> [sq]
-    return (mconcat as)
-
+    let as = assailants <$> allPiecesColored c <*> [sq]
+    mconcat `fmap` sequence as
 
 
 assailants :: Piece -> Square -> PReader [Square]
