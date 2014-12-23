@@ -2,8 +2,9 @@ module PieceSquares where
 import Prelude (Enum)
 import Data.Function
 import Data.List
+import Data.Eq
 
-import Square (Square, add)
+import Square (Square, add, rank)
 import Piece
 import Directions
 import SquareOffsets

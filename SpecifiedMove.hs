@@ -5,15 +5,18 @@ import Control.Monad
 import Control.Applicative
 
 import Square
-import MoveTypes
-import MoveUtils
 import Position
+import Candidates
 
 specify :: Move -> PReader [SpecifiedMove]
 specify mv = do
     sqs <- findPieces mv
     mvs <- fmap (specified mv) sqs
     filterM valid (catMaybes mvs)
+
+findPieces :: PartialMove -> PReader [Square]
+findPieces mv = 
+               
 
 specified :: Move -> Square -> PReader (Maybe SpecifiedMove)
 specified mv sq = do

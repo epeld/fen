@@ -1,4 +1,4 @@
-module Assailants where
+module Candidates where
 import Prelude ()
 import Control.Applicative
 import Control.Monad
@@ -18,13 +18,32 @@ import Movement
 import SquareListUtils
 import Directions
 import PieceSquares
+import MoveType
+import MoveDescription
+
+candidates :: MoveDescription d => d -> PReader [Square]
+candidates desc = do
+    let dest = destination desc
+        mt = moveType desc
+        finder = candidateFinder mt
+    c <- turn
+    finder c dest
+
+type CandidateFinder = Color -> Square -> PReader [Square]
+
+candidateFinder Captures = allAssailants
+candidateFinder Moves = allReachers
 
 
-allAssailants :: Color -> Square -> PReader [Square]
+allAssailants :: CandidateFinder
 
 allAssailants c sq = do
     as <- mapM (flip assailants sq) (allPiecesColored c)
     return (mconcat as)
+
+
+
+allReachers :: CandidateFinder
 
 allReachers c sq = do
     oas <- mapM (flip assailants sq) (allOfficersColored c)
