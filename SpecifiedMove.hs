@@ -15,7 +15,7 @@ specify mv = do
     filterM valid (catMaybes mvs)
 
 findPieces :: PartialMove -> PReader [Square]
-findPieces mv = 
+findPieces (Move d) = candidates d
                
 
 specified :: Move -> Square -> PReader (Maybe SpecifiedMove)
@@ -25,14 +25,3 @@ specified mv sq = do
         smv = SpecifiedMove <$> pt <*> Just mv <*> Just sq
     return smv
 
-
-valid :: SpecifiedMove -> PReader Bool
-valid smv = valid' (
-    where isValid
-
-valid (SpecifiedMove Pawn mv sq) = undefined -- TODO
-valid (SpecifiedMove (Officer off) mv sq) = undefined -- TODO
-
-after :: SpecifiedMove -> PReader Position
-after (SpecifiedMove Pawn mv sq) = undefined -- TODO
-after (SpecifiedMove (Officer off) mv sq) = undefined -- TODO

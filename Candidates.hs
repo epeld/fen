@@ -21,6 +21,7 @@ import PieceSquares
 import MoveType
 import MoveDescription
 
+
 candidates :: MoveDescription d => d -> PReader [Square]
 candidates desc = do
     let dest = destination desc

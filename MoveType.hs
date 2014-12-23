@@ -15,4 +15,6 @@ data Move desc =
     OfficerMove OfficerType desc
 
 
-data Legal a = Legal a
+pieceType :: Move a -> PieceType
+pieceType (PawnMove a _) = Pawn
+pieceType (OfficerMove ot _) = Officer ot

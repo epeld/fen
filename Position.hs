@@ -13,11 +13,14 @@ import MoveType
 import Piece
 import Square
 
+import Control.Lens
+
 type Board = Map Square Piece
 
 data Position = Position {
     board :: Board,
-    turn :: Color
+    turn :: Color,
+    passant :: Maybe Square
     } deriving (Show)
 
 hasPiece :: Position -> Piece -> Square -> Bool
@@ -26,3 +29,8 @@ hasPiece pos pc sq = pieceAt pos sq == Just pc
 pieceAt :: Position -> Square -> Maybe Piece
 pieceAt pos sq = lookup sq (board pos)
 
+movePiece :: Position -> Square -> Square -> Position
+movePiece src dst p = p { board = movePiece' src dst (board p) }
+    where
+    movePiece' src dst b = let pc = lookup src b
+                            in update (const pc) dst (delete src b)
