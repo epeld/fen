@@ -25,6 +25,7 @@ newtype FullMove = Move Description
 
 
 
+-- TODO move these two fns to a Legal-module
 fullMoves :: MoveDescription desc => Move desc -> PReader [FullMove]
 fullMoves mv = do
     mvs <- fmap fullMove `liftM` candidates mv
@@ -36,15 +37,20 @@ legal mv = local (runReader $ after mv) Position.legal
 
 
 
--- TODO put everything below this line into new module!
+-- TODO put everything below this line into new module: UpdatePosition or something
 after :: FullMove -> PReader Position
 after mv = do
     p <- ask
     let env = UpdateEnvironment { move = mv, originalPosition = p }
     return $ runReader newPosition env
 
+-- Represents the information needed to create a new position from an old
+-- e.g we need to know how the position looked initially, and we need to know what is going to change
 data UpdateEnvironment = UpdateEnvironment { move :: FullMove, originalPosition :: Position }
 type UpdateProcessor = Reader UpdateEnvironment
+
+-- We will create a new position from an old one by generating lots of small update functions,
+-- each updating a single property of the position, and then composing them
 type UpdateFn = Position -> Position
 
 newPosition :: UpdateProcessor Position
@@ -57,14 +63,20 @@ positionUpdater = composeAll `ap` updaterStack
 composeAll :: [(a -> a)] -> a -> a
 composeAll = appEndo. foldMap Endo
 
+-- The update stack has two substacks: board and properties
 updaterStack :: UpdateProcessor [UpdateFn]
-updaterStack = sequence $ concat [boardStack, propertiesStack]
+updaterStack = do
+    bs <- boardStack 
+    ps <- propertiesStack
+    return (bs ++ ps)
 
-boardStack :: [UpdateProcessor UpdateFn]
-boardStack = [movePieceUpdater, passantUpdater, promotionUpdater]
+-- The board stack contains all updaters that will update the position's pieces
+boardStack :: UpdateProcessor [UpdateFn]
+boardStack = sequence [movePieceUpdater, passantUpdater, promotionUpdater]
 
-propertiesStack :: [UpdateProcessor UpdateFn]
-propertiesStack = [] -- TODO
+-- The properties stack contains all updaters that will update the position's meta info (e.g move count etc)
+propertiesStack :: UpdateProcessor [UpdateFn]
+propertiesStack = return [] -- TODO
 
 movePieceUpdater :: UpdateProcessor UpdateFn
 movePieceUpdater = do
@@ -83,10 +95,13 @@ promotionUpdater :: UpdateProcessor UpdateFn
 promotionUpdater = do
     orig <- originalPosition `fmap` ask
     mv <- move `fmap` ask
-    if isLastRank mv orig 
-    then return id -- TODO promote 
-    else return id
+    return $ case mv of
+        (PawnMove desc (Just officer)) -> 
+            let dst = destination mv
+                piece = Piece (Officer officer) (turn orig)
+             in \p -> p { board = insert dst piece (board p) }
 
+        _ -> id
 
 
     
