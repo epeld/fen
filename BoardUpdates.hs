@@ -23,24 +23,25 @@ import UpdateFunctions
 
 -- The board stack contains all updateFns that will update the position's pieces
 boardStack :: UpdateReader [UpdateFn]
-boardStack = sequence [movePieceUpdateFn, passantUpdateFn, promotionUpdateFn]
+boardStack = sequence [movePiece, passant, promotion]
 
 
-movePieceUpdateFn :: UpdateReader UpdateFn
-movePieceUpdateFn = do
+movePiece :: UpdateReader UpdateFn
+movePiece = do
     mv <- asks move
     let src = source $ description mv
     return $ Position.movePiece src (destination mv)
 
-passantUpdateFn :: UpdateReader UpdateFn
-passantUpdateFn = do
+
+passant :: UpdateReader UpdateFn
+passant = do
     mv <- asks move
-    msq <- asks $ runReader (passantedSquare mv). originalPosition
+    msq <- asks $ runReader (passantedPawn mv). originalPosition
     return $ \p -> p { Position.board = deleteMaybe msq (Position.board p) }
         
 
-promotionUpdateFn :: UpdateReader UpdateFn
-promotionUpdateFn = do
+promotion :: UpdateReader UpdateFn
+promotion = do
     color <- asks (Position.turn. originalPosition)
     mv <- asks move
     return $ case mv of
@@ -52,19 +53,21 @@ promotionUpdateFn = do
         _ -> id
 
 
+
+-- Util function:
 -- Returns the square of the pawn that was taken en passant
-passantedSquare :: FullMove -> PReader (Maybe Square)
-passantedSquare mv@(PawnMove (Description _ dst mt) _) = do
+passantedPawn :: FullMove -> PReader (Maybe Square)
+passantedPawn mv@(PawnMove (Description _ dst mt) _) = do
     ep <- asks Position.passant 
     color <- turn
     if ep == Just dst && mt == Captures
        then behind dst
        else return Nothing
 
-passantedSquare _ = return Nothing
+passantedPawn _ = return Nothing
 
 
 
-
+-- Util funtion: delete the piece at the indicated square, or do nothing if passed Nothing
 deleteMaybe :: Maybe Square -> Position.Board -> Position.Board
 deleteMaybe = maybe id delete

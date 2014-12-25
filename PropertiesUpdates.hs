@@ -21,31 +21,32 @@ import UpdateFunctions
 
 -- The properties stack contains all updateFns that will update the position's meta info (e.g move count etc)
 propertiesStack :: UpdateReader [UpdateFn]
-propertiesStack = sequence [fullMoveUpdateFn,
-                            halfMoveUpdateFn,
-                            castlingRightsUpdateFn,
-                            passantSquareUpdateFn]
+propertiesStack = sequence [fullMove, halfMove, castlingRights, passantSquare]
 
 
-fullMoveUpdateFn :: UpdateReader UpdateFn
-fullMoveUpdateFn = do
+fullMove :: UpdateReader UpdateFn
+fullMove = do
     color <- turn
     return $ case color of
         Black -> \p -> p { fullMoveCount = inc (fullMoveCount p) }
         White -> id
 
 
-halfMoveUpdateFn :: UpdateReader UpdateFn
-halfMoveUpdateFn = return $ 
+halfMove :: UpdateReader UpdateFn
+halfMove = return $ 
     \p -> p { halfMoveCount = inc (halfMoveCount p) }
 
 
-castlingRightsUpdateFn :: UpdateReader UpdateFn
-castlingRightsUpdateFn = do
+castlingRights :: UpdateReader UpdateFn
+castlingRights = do
     mv <- asks move
     return id -- TODO
 
 
-passantSquareUpdateFn :: UpdateReader UpdateFn
-passantSquareUpdateFn = do
+passantSquare :: UpdateReader UpdateFn
+passantSquare = do
     return id -- TODO
+
+
+newTurn :: UpdateReader UpdateFn
+newTurn = return $ \p -> p { turn = otherColor (turn p) }
