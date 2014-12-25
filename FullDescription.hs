@@ -1,9 +1,11 @@
-module FullDescription (fullMove, Description(Description), MoveError, FullMove, source) where
+module FullDescription (fullMove, Description(Description), MoveError, FullMove, source, passantSquare) where
 import Prelude (undefined)
 import Data.Eq
+import Data.Maybe
+import Control.Monad (return)
 import Text.Show
 
-import MoveDescription
+import qualified MoveDescription 
 import qualified PartialDescription as Partial
 import Square
 import MoveType
@@ -17,13 +19,13 @@ data Description = Description {
         moveType :: MoveType
     } deriving (Show)
 
-instance MoveDescription Description where
+instance MoveDescription.MoveDescription Description where
     destination = FullDescription.destination
     moveType = FullDescription.moveType
 
 type FullMove = Move Description
 
-fullMove :: MoveDescription desc => Move desc -> Square -> FullMove
+fullMove :: MoveDescription.MoveDescription desc => Move desc -> Square -> FullMove
 fullMove mv src =
     let desc = Description { source = src,
                              FullDescription.destination = MoveDescription.destination mv, 
@@ -32,3 +34,14 @@ fullMove mv src =
     case mv of
         PawnMove d promo -> PawnMove desc promo
         OfficerMove ot d -> OfficerMove ot desc
+
+
+-- TODO consider moving an not using PReader (use UpdateReader instead!)
+passantSquare :: FullMove -> PReader (Maybe Square)
+passantSquare mv@(PawnMove _ _) =
+    let dst = destination (description mv)
+        (_, y) = dst `diff` source (description mv)
+    in 
+    if y == 2 
+    then behind dst 
+    else return Nothing

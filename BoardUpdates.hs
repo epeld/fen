@@ -1,4 +1,4 @@
-module BoardUpdates
+module BoardUpdates where
 import Prelude (undefined)
 import Data.Eq
 import Data.Function
@@ -14,7 +14,7 @@ import ListUtils
 import MoveDescription
 import Square
 import Piece
-import MoveType
+import qualified MoveType
 import qualified Position
 import Position (Position)
 import PositionReader
@@ -29,7 +29,7 @@ boardStack = sequence [movePiece, passant, promotion]
 movePiece :: UpdateReader UpdateFn
 movePiece = do
     mv <- asks move
-    let src = source $ description mv
+    let src = source $ MoveType.description mv
     return $ Position.movePiece src (destination mv)
 
 
@@ -45,7 +45,7 @@ promotion = do
     color <- asks (Position.turn. originalPosition)
     mv <- asks move
     return $ case mv of
-        (PawnMove desc (Just officer)) -> 
+        (MoveType.PawnMove desc (Just officer)) -> 
             let dst = destination mv
                 piece = Piece (Officer officer) color
              in \p -> p { Position.board = insert dst piece (Position.board p) }
@@ -57,10 +57,10 @@ promotion = do
 -- Util function:
 -- Returns the square of the pawn that was taken en passant
 passantedPawn :: FullMove -> PReader (Maybe Square)
-passantedPawn mv@(PawnMove (Description _ dst mt) _) = do
+passantedPawn mv@(MoveType.PawnMove (Description _ dst mt) _) = do
     ep <- asks Position.passant 
     color <- turn
-    if ep == Just dst && mt == Captures
+    if ep == Just dst && mt == MoveType.Captures
        then behind dst
        else return Nothing
 

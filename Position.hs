@@ -4,6 +4,7 @@ import Data.Bool
 import Data.Eq
 import Data.Maybe
 import Data.Map
+import Data.Int
 import Data.Function
 
 import Text.Show

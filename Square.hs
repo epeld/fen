@@ -1,5 +1,5 @@
 module Square where
-import Prelude ((+))
+import Prelude ((+), (-))
 import Data.Ord
 import Data.Eq
 import Data.Int
@@ -23,3 +23,6 @@ add (Square (a, b)) (x, y) =
         else Nothing
                                  
 rank (Square (_, b)) = b
+
+diff :: Square -> Square -> (Int, Int)
+diff (Square (a,b)) (Square (x,y)) = (a - x, b - y)
