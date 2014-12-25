@@ -20,6 +20,8 @@ import Position (Position)
 import PositionReader
 import FullDescription
 import UpdateFunctions
+import BoardUpdates
+import PropertiesUpdates
 
 
 after :: FullMove -> PReader Position
@@ -36,19 +38,10 @@ positionUpdateFn :: UpdateReader UpdateFn
 positionUpdateFn = liftM compose updateStack
 
 
-
-
 -- The update stack has two substacks: board and properties
+-- defined in BoardUpdates and PropertiesUpdates
 updateStack :: UpdateReader [UpdateFn]
 updateStack = do
     bs <- boardStack 
     ps <- propertiesStack
     return (bs ++ ps)
-
--- The board stack contains all updateFns that will update the position's pieces
-boardStack :: UpdateReader [UpdateFn]
-boardStack = sequence [movePieceUpdateFn, passantUpdateFn, promotionUpdateFn]
-
--- The properties stack contains all updateFns that will update the position's meta info (e.g move count etc)
-propertiesStack :: UpdateReader [UpdateFn]
-propertiesStack = return [] -- TODO

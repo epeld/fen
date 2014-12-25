@@ -20,7 +20,9 @@ type Board = Map Square Piece
 data Position = Position {
     board :: Board,
     turn :: Color,
-    passant :: Maybe Square
+    passant :: Maybe Square,
+    fullMoveCount :: Int,
+    halfMoveCount :: Int
     } deriving (Show)
 
 hasPiece :: Position -> Piece -> Square -> Bool
