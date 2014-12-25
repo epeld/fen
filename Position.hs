@@ -29,7 +29,7 @@ hasPiece pos pc sq = pieceAt pos sq == Just pc
 pieceAt :: Position -> Square -> Maybe Piece
 pieceAt pos sq = lookup sq (board pos)
 
-movePiece :: Position -> Square -> Square -> Position
+movePiece :: Square -> Square -> Position -> Position
 movePiece src dst p = p { board = movePiece' src dst (board p) }
     where
     movePiece' src dst b = let pc = lookup src b

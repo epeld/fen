@@ -14,6 +14,9 @@ import Piece
 import Directions
 import SquareOffsets
 
+behind :: Color -> Square -> Maybe Square
+behind color sq = safeHead $ concat $ apply1 sq [pawnMoveSource color]
+
 type ApplyFn = (Square -> [Direction] -> [[Square]])
 
 apply :: ApplyFn

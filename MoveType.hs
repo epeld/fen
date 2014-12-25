@@ -11,8 +11,12 @@ import Piece
 data MoveType = Moves | Captures deriving (Show, Eq)
 
 data Move desc = 
-    PawnMove desc (Maybe OfficerType) | 
-    OfficerMove OfficerType desc
+    PawnMove {
+        description :: desc,
+        promotion :: Maybe OfficerType } | 
+    OfficerMove {
+        officerType :: OfficerType,
+        description :: desc }
 
 
 pieceType :: Move a -> PieceType

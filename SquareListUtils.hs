@@ -9,6 +9,7 @@ import Data.List
 import Data.Eq
 import Control.Monad.Reader
 
+import ListUtils
 import PositionReader
 import qualified Position
 import Piece
@@ -26,9 +27,6 @@ firstNonEmpty sqs = do
     pos <- ask
     return $ safeHead $ dropWhile (isNothing. lookupSquare pos) sqs
 
-
-safeHead [] = Nothing
-safeHead xs = Just (head xs)
 
 -- TODO move to Position
 lookupSquare pos sq = runReader (pieceAt sq) pos

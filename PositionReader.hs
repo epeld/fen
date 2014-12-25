@@ -15,6 +15,7 @@ import qualified Position as P
 import MoveType
 import Piece
 import Square
+import Movement
 
 type PReader = Reader P.Position
 
@@ -31,6 +32,11 @@ hasPiece :: Piece -> Square -> PReader Bool
 hasPiece pc sq = do
     mpc <- pieceAt sq
     return (mpc == Just pc)
+
+behind :: Square -> PReader (Maybe Square)
+behind sq = do
+    color <- turn
+    return $ Movement.behind color sq
 
 --
 -- Accessors
