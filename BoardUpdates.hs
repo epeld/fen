@@ -35,15 +35,16 @@ movePiece = do
 
 passant :: UpdateReader UpdateFn
 passant = do
-    mv <- asks move
-    msq <- asks $ runReader (passantedPawn mv). originalPosition
+    mv <- moveR
+    orig <- originalPositionR
+    let msq = runReader (passantedPawn mv) orig
     return $ \p -> p { Position.board = deleteMaybe msq (Position.board p) }
         
 
 promotion :: UpdateReader UpdateFn
 promotion = do
-    color <- asks (Position.turn. originalPosition)
-    mv <- asks move
+    color <- whoseMoveR
+    mv <- moveR
     return $ case mv of
         (MoveType.PawnMove desc (Just officer)) -> 
             let dst = destination mv

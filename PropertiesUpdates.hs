@@ -27,7 +27,7 @@ propertiesStack = sequence [fullMove, halfMove, castlingRights, passantSquare]
 
 fullMove :: UpdateReader UpdateFn
 fullMove = do
-    color <- asks (Position.turn. originalPosition)
+    color <- whoseMoveR
     return $ case color of
         Black -> \p -> p { Position.fullMoveCount = succ (Position.fullMoveCount p) }
         White -> id
@@ -37,7 +37,7 @@ fullMove = do
 --  This is used to determine if a draw can be claimed under the fifty-move rule."
 halfMove :: UpdateReader UpdateFn
 halfMove = do
-    mv <- asks move
+    mv <- moveR
     let reset p = p { Position.halfMoveCount = 0 }
         inc p = p  { Position.halfMoveCount = succ (Position.halfMoveCount p) }
     return $ case mv of
@@ -48,7 +48,7 @@ halfMove = do
 
 castlingRights :: UpdateReader UpdateFn
 castlingRights = do
-    mv <- asks move
+    mv <- moveR
     return id -- TODO
 
 
@@ -57,8 +57,8 @@ castlingRights = do
 --  This is recorded regardless of whether there is a pawn in position to make an en passant capture"
 passantSquare :: UpdateReader UpdateFn
 passantSquare = do
-    mv <- asks move
-    orig <- asks originalPosition 
+    mv <- moveR
+    orig <- originalPositionR
     let psq = runReader (FullMove.passantSquare mv) orig
     return $ \p ->
         p { Position.passant = psq }
@@ -66,5 +66,5 @@ passantSquare = do
 
 newTurn :: UpdateReader UpdateFn
 newTurn = do
-    color <- asks (Position.turn. originalPosition)
+    color <- whoseMoveR
     return $ \p -> p { Position.turn = otherColor color }

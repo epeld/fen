@@ -31,3 +31,11 @@ type UpdateReader = Reader UpdateEnvironment
 -- each updating a single property of the position, and then composing them
 type UpdateFn = Position -> Position
 
+originalPositionR  :: UpdateReader Position
+originalPositionR = asks originalPosition
+
+moveR :: UpdateReader FullMove
+moveR = asks move
+
+whoseMoveR :: UpdateReader Color
+whoseMoveR = Position.turn `liftM` originalPositionR

@@ -37,6 +37,7 @@ fullMove mv src =
 
 
 -- TODO consider moving an not using PReader (use UpdateReader instead!)
+-- Change is not super easy, though because 'behind' also is a PReader
 passantSquare :: FullMove -> PReader (Maybe Square)
 passantSquare mv@(PawnMove _ _) =
     let dst = destination (description mv)
