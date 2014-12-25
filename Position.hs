@@ -9,21 +9,24 @@ import Data.Function
 
 import Text.Show
 import Control.Monad.Reader
+import qualified Data.Set as Set
 
 import MoveType
 import Piece
 import Square
+import Castling
 
-import Control.Lens
 
 type Board = Map Square Piece
+
 
 data Position = Position {
     board :: Board,
     turn :: Color,
     passant :: Maybe Square,
     fullMoveCount :: Int,
-    halfMoveCount :: Int
+    halfMoveCount :: Int,
+    castlingRights :: Set.Set CastlingRight
     } deriving (Show)
 
 hasPiece :: Position -> Piece -> Square -> Bool

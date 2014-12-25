@@ -1,7 +1,10 @@
-module FullDescription (fullMove, Description(Description), MoveError, FullMove, source, passantSquare) where
+module FullDescription (fullMove, Description(Description), 
+                        MoveError, FullMove, source, 
+                        passantSquare, fullSource) where
 import Prelude (undefined)
 import Data.Eq
 import Data.Maybe
+import Data.Function
 import Control.Monad (return)
 import Text.Show
 
@@ -35,6 +38,8 @@ fullMove mv src =
         PawnMove d promo -> PawnMove desc promo
         OfficerMove ot d -> OfficerMove ot desc
 
+fullSource :: FullMove -> Square
+fullSource mv = source $ description mv
 
 -- TODO consider moving an not using PReader (use UpdateReader instead!)
 -- Change is not super easy, though because 'behind' also is a PReader

@@ -26,9 +26,9 @@ data PieceType = Pawn | Officer OfficerType
 data OfficerType = Bishop | Knight | Rook | Queen | King
                    deriving (Show, Eq, Ord, Enum)
 
-data Piece = Piece { pieceType :: PieceType, color :: Color } deriving (Show, Eq)
+data Piece = Piece { pieceType :: PieceType, color :: Color } deriving (Show, Eq, Ord)
 
-data Color = White | Black deriving (Show, Eq, Enum)
+data Color = White | Black deriving (Show, Eq, Enum, Ord)
 
 otherColor White = Black
 otherColor Black = White
