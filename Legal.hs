@@ -16,6 +16,7 @@ fullMoves mv = do
     filterM legal mvs
 
 
+-- TODO return Either LegalityError FullMove instead!
 legal :: FullMove -> PReader Bool
 legal mv = local (runReader $ after mv) Position.legal
 

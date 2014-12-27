@@ -1,6 +1,6 @@
-module FullDescription (fullMove, Description(Description), 
-                        MoveError, FullMove, source, 
-                        passantSquare, fullSource) where
+module FullMove (fullMove, Description(Description), 
+                  MoveError, FullMove, source, 
+                  passantSquare, fullSource) where
 import Prelude (undefined)
 import Data.Eq
 import Data.Maybe
