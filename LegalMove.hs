@@ -1,24 +1,23 @@
 module LegalMove where
-import MoveTypes
+import Prelude (undefined)
+import Data.Eq
+import Text.Show
 
-pawnMove :: SpecifiedMove -> Maybe SpecifiedPawnMove
-pawnMove smv = case piece smv of
-    Pawn _ -> Just $ SpecifiedPawnMove smv
-    _ -> Nothing
+import MoveDescription
+import qualified PartialDescription as Partial
+import Square
+import MoveType
+import PositionReader
+import FullMove
 
-officerMove :: SpecifiedMove -> Maybe SpecifiedOfficerMove
-officerMove smv = case piece smv of
-    Officer smv -> Just $ SpecifiedOfficerMove smv
-    _ -> Nothing
-
-classify :: SpecifiedMove -> Either SpecifiedPawnMove SpecifiedOfficerMove
-classify smv = case first of
-    Just x -> x
-    _ -> error "Invalid Specified Move; couldn't classify"
-    where first = getFirst $ mconcat $ fmap First $ [pawnMove, officerMove] <*> [smv]
+{-
+fullMoves :: MoveDescription desc => Move desc -> PReader [FullMove]
+fullMoves mv = do
+    mvs <- fmap fullMove `liftM` candidates mv
+    filterM legal mvs
 
 
-legal :: SpecifiedMove -> PReader Bool
-legal = fmap legal. after
+legal :: FullMove -> PReader Bool
+legal mv = local (runReader $ after mv) LegalPosition.legal
 
-move :: LegalMove -> PReader Position
+-}

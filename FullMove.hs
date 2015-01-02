@@ -23,16 +23,16 @@ data Description = Description {
     } deriving (Show)
 
 instance MoveDescription.MoveDescription Description where
-    destination = FullDescription.destination
-    moveType = FullDescription.moveType
+    destination = FullMove.destination
+    moveType = FullMove.moveType
 
 type FullMove = Move Description
 
 fullMove :: MoveDescription.MoveDescription desc => Move desc -> Square -> FullMove
 fullMove mv src =
     let desc = Description { source = src,
-                             FullDescription.destination = MoveDescription.destination mv, 
-                             FullDescription.moveType = MoveDescription.moveType mv }
+                             FullMove.destination = MoveDescription.destination mv, 
+                             FullMove.moveType = MoveDescription.moveType mv }
     in
     case mv of
         PawnMove d promo -> PawnMove desc promo
@@ -41,8 +41,8 @@ fullMove mv src =
 fullSource :: FullMove -> Square
 fullSource mv = source $ description mv
 
--- TODO consider moving an not using PReader (use UpdateReader instead!)
--- Change is not super easy, though because 'behind' also is a PReader
+-- TODO consider moving. And not using PReader (use UpdateReader instead!).
+-- Change is not super easy though because 'behind' also is a PReader
 passantSquare :: FullMove -> PReader (Maybe Square)
 passantSquare mv@(PawnMove _ _) =
     let dst = destination (description mv)

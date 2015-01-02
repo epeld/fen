@@ -40,3 +40,7 @@ movePiece src dst p = p { board = movePiece' src dst (board p) }
     where
     movePiece' src dst b = let pc = lookup src b
                             in update (const pc) dst (delete src b)
+
+lastRank :: Color -> Int
+lastRank White = 1
+lastRank Black = 8

@@ -17,7 +17,7 @@ import Square
 import Piece
 import MoveType
 import PositionReader
-import qualified FullDescription as FullMove
+import qualified FullMove
 import UpdateFunctions
 import qualified Position
 import Castling

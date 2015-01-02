@@ -18,7 +18,7 @@ import qualified MoveType
 import qualified Position
 import Position (Position)
 import PositionReader
-import FullDescription
+import FullMove
 import UpdateFunctions
 
 -- The board stack contains all updateFns that will update the position's pieces

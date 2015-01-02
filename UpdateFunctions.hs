@@ -19,7 +19,7 @@ import MoveType
 import qualified Position
 import Position (Position)
 import PositionReader
-import FullDescription
+import FullMove
 
 -- Represents the information needed to create a new position from an old
 -- e.g we need to know how the position looked initially, and we need to know what is going to change

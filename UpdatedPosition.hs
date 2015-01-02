@@ -18,7 +18,7 @@ import MoveType
 import qualified Position
 import Position (Position)
 import PositionReader
-import FullDescription
+import FullMove
 import UpdateFunctions
 import BoardUpdates
 import PropertiesUpdates

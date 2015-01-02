@@ -3,6 +3,7 @@ import Prelude ()
 import Data.Bool
 import Data.Eq
 import Data.Maybe
+import Data.Int
 import Data.Map
 import Data.Function
 import Data.Monoid
@@ -41,6 +42,9 @@ behind sq = do
 --
 -- Accessors
 --
+
+lastRank :: PReader Int
+lastRank = fmap P.lastRank turn
 
 pieceAt :: Square -> PReader (Maybe Piece)
 pieceAt sq = boardAccessor (lookup sq)
