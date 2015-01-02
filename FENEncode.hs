@@ -6,6 +6,7 @@ import Data.Functor
 import Data.Maybe
 import Data.Monoid
 import Data.Map
+import Data.List.Split
 import qualified Data.Set as Set
 import Data.List (unwords, concatMap, group, replicate, length, head, sort)
 import Control.Applicative
@@ -36,7 +37,8 @@ rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2
 encode :: Position -> String
 encode = mconcat [encodeBoard. board, encodeProperties]
 
-encodeBoard b = 
+-- TODO must be done per row so we can chunk and intersperse! /
+encodeBoard' b = 
     let pcs = fmap (flip lookup b) fenSquares
         enc (i, Nothing) = [intToDigit i]
         enc (i, Just p) = replicate i (encodePiece p)
@@ -45,6 +47,9 @@ encodeBoard b =
 
 fenSquares :: [Square]
 fenSquares = let sq a b = Square (b, a) in sq <$> [1..8] <*> [1..8]
+
+fenSquareRows :: [[Square]]
+fenSquareRows = chunk 8 fenSquares
 
 encodeProperties :: Position -> String
 encodeProperties = mconcat [encodeTurn, encodeCastlingRights, encodePassant, encodeHalfMove, encodeFullMove]

@@ -24,6 +24,10 @@ files = ['a'..'h']
 ranks :: [Int]
 ranks = [1..8]
 
+string :: Square -> String
+string (Square (a, b)) = [chr (ord 'a' + a - 1), chr (ord '1' + b - 1)]
+
+
 square :: String -> Maybe Square
 square [file, rank] = curry Square <$> fi <*> ri
     where fi = findIndex (== file) files
@@ -40,6 +44,7 @@ add :: Square -> Offset -> Maybe Square
 add (Square (a, b)) (x, y) =
     let a' = a + x
         b' = b + y
+    -- TODO use <,> instead of elem
      in if elem a' [1..8] && elem b' [1..8]
         then Just $ Square (a', b')
         else Nothing
