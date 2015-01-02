@@ -20,8 +20,8 @@ data Error = MissingPromotion Square | KingAttacked Square
              deriving (Show, Eq)
 
 
-legal :: PReader (Maybe Error)
-legal = do
+error :: PReader (Maybe Error)
+error = do
     ka <- kingAttacked
     mp <- missingPromotion
     return $ getFirst $ ka `mappend` mp
