@@ -44,7 +44,14 @@ add (Square (a, b)) (x, y) =
         then Just $ Square (a', b')
         else Nothing
                                  
+rank :: Square -> Int
 rank (Square (_, b)) = b
+
+file :: Square -> Int
+file (Square (a, _)) = a
+
+fileIndex :: Char -> Maybe Int
+fileIndex f = findIndex (== f) files
 
 diff :: Square -> Square -> (Int, Int)
 diff (Square (a,b)) (Square (x,y)) = (a - x, b - y)

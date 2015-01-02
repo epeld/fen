@@ -25,6 +25,7 @@ data Description = Description {
 instance MoveDescription.MoveDescription Description where
     destination = FullMove.destination
     moveType = FullMove.moveType
+    possibleSource desc sq = sq == (source desc)
 
 type FullMove = Move Description
 

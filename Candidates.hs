@@ -28,7 +28,8 @@ candidates desc = do
         mt = moveType desc
         finder = candidateFinder mt
     c <- turn
-    finder c dest
+    sqs <- finder c dest
+    return $ filter (possibleSource desc) sqs
 
 type CandidateFinder = Color -> Square -> PReader [Square]
 
