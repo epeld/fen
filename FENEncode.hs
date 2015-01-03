@@ -40,7 +40,7 @@ encode = mconcat [encodeBoard. board, encodeProperties]
 encodeBoard :: Board -> String
 encodeBoard b = mconcat $ intersperse "/" encodedRows
     where   
-    encodedRows = encodeRow <$> fenSquareRows <*> pure b
+    encodedRows = encodeRow <$> chunksOf 8 fenSquares <*> pure b
 
 encodeRow :: [Square] -> Board -> String
 encodeRow sqs b =
@@ -51,10 +51,7 @@ encodeRow sqs b =
     in concatMap (enc. histo) (group pcs)
 
 fenSquares :: [Square]
-fenSquares = let sq a b = Square (b, a) in sq <$> [1..8] <*> [1..8]
-
-fenSquareRows :: [[Square]]
-fenSquareRows = chunksOf 8 fenSquares
+fenSquares = let sq a b = Square (b, a) in sq <$> [8,7..1] <*> [1..8]
 
 encodeProperties :: Position -> String
 encodeProperties = mconcat [encodeTurn, encodeCastlingRights, encodePassant, encodeHalfMove, encodeFullMove]
