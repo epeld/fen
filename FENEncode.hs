@@ -37,9 +37,12 @@ rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2
 encode :: Position -> String
 encode = mconcat [encodeBoard. board, encodeProperties]
 
--- TODO must be done per row so we can chunk and intersperse! /
-encodeBoard' b = 
-    let pcs = fmap (flip lookup b) fenSquares
+encodeBoard :: Board -> String
+encodeBoard b = unwords (encodeRow <$> fenSquareRows <*> pure b)
+
+encodeRow :: [Square] -> Board -> String
+encodeRow sqs b =
+    let pcs = fmap (flip lookup b) sqs
         enc (i, Nothing) = [intToDigit i]
         enc (i, Just p) = replicate i (encodePiece p)
         histo = length &&& head -- group guarantees head is safe
@@ -49,7 +52,7 @@ fenSquares :: [Square]
 fenSquares = let sq a b = Square (b, a) in sq <$> [1..8] <*> [1..8]
 
 fenSquareRows :: [[Square]]
-fenSquareRows = chunk 8 fenSquares
+fenSquareRows = chunksOf 8 fenSquares
 
 encodeProperties :: Position -> String
 encodeProperties = mconcat [encodeTurn, encodeCastlingRights, encodePassant, encodeHalfMove, encodeFullMove]
