@@ -8,7 +8,7 @@ import Data.Monoid
 import Data.Map
 import Data.List.Split
 import qualified Data.Set as Set
-import Data.List (unwords, concatMap, group, replicate, length, head, sort)
+import Data.List (unwords, concatMap, group, replicate, length, head, sort, intersperse)
 import Control.Applicative
 import Control.Arrow
 import Data.Char
@@ -38,7 +38,9 @@ encode :: Position -> String
 encode = mconcat [encodeBoard. board, encodeProperties]
 
 encodeBoard :: Board -> String
-encodeBoard b = unwords (encodeRow <$> fenSquareRows <*> pure b)
+encodeBoard b = mconcat $ intersperse "/" encodedRows
+    where   
+    encodedRows = encodeRow <$> fenSquareRows <*> pure b
 
 encodeRow :: [Square] -> Board -> String
 encodeRow sqs b =
