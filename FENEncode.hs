@@ -56,7 +56,7 @@ fenSquares = let sq a b = Square (b, a) in sq <$> [8,7..1] <*> [1..8]
 encodeProperties :: Position -> String
 encodeProperties = separated " " [encodeTurn, encodeCastlingRights, encodePassant, encodeHalfMove, encodeFullMove]
 
--- TODO write signature or remove..
+separated :: String -> [Position -> String] -> Position -> String
 separated space parsers = mconcat (intersperse (const space) parsers)
 
 
