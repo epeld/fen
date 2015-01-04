@@ -1,5 +1,5 @@
 module Square where
-import Prelude ((+), (-), error)
+import Prelude ((+), (-), error, succ)
 import Data.Ord
 import Data.Eq
 import Data.Int
@@ -30,8 +30,8 @@ string (Square (a, b)) = [chr (ord 'a' + a - 1), chr (ord '1' + b - 1)]
 
 square :: String -> Maybe Square
 square [file, rank] = curry Square <$> fi <*> ri
-    where fi = findIndex (== file) files
-          ri = findIndex (== rank) ['1'..'8']
+    where fi = succ <$> findIndex (== file) files
+          ri = succ <$> findIndex (== rank) ['1'..'8']
 square _ = Nothing
 
 square' :: String -> Square
