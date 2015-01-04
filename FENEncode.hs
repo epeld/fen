@@ -66,8 +66,11 @@ encodeTurn p = s (turn p)
           s Black = "b"
 
 encodeCastlingRights :: Position -> String
-encodeCastlingRights = sort. fmap encodeRight. Set.toList. castlingRights
-    where encodeRight cr@(Castling clr side) = cased clr (encodeSide side)
+encodeCastlingRights = e. sort. fmap encodeRight. Set.toList. castlingRights
+    where 
+          e "" = "-"
+          e x = x
+          encodeRight cr@(Castling clr side) = cased clr (encodeSide side)
           encodeSide Kingside = 'k'
           encodeSide Queenside = 'q'
 
