@@ -16,16 +16,20 @@ square sq = case Square.square sq of
     Nothing -> error ("Invalid square " ++ sq)
     Just s -> s
 
+emptyPosition :: Position
+emptyPosition = Position { board = Map.empty,
+                           turn = White,
+                           passant = Nothing,
+                           fullMoveCount = 1,
+                           halfMoveCount = 0,
+                           castlingRights = Set.empty }
+
+
 main :: IO ()
 main = hspec $ do
     describe "FENEncode.encode" $ do
 
-        let pos = Position { board = Map.empty,
-                             turn = White,
-                             passant = Nothing,
-                             fullMoveCount = 1,
-                             halfMoveCount = 0,
-                             castlingRights = Set.empty }
+        let pos = emptyPosition
             part :: Int -> String -> String
             part n s = words s !! n
 
