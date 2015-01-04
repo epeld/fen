@@ -18,7 +18,7 @@ square sq = case Square.square sq of
 
 main :: IO ()
 main = hspec $ do
-    describe "encode" $ do
+    describe "FENEncode.encode" $ do
 
         let pos = Position { board = Map.empty,
                              turn = White,
