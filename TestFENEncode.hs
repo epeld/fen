@@ -17,8 +17,8 @@ main = hspec $ do
         let pos = Position { board = Map.empty,
                              turn = White,
                              passant = Nothing,
-                             fullMoveCount = 0,
-                             halfMoveCount = 1,
+                             fullMoveCount = 1,
+                             halfMoveCount = 0,
                              castlingRights = Set.empty }
             part :: Int -> String -> String
             part n s = words s !! n
@@ -27,26 +27,30 @@ main = hspec $ do
             length (words $ FEN.encode pos) `shouldBe` 6
 
         describe "the turn-part" $ do
+            let encoded :: Position -> String
+                encoded = part 1. FEN.encode
 
             it "encodes white's turn as 'w'" $ do
                 let p = pos { turn = White }
-                part 1 (FEN.encode p) `shouldBe` "w"
+                encoded p `shouldBe` "w"
 
             it "encodes black's turn as 'b'" $ do
                 let p = pos { turn = Black }
-                part 1 (FEN.encode p) `shouldBe` "b"
+                encoded p `shouldBe` "b"
 
 
         describe "the castling rights-part" $ do
+            let encoded :: Position -> String
+                encoded = part 2. FEN.encode
 
             it "encodes whites queenside castling right as 'K'" $ do
                 let _K = Castling White Kingside
                     p = pos { castlingRights = Set.singleton _K}
-                part 2 (FEN.encode p) `shouldBe` "K"
+                encoded p `shouldBe` "K"
 
             it "encodes a lack of castling rights as '-'" $ do
                 let p = pos { castlingRights = Set.empty }
-                part 2 (FEN.encode p) `shouldBe` "-"
+                encoded p `shouldBe` "-"
 
 
         describe "the passant square-part" $ do
@@ -60,3 +64,21 @@ main = hspec $ do
             it "encodes e4 as 'e4'" $ do
                 let p = pos { passant = Square.square "e4" }
                 encoded p `shouldBe` "e4"
+
+
+        describe "the half move count-part" $ do
+            let encoded :: Position -> String
+                encoded = part 4. FEN.encode
+
+            it "encodes move count 17 as '17'" $ do
+                let p = pos { halfMoveCount = 17 }
+                encoded p `shouldBe` "17"
+
+
+        describe "the full move count-part" $ do
+            let encoded :: Position -> String
+                encoded = part 5. FEN.encode
+
+            it "encodes move count 23 as '23'" $ do
+                let p = pos { fullMoveCount = 23 }
+                encoded p `shouldBe` "23"
