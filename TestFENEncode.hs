@@ -7,10 +7,16 @@ import FENEncode as FEN
 import Castling
 import Piece
 import Position
-import Square
+import qualified Square
 
 -- rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 
+square :: String -> Square.Square
+square sq = case Square.square sq of
+    Nothing -> error ("Invalid square " ++ sq)
+    Just s -> s
+
+main :: IO ()
 main = hspec $ do
     describe "encode" $ do
 
@@ -25,6 +31,22 @@ main = hspec $ do
 
         it "encodes a position into 6 parts" $ do
             length (words $ FEN.encode pos) `shouldBe` 6
+
+        describe "the board-part" $ do
+            let encoded :: Position -> String
+                encoded = part 0. FEN.encode
+            
+            it "encodes a white knight at e4" $ do
+                let _N = Piece (Officer Knight) White
+                    e4 = square "e4"
+                    p = pos { board = Map.singleton e4 _N}
+                encoded p `shouldBe` "8/8/8/8/4N3/8/8/8"
+
+            it "encodes a black knight at d5" $ do
+                let n = Piece (Officer Knight) Black
+                    d5 = square "d5"
+                    p = pos { board = Map.singleton d5 n}
+                encoded p `shouldBe` "8/8/8/3n4/8/8/8/8"
 
         describe "the turn-part" $ do
             let encoded :: Position -> String
