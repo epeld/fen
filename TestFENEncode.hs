@@ -12,9 +12,7 @@ import qualified Square
 -- rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 
 square :: String -> Square.Square
-square sq = case Square.square sq of
-    Nothing -> error ("Invalid square " ++ sq)
-    Just s -> s
+square = Square.unsafe
 
 emptyPosition :: Position
 emptyPosition = Position { board = Map.empty,

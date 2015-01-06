@@ -27,6 +27,10 @@ ranks = [1..8]
 string :: Square -> String
 string (Square (a, b)) = [chr (ord 'a' + a - 1), chr (ord '1' + b - 1)]
 
+unsafe :: String -> Square
+unsafe s = sq (square s)
+    where sq Nothing = error ("Invalid square " ++ s)
+          sq (Just x) = x
 
 square :: String -> Maybe Square
 square [file, rank] = curry Square <$> fi <*> ri
