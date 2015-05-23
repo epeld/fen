@@ -21,6 +21,7 @@ import qualified FullMove
 import UpdateFunctions
 import qualified Position
 import Castling
+import qualified PassantUtils
 
 
 -- The properties stack contains all updateFns that will update the position's meta info (e.g move count etc)
@@ -68,9 +69,7 @@ castlingRights = do
 --  This is recorded regardless of whether there is a pawn in position to make an en passant capture"
 passantSquare :: UpdateReader UpdateFn
 passantSquare = do
-    mv <- moveR
-    orig <- originalPositionR
-    let psq = runReader (FullMove.passantSquare mv) orig
+    psq <- PassantUtils.passantSquare
     return $ \p ->
         p { Position.passant = psq }
 
@@ -79,3 +78,4 @@ newTurn :: UpdateReader UpdateFn
 newTurn = do
     color <- whoseMoveR
     return $ \p -> p { Position.turn = otherColor color }
+

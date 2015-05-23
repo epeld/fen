@@ -1,6 +1,5 @@
 module FullMove (fullMove, Description(Description), 
-                  MoveError, FullMove, source, 
-                  passantSquare, fullSource) where
+                  MoveError, FullMove, source, fullSource) where
 import Prelude (undefined)
 import Data.Eq
 import Data.Maybe
@@ -41,14 +40,3 @@ fullMove mv src =
 
 fullSource :: FullMove -> Square
 fullSource mv = source $ description mv
-
--- TODO consider moving. And not using PReader (use UpdateReader instead!).
--- Change is not super easy though because 'behind' also is a PReader
-passantSquare :: FullMove -> PReader (Maybe Square)
-passantSquare mv@(PawnMove _ _) =
-    let dst = destination (description mv)
-        (_, y) = dst `diff` source (description mv)
-    in 
-    if y == 2 
-    then behind dst 
-    else return Nothing
