@@ -29,5 +29,3 @@ instance MoveDescription Description where
               conformsP (Rank r) = rank sq == r
               conformsP (File f) = Just (file sq) == fileIndex f
               conformsP (Whole sq2) = sq == sq2
-
-newtype PartialMove = Move Description
