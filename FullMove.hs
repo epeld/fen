@@ -12,6 +12,7 @@ import qualified PartialDescription as Partial
 import Square
 import MoveType
 import PositionReader
+import Move
 
 data MoveError = Ambiguous [FullMove] | Invalid
 

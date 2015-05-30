@@ -16,6 +16,7 @@ import Square
 import Piece
 import qualified MoveType
 import qualified Position
+import qualified Move
 import Position (Position)
 import PositionReader
 import FullMove
@@ -29,7 +30,7 @@ boardStack = sequence [movePiece, passant, promotion]
 movePiece :: UpdateReader UpdateFn
 movePiece = do
     mv <- asks move
-    let src = source $ MoveType.description mv
+    let src = source $ Move.description mv
     return $ Position.movePiece src (destination mv)
 
 
@@ -46,7 +47,7 @@ promotion = do
     color <- whoseMoveR
     mv <- moveR
     return $ case mv of
-        (MoveType.PawnMove desc (Just officer)) -> 
+        (Move.PawnMove desc (Just officer)) -> 
             let dst = destination mv
                 piece = Piece (Officer officer) color
              in \p -> p { Position.board = insert dst piece (Position.board p) }
@@ -58,7 +59,7 @@ promotion = do
 -- Util function:
 -- Returns the square of the pawn that was taken en passant
 passantedPawn :: FullMove -> PReader (Maybe Square)
-passantedPawn mv@(MoveType.PawnMove (Description _ dst mt) _) = do
+passantedPawn mv@(Move.PawnMove (Description _ dst mt) _) = do
     ep <- asks Position.passant 
     color <- turn
     if ep == Just dst && mt == MoveType.Captures

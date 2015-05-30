@@ -3,6 +3,7 @@ import Prelude ()
 import Data.Function
 import Data.Bool
 
+import Move
 import MoveType
 import Square
 

@@ -20,6 +20,7 @@ import FullMove
 import Candidates
 import UpdatedPosition
 import qualified LegalPosition as LP
+import Move
 
 
 fullMoves :: MoveDescription desc => Move desc -> PReader [FullMove]

@@ -22,6 +22,7 @@ import UpdateFunctions
 import qualified Position
 import Castling
 import qualified PassantUtils
+import Move
 
 
 -- The properties stack contains all updateFns that will update the position's meta info (e.g move count etc)

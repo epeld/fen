@@ -7,6 +7,7 @@ import MoveDescription
 import MoveType
 import Square
 import PositionReader
+import Move
 
 passantSquare :: UpdateReader (Maybe Square)
 passantSquare = do

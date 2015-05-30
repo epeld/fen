@@ -41,15 +41,20 @@ withSquare s =
         case s of
             Nothing -> -}
 
+parseMoves :: String -> Either a b
+parseMoves fen = undefined
+
+
+
 afterMoves :: String -> PReader Spec -> Spec
 afterMoves m r = 
     describe ("moves " ++ m) $ do
-        let mvs = parseMoves m
-        it "are parsed correctly" $ assertRight mvs
-        withRight mvs $ \mvs' -> do
+        let mvs = parseMoves e
+        it "parse correctly" $ assertRight mvs
+        mvs `withRight` \mvs' -> do
             let p = afterMany mvs'
             it "produces a legal position" $ assertRight p
-            withRight p $ \p' ->
+            p `withRight` \p' -> do
                 describe "in resulting position" $
                     runReader r p'
         
