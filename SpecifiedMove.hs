@@ -7,6 +7,9 @@ import Control.Applicative
 import Square
 import Position
 import Candidates
+import PartialMove
+import PositionReader
+import Move
 
 specify :: Move -> PReader [SpecifiedMove]
 specify mv = do
