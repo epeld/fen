@@ -7,26 +7,14 @@ import Control.Monad.Reader
 import PositionReader
 import FENDecode
 
-withPosition :: String -> PReader Spec -> Spec
-withPosition fen r =
-    let p = decode fen
-        text = "position " ++ fen
-    in describe text $ do
-        it "is valid" $ assertRight p
-        withRight p $ runReader r
+-- TODO This module is the work in progess module for testing out the program
 
-assertRight (Left err) = assertFailure $ show err
-assertRight _ = assertSuccess
-assertSuccess = return ()
-
-withRight :: Monad m => Either a b -> (b -> m ()) -> m ()
-withRight (Right a) f = f a
-withRight _ _ = return ()
 
 --withInitialPosition :: String -> Spec
 --withInitialPosition = withPosition initialFEN
 
 {-
+ - Intended example usage:
 stuff = withInitialPosition $ do
     hasOfficerAt Knight "e4"
     hasPawnAt "d2"
@@ -58,3 +46,22 @@ afterMoves m r =
                 describe "in resulting position" $
                     runReader r p'
         
+--
+-- Testing utils
+-- TODO move
+
+withPosition :: String -> PReader Spec -> Spec
+withPosition fen r =
+    let p = decode fen
+        text = "position " ++ fen
+    in describe text $ do
+        it "is valid" $ assertRight p
+        withRight p $ runReader r
+
+assertRight (Left err) = assertFailure $ show err
+assertRight _ = assertSuccess
+assertSuccess = return ()
+
+withRight :: Monad m => Either a b -> (b -> m ()) -> m ()
+withRight (Right a) f = f a
+withRight _ _ = return ()
