@@ -7,6 +7,11 @@ import Control.Monad.Reader
 import PositionReader
 import FENDecode
 
+import Distribution.TestSuite
+
+tests :: IO [Distribution.TestSuite.Test]
+tests = return []
+
 -- TODO This module is the work in progess module for testing out the program
 
 runTests :: IO ()

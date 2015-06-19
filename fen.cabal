@@ -23,3 +23,9 @@ executable fen
   build-depends:       base >=4.7 && <4.8, containers >=0.5 && <0.6, mtl >=2.2 && <2.3, monadplus >=1.4 && <1.5, split >=0.2 && <0.3, parsec >=3.1 && <3.2, HUnit >=1.2 && <1.3, hspec >=2.1 && <2.2, QuickCheck >=2.6 && <2.7
   hs-source-dirs:      src
   default-language:    Haskell2010
+
+Test-Suite square-tests
+    type:   detailed-0.9
+    test-module:    SquareTestSuite
+    hs-source-dirs:      src, test
+    build-depends:       base >=4.7 && <4.8, containers >=0.5 && <0.6, mtl >=2.2 && <2.3, monadplus >=1.4 && <1.5, split >=0.2 && <0.3, parsec >=3.1 && <3.2, HUnit >=1.2 && <1.3, hspec >=2.1 && <2.2, QuickCheck >=2.6 && <2.7, Cabal >= 1.20
