@@ -9,6 +9,9 @@ import FENDecode
 
 -- TODO This module is the work in progess module for testing out the program
 
+runTests :: IO ()
+runTests = return ()
+
 
 {-
  - Intended example usage:
