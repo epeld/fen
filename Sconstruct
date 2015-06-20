@@ -24,9 +24,6 @@ bld = Builder(action = run_template,
 
 env.Append(BUILDERS={'Template': bld})
 
-# env.Template([t.name.replace("Test", "").replace(". for t in tests)
-
-
 
 for test in tests:
     if "Utils" in test.name:
