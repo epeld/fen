@@ -23,8 +23,8 @@ emptyPosition = Position { board = Map.empty,
                            castlingRights = Set.empty }
 
 
-main :: IO ()
-main = hspec $ do
+test :: IO ()
+test = hspec $ do
     describe "FENEncode.encode" $ do
 
         let pos = emptyPosition
