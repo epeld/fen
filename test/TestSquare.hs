@@ -5,8 +5,8 @@ import Control.Applicative
 
 import Square
 
-main :: IO ()
-main = hspec $ do
+test :: IO ()
+test = hspec $ do
     describe "Square" $ do
 
         describe "square" $ do
