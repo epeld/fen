@@ -1,0 +1,39 @@
+templates_dir = Dir('templates/')
+test_dir = Dir('test/')
+tests = test_dir.glob('Test*.hs')
+
+env = Environment(tools=['textfile'])
+
+def add_template_source(target, source, env):
+    new_source = [File(s.name, templates_dir) for s in source]
+    return target, new_source
+
+def run_template(target, source, env):
+    def run1(t, s):
+        print "Template", s, t
+        with open(s.get_path()) as i:
+            with open(t.get_path(), "w") as o:
+                o.write(env.subst(i.read()))
+    map(run1, target, source)
+
+bld = Builder(action = run_template,
+              src_dir = 'templates/',
+              src_suffix = '.template',
+              emitter = add_template_source)
+
+
+env.Append(BUILDERS={'Template': bld})
+
+# env.Template([t.name.replace("Test", "").replace(". for t in tests)
+
+
+
+for test in tests:
+    if "Utils" in test.name:
+        "Print skipping utilities module"
+        continue
+    name = test.name.replace(".hs", "")
+    target = 'test-suites/{name}TestSuite.hs'.format(name=name.replace("Test", ""))
+    print "Target is", target
+    env.Clone(TEST_MODULE=name).Template(target, 'TestSuite.hs.template')
+

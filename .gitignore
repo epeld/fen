@@ -2,3 +2,6 @@
 *.o
 *.hi
 dist
+
+test-suites
+build
