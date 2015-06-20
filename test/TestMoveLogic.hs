@@ -7,11 +7,16 @@ import Control.Monad.Reader
 import PositionReader
 import FENDecode
 
+import Distribution.TestSuite
+
+tests :: IO [Distribution.TestSuite.Test]
+tests = return []
+
 -- TODO This module is the work in progess module for testing out the program
 
+runTests :: IO ()
+runTests = return ()
 
---withInitialPosition :: String -> Spec
---withInitialPosition = withPosition initialFEN
 
 {-
  - Intended example usage:
@@ -29,6 +34,7 @@ withSquare s =
         case s of
             Nothing -> -}
 
+{-
 parseMoves :: String -> Either a b
 parseMoves fen = undefined
 
@@ -45,23 +51,9 @@ afterMoves m r =
             p `withRight` \p' -> do
                 describe "in resulting position" $
                     runReader r p'
+-}
         
 --
 -- Testing utils
 -- TODO move
 
-withPosition :: String -> PReader Spec -> Spec
-withPosition fen r =
-    let p = decode fen
-        text = "position " ++ fen
-    in describe text $ do
-        it "is valid" $ assertRight p
-        withRight p $ runReader r
-
-assertRight (Left err) = assertFailure $ show err
-assertRight _ = assertSuccess
-assertSuccess = return ()
-
-withRight :: Monad m => Either a b -> (b -> m ()) -> m ()
-withRight (Right a) f = f a
-withRight _ _ = return ()
