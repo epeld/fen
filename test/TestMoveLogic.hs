@@ -1,21 +1,27 @@
-module Test where
+module TestMoveLogic where
 import Test.HUnit
 import Test.Hspec
+
+import TestUtils
+import HelperReaders
 
 import Control.Monad.Reader
 
 import PositionReader
 import FENDecode
 
-import Distribution.TestSuite
-
-tests :: IO [Distribution.TestSuite.Test]
-tests = return []
+test :: IO ()
+test = hspec $ 
+    describe "Move Logic" $ do
+        withInitialPosition $ \p -> do
+            p `hasPawnAt` "d2"
+            p `hasPawnAt` "c7"
+            p `hasPawnAt` "e2"
+            p `hasPawnAt` "e7"
+            p `hasPawnAt` "h7"
 
 -- TODO This module is the work in progess module for testing out the program
 
-runTests :: IO ()
-runTests = return ()
 
 
 {-

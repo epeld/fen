@@ -26,9 +26,6 @@ env.Append(BUILDERS={'Template': bld})
 
 
 for test in tests:
-    if "Utils" in test.name:
-        "Print skipping utilities module"
-        continue
     name = test.name.replace(".hs", "")
     target = 'test-suites/{name}TestSuite.hs'.format(name=name.replace("Test", ""))
     print "Target is", target

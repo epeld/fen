@@ -3,30 +3,34 @@ import Test.HUnit
 import Test.Hspec
 
 import Control.Monad.Reader
+import Data.Maybe
 
 import PositionReader
 import FENDecode
+import Position
 
-hasPawnAt :: String -> PReader Spec
-hasPawnAt s = pieceSatisfyingAt (\pc -> pieceType pc == Pawn) s "has pawn"
+test :: IO ()
+test = hspec $
+    describe "Helpers" $ do
+        -- TODO we really want to test FAILING cases here but don't know how..
+        
+        describe "assertRight" $ do
+            it "assertRight Right" $ assertRight (Right 3 :: Either Int Int)
 
-pieceSatisfyingAt :: (Piece -> Bool) -> String -> String -> PReader Spec
-pieceSatisfyingAt f s txt = do
-    pc <- pieceAt (square' s)
-    return $ 
-        describe ("square " ++ s) $ do
-            it (s ++ " isn't empty ") (assertJust pc) 
-            withJust' $ \p ->
-                it txt (f p)
+        describe "withInitialPosition" $ do
+            withInitialPosition $ do
+                --return $ it "blows up" $ 3 `shouldBe` 4
+                return $ it "works " $ 3 `shouldBe` 3
 
-withInitialPosition :: PReader Spec -> Spec
+
+withInitialPosition :: (Position -> Spec) -> Spec
 withInitialPosition = withPosition initialFEN
 
-withPosition :: String -> PReader Spec -> Spec
-withPosition fen r =
+withPosition :: String -> (Position -> Spec) -> Spec
+withPosition fen f =
     let label = "position " ++ fen
-        assertion = decode fen `withRight` runReader r
-    in label `describe` assertion
+        spc = decode fen `withRight` f
+    in label `describe` spc
 
 
 withRight :: (Show a, Show b) => Either a b -> (b -> Spec) -> Spec
@@ -34,13 +38,13 @@ withRight x f = do
     it "is valid" (assertRight x)
     withRight' x f
 
-withRight' :: Either a b -> (b -> Spec) -> Spec
+withRight' :: Monad m => Either a b -> (b -> m ()) -> m ()
 withRight' (Right a) f = f a
-withRight' _ _ = doNothing
+withRight' _ _ = return ()
 
-withJust' :: Just a -> (a -> Spec) -> Spec
+withJust' :: Monad m => Maybe a -> (a -> m ()) -> m () 
 withJust' (Just x) f = f x
-withJust' _ = doNothing
+withJust' _ _ = return ()
 
 assertRight x = x `shouldSatisfy` isRight
 assertJust x = x `shouldSatisfy` isJust
@@ -49,5 +53,3 @@ isRight :: Either a b -> Bool
 isRight (Right _) = True
 isRight _ = False
 
-
-doNothing = return ()
