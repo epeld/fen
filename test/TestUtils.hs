@@ -23,6 +23,9 @@ test = hspec $
                 return $ it "works " $ 3 `shouldBe` 3
 
 
+afterMoves :: String -> (Position -> a) -> a
+afterMoves s = undefined
+
 withInitialPosition :: (Position -> Spec) -> Spec
 withInitialPosition = withPosition initialFEN
 
