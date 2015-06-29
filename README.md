@@ -28,10 +28,9 @@ if you are lucky the `scons`-command should have generated a `test-suites`-direc
 and `cabal test` ran the tests.
 
 # TODOs
-- Finish test suite + utils in Test.hs
-- Write PGN move parsing functionality
+- Write PGN move parsing functionality (define ParserT types, parse out PartialMoves, test)
 - Write main.hs (parse command line args, display errors in a user-friendly way etc)
-- Support move translation, e.g "e4 -> KP4"
+- Support move translation, e.g "e4 -> KP4" (would be cool!)
 - Support loading entire .pgn-files and parsing out all the moves and resulting positions
 
 
