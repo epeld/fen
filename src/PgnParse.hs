@@ -1,69 +1,106 @@
 {-#LANGUAGE NoMonomorphismRestriction #-}
 module PgnParse where
 
-import Square hiding (file, rank)
-import Game
-import Board
-import Piece
-import qualified Pgn
-import Data.Char
-import Text.Parsec
-import Control.Applicative hiding ((<|>))
+import PartialDescription as Partial
 
-castlesKingside = string "O-O" >> return (Pgn.Castles Kingside)
-castlesQueenside = string "O-O-O" >> return (Pgn.Castles Queenside)
+--pgnMove = choice [try pawnMove, try officerMove, castles]
 
-castles = try castlesQueenside <|> castlesKingside
+pawnMove :: Parser Move
+pawnMove = PawnMove <$> descs <*> optionMaybe promotion
+    where
+    descs = choice [try longPawnMoveDesc, shortPawnMoveDesc]
 
-moveType = option Pgn.Moves (char 'x' >> return Pgn.Takes) 
+officerMove :: Parser Move
+officerMove = OfficerMove <$> officer <*> descs
+    where
+    descs = choice [try longOfficerMoveDesc, shortOfficerMoveDesc]
 
--- "exd4"
-longPawnMove = do
-    h <- pawnHint
-    m <- moveType
-    s <- square
-    p <- optionMaybe promotion
-    let e = Pgn.PGNMoveEssentials (Just h) m s
-    return $ Pgn.PawnMove e p
+--castlesKingside = string "O-O" >> return (Pgn.Castles Kingside)
+--castlesQueenside = string "O-O-O" >> return (Pgn.Castles Queenside)
 
--- "e4=D"
-shortPawnMove = do
-    s <- square
-    p <- optionMaybe promotion
-    let e = Pgn.PGNMoveEssentials Nothing Pgn.Moves s
-    return $ Pgn.PawnMove e p
+--castles = try castlesQueenside <|> castlesKingside
 
-promotion = string "=" >> charToOfficerType <$> oneOf "RBQN"
 
-squareHint = Pgn.SquareHint <$> square 
-fileHint = Pgn.FileHint <$> file 
-rankHint = Pgn.RankHint <$> rank 
-file = File <$> oneOf ['a'..'h'] 
-rank = Rank . digitToInt <$> oneOf ['1'..'8']
+shortOfficerMoveDesc :: Parser Partial.Description
+shortOfficerMoveDesc = do
+    mt <- moveType
+    dst <- square
+    return $ Partial.Description dst mt Nothing
 
-officerHint = try rankHint <|> pawnHint
-pawnHint = try squareHint <|> fileHint
 
-pawnMove = choice [try longPawnMove, shortPawnMove]
+longOfficerMoveDesc :: Parser Partial.Description
+longOfficerMoveDesc = do
+    src <- officerSource
+    mt <- moveType
+    dst <- square
+        return $ Partial.Description dst mt src
 
-officerType = charToOfficerType <$> oneOf "RKNQB"
 
-officerMove = choice [try longOfficerMove, shortOfficerMove]
+-- E.g "exd4"
+longPawnMoveDesc :: Parser Partial.Description
+longPawnMoveDesc = do
+    src <- partialSquare -- TODO, really only file or rank
+    mt <- moveType
+    dst <- square
+    return $ Description dst mt src
 
-shortOfficerMove = do
-    t <- officerType
-    m <- moveType
-    s <- square
-    let e = Pgn.PGNMoveEssentials Nothing m s
-    return $ Pgn.OfficerMove t e
 
-longOfficerMove = do
-    t <- officerType
-    h <- officerHint
-    m <- moveType
-    s <- square
-    let e = Pgn.PGNMoveEssentials (Just h) m s
-    return $ Pgn.OfficerMove t e
+--  E.g "e4"
+shortPawnMoveDesc :: Parser Partial.Description
+shortPawnMoveDesc = do
+    dst <- square
+    return $ Description dst Moves Nothing
+    
 
-pgnMove = choice [try pawnMove, try officerMove, castles]
+moveType :: Parser MoveType
+moveType = Moves `option` captures
+    where
+    captures = char 'x' >> return Captures
 
+
+promotion :: Parser Officer
+promotion = do
+    char '='
+    rook <|> knight <|> bishop <|> queen
+
+
+rook :: Parser OfficerType
+rook = char 'R' >> return Rook
+
+
+knight :: Parser OfficerType
+knight = char 'N' >> return Knight
+
+
+bishop :: Parser OfficerType
+bishop = char 'B' >> return Bishop
+
+
+queen :: Parser OfficerType
+queen = char 'Q' >> return Queen
+
+
+king :: Parser OfficerType
+king = char 'K' >> return King
+
+
+officer :: Parser Officer
+officer = king <|> queen <|> rook <|> bishop <|> knight
+
+
+officerSource :: Parser PartialSquare
+officerSource = choice [rankPartial, filePartial, squarePartial]
+
+
+rankPartial :: Parser PartialSquare
+rankPartial = choice ranks
+    ranks = forM [1..9] $ \x -> char (intToDigit x) >> Partial.Rank x
+
+
+filePartial :: Parser PartialSquare
+filePartial = choice files
+    files = forM ['a'..'h'] $ \x -> char x >> Partial.File x
+
+
+squarePartial :: Parser PartialSquare
+squarePartial = Whole <$> square
