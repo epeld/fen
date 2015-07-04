@@ -1,19 +1,34 @@
 {-#LANGUAGE NoMonomorphismRestriction #-}
+{-#LANGUAGE RankNTypes #-}
+{-#LANGUAGE FlexibleContexts #-}
 module PgnParse where
+import Control.Applicative ((<$>), (<*>))
+import Control.Monad
 
-import PartialDescription as Partial
+import Text.Parsec
+import Data.Char
+
+import MoveType
+import Piece
+import PartialMove
+import qualified Square
+import qualified Move
+
+import qualified PartialDescription as Partial
+
+type Parser r = forall s. forall m. Stream s m Char => ParsecT s () m r
 
 --pgnMove = choice [try pawnMove, try officerMove, castles]
 
-pawnMove :: Parser Move
-pawnMove = PawnMove <$> descs <*> optionMaybe promotion
+pawnMove :: Parser PartialMove
+pawnMove = Move.PawnMove <$> desc <*> optionMaybe promotion
     where
-    descs = choice [try longPawnMoveDesc, shortPawnMoveDesc]
+    desc = choice [try longPawnMoveDesc, shortPawnMoveDesc]
 
-officerMove :: Parser Move
-officerMove = OfficerMove <$> officer <*> descs
+officerMove :: Parser PartialMove
+officerMove = Move.OfficerMove <$> officer <*> desc
     where
-    descs = choice [try longOfficerMoveDesc, shortOfficerMoveDesc]
+    desc = choice [try longOfficerMoveDesc, shortOfficerMoveDesc]
 
 --castlesKingside = string "O-O" >> return (Pgn.Castles Kingside)
 --castlesQueenside = string "O-O-O" >> return (Pgn.Castles Queenside)
@@ -33,23 +48,23 @@ longOfficerMoveDesc = do
     src <- officerSource
     mt <- moveType
     dst <- square
-        return $ Partial.Description dst mt src
+    return $ Partial.Description dst mt (Just src)
 
 
 -- E.g "exd4"
 longPawnMoveDesc :: Parser Partial.Description
 longPawnMoveDesc = do
-    src <- partialSquare -- TODO, really only file or rank
+    src <- filePartial <|> squarePartial
     mt <- moveType
     dst <- square
-    return $ Description dst mt src
+    return $ Partial.Description dst mt (Just src)
 
 
 --  E.g "e4"
 shortPawnMoveDesc :: Parser Partial.Description
 shortPawnMoveDesc = do
     dst <- square
-    return $ Description dst Moves Nothing
+    return $ Partial.Description dst Moves Nothing
     
 
 moveType :: Parser MoveType
@@ -58,7 +73,7 @@ moveType = Moves `option` captures
     captures = char 'x' >> return Captures
 
 
-promotion :: Parser Officer
+promotion :: Parser OfficerType
 promotion = do
     char '='
     rook <|> knight <|> bishop <|> queen
@@ -84,23 +99,33 @@ king :: Parser OfficerType
 king = char 'K' >> return King
 
 
-officer :: Parser Officer
+officer :: Parser OfficerType
 officer = king <|> queen <|> rook <|> bishop <|> knight
 
 
-officerSource :: Parser PartialSquare
+officerSource :: Parser Partial.PartialSquare
 officerSource = choice [rankPartial, filePartial, squarePartial]
 
 
-rankPartial :: Parser PartialSquare
-rankPartial = choice ranks
-    ranks = forM [1..9] $ \x -> char (intToDigit x) >> Partial.Rank x
+rankPartial :: Parser Partial.PartialSquare
+rankPartial = Partial.File <$> file
 
 
-filePartial :: Parser PartialSquare
-filePartial = choice files
-    files = forM ['a'..'h'] $ \x -> char x >> Partial.File x
+filePartial :: Parser Partial.PartialSquare
+filePartial = Partial.Rank <$> rank
 
 
-squarePartial :: Parser PartialSquare
-squarePartial = Whole <$> square
+squarePartial :: Parser Partial.PartialSquare
+squarePartial = Partial.Whole <$> square
+
+
+square :: Parser Square.Square
+square = fromJust <$> liftM2 Square.square' file rank
+
+
+file :: Parser Char
+file = oneOf "abcdefgh"
+
+
+rank :: Parser Int
+rank = digitToInt <$> oneOf "12345678"
