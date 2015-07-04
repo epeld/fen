@@ -38,6 +38,8 @@ You can then use the `FullMove` or `LegalMove` to promote your moves. That is, b
 
 The `LegalMove`-module can take any type of (partially specified) move and calculate all the legal moves that said move *could* represent.
 
+Note that, currently castling moves cannot be processed (Work in Progress).
+
 In the end, when the program is run it will be the responsibility of the user to always supply enough information to uniquely determine a move.
 If this requirement is not satisfied, there will be an error: "Ambiguous move. Candidates are: [List of candidates]"
 
@@ -47,13 +49,14 @@ Modules of importance:
 - To parse moves out of strings, see `PgnParse`.
 
 # TODOs
-- Write PGN move parsing functionality (define ParserT types, parse out PartialMoves, test)
+- Define data type that supports both normal moves and castling
+- Write PGN move parsing functionality (test)
 - Write main.hs (parse command line args, display errors in a user-friendly way etc)
 - Support move translation, e.g "e4 -> KP4" (would be cool!)
 - Support loading entire .pgn-files and parsing out all the moves and resulting positions
 
 
 ## Long term TODOs
-- Develop a GUI (websockets??)
+- Develop a GUI (elm, websockets??)
 - Allow importing, searching etc to chess game database
 - Support talking to chess engine
