@@ -1,3 +1,5 @@
+-- Module for determining legal moves.
+-- Figure out all the legal moves that can be made, given a partially specified move and a position
 module LegalMove where
 import Prelude ()
 import Data.Eq
@@ -23,17 +25,18 @@ import qualified LegalPosition as LP
 import Move
 
 
+-- Figure out all the legal moves that can be made, given a partially specified move and a position
 fullMoves :: MoveDescription desc => Move desc -> PReader [FullMove]
 fullMoves mv = do
     cands <- candidates (description mv)
-    let mvs = fmap (fullMove mv) cands
+    let mvs = fullMove mv <$> cands
     filterM isLegal mvs
 
 
 
 
 isLegal :: FullMove -> PReader Bool
-isLegal mv = fmap isNothing $ error mv
+isLegal mv = isNothing <$> error mv
 
 
 
