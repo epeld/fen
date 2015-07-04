@@ -30,18 +30,21 @@ and `cabal test` ran the tests.
 # Architectural Overview
 The logic is centered around the concept of 'promoting' moves.
 
-You start with something like a `PartialMove`, where 'Partial' is intended to mean 'lacking information that uniquely identifies the move'.
-You can then use the `FullMove` or `LegalMove`-modules to promote your moves, i.e, by supplying more information.
+You start with something like a `PartialMove`, where 
+```
+'Partial' is intended to mean 'lacking information that uniquely identifies the move'.
+```
+You can then use the `FullMove` or `LegalMove` to promote your moves. That is, by supplying more information.
 
-The `LegalMove`-module can take any type of (partially specified) move and calculate all the legal moves that said move COULD represent.
+The `LegalMove`-module can take any type of (partially specified) move and calculate all the legal moves that said move *could* represent.
 
 In the end, when the program is run it will be the responsibility of the user to always supply enough information to uniquely determine a move.
 If this requirement is not satisfied, there will be an error: "Ambiguous move. Candidates are: [List of candidates]"
 
 Modules of importance:
-- All Move-modules: Move, PartialMove, FullMove, LegalMove
-- The UpdatedPosition-module produces a new position, given a legal move
-- To parse moves out of strings, see the PgnParse-module.
+- All Move-modules: `Move`, `PartialMove`, `FullMove`, `LegalMove`
+- `UpdatedPosition` produces a new position, given a legal move
+- To parse moves out of strings, see `PgnParse`.
 
 # TODOs
 - Write PGN move parsing functionality (define ParserT types, parse out PartialMoves, test)
