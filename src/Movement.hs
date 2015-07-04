@@ -1,3 +1,5 @@
+-- This module contains combinators for 'moving' between chess squares
+-- TODO rename so as to not confuse with chess game move-logic
 module Movement where
 import Prelude (Enum)
 import Data.Maybe
