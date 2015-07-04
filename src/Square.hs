@@ -10,6 +10,7 @@ import Data.Function
 import Data.Char
 import Data.String
 import Data.Tuple
+import Control.Monad
 import Control.Applicative
 
 import Text.Show
@@ -27,19 +28,21 @@ ranks = [1..8]
 string :: Square -> String
 string (Square (a, b)) = [chr (ord 'a' + a - 1), chr (ord '1' + b - 1)]
 
-unsafe :: String -> Square
-unsafe s = sq (square s)
-    where sq Nothing = error ("Invalid square " ++ s)
-          sq (Just x) = x
-
 square :: String -> Maybe Square
-square [file, rank] = curry Square <$> fi <*> ri
-    where fi = succ <$> findIndex (== file) files
-          ri = succ <$> findIndex (== rank) ['1'..'8']
+square [file, rank] = digitToMaybeInt rank >>= square' file 
 square _ = Nothing
 
-square' :: String -> Square
-square' s =
+digitToMaybeInt :: Char -> Maybe Int
+digitToMaybeInt c = if isDigit c then Just $ digitToInt c else Nothing
+
+square' :: Char -> Int -> Maybe Square
+square' f r = curry Square <$> fi <*> ri
+    where fi = succ <$> findIndex (== f) files
+          ri = succ <$> findIndex (== r) ranks
+
+
+unsafe :: String -> Square
+unsafe s =
     case square s of
         Nothing -> error ("Invalid square string: '" ++ s ++ "'")
         Just sq -> sq

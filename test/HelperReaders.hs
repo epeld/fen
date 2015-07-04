@@ -39,7 +39,7 @@ hasPawnAt p s = pieceSatisfyingAt p (\pc -> pieceType pc == Pawn) s "has pawn"
 pieceSatisfyingAt :: Position -> (Piece -> Bool) -> String -> String -> Spec
 pieceSatisfyingAt p f s txt = 
     describe ("square " ++ s) $ do
-        let pc = pieceAt p (square' s)
+        let pc = pieceAt p (unsafe s)
         it "is occupied" (assertJust pc)
         withJust' pc $ \p ->
             it txt (p `shouldSatisfy` f)
