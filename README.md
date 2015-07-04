@@ -52,11 +52,12 @@ Modules of importance:
 - Define data type that supports both normal moves and castling
 - Write PGN move parsing functionality (test)
 - Write main.hs (parse command line args, display errors in a user-friendly way etc)
-- Support move translation, e.g "e4 -> KP4" (would be cool!)
 - Support loading entire .pgn-files and parsing out all the moves and resulting positions
+- Create deeper module hierarchies to better organize code
 
 
 ## Long term TODOs
+- Support move translation, e.g "e4 -> KP4" (would be cool!)
 - Develop a GUI (elm, websockets??)
 - Allow importing, searching etc to chess game database
 - Support talking to chess engine
