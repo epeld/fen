@@ -1,18 +1,15 @@
+{-# LANGUAGE TemplateHaskell #-}
 module MoveDescription where
 import Prelude ()
-import Data.Function
-import Data.Bool
+import Data.Eq
+import Data.Maybe
+import Text.Show
+import Control.Lens
 
-import Move
-import MoveType
 import Square
+import Piece
+import MoveType
 
-class MoveDescription d where
-    destination :: d -> Square
-    moveType :: d -> MoveType
-    possibleSource :: d -> Square -> Bool
-    possibleSource _ _ = True
+data Description src = Description { _source :: src, _destination :: Square, _moveType :: MoveType }
 
-instance MoveDescription desc => MoveDescription (Move desc) where
-    destination = destination. description
-    moveType = moveType. description
+makeLenses ''Description

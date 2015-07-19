@@ -1,17 +1,28 @@
+{-# LANGUAGE TemplateHaskell #-}
 module Move where
-import Prelude ()
 import Data.Eq
 import Data.Maybe
 import Text.Show
+import Control.Lens
 
 import Square
 import Piece
 import MoveType
+import MoveDescription as Description
 
 
 data Move src = 
-    PawnMove { description :: Description src, promotion :: Maybe OfficerType } | 
-    OfficerMove { description :: Description src, officerType :: OfficerType }
+    PawnMove { _description :: Description src, _promotion :: Maybe OfficerType } | 
+    OfficerMove { _description :: Description src, _officerType :: OfficerType }
+
+makeLenses ''Move
 
 
-data Description src = Description { source :: src, destination :: Square, moveType :: MoveType }
+source :: Simple Lens (Move src) src
+source = description . Description.source
+
+destination :: Simple Lens (Move src) Square
+destination = description . Description.destination
+
+moveType :: Simple Lens (Move src) MoveType
+moveType = description . Description.moveType
