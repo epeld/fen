@@ -18,7 +18,7 @@ data Move src =
 makeLenses ''Move
 
 
-source :: Simple Lens (Move src) src
+source :: Lens (Move a) (Move b) a b
 source = description . Description.source
 
 destination :: Simple Lens (Move src) Square

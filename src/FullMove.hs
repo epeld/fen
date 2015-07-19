@@ -1,43 +1,27 @@
-module FullMove (fullMove, Description(Description), 
-                  MoveError, FullMove, source, fullSource) where
-import Prelude (undefined)
-import Data.Eq
-import Data.Maybe
-import Data.Function
-import Control.Monad (return)
-import Text.Show
+module FullMove where
+import Control.Applicative
+import Control.Lens
 
-import qualified MoveDescription 
-import qualified PartialDescription as Partial
 import Square
-import MoveType
-import PositionReader
 import Move
+import MoveQualifier
 
-data MoveError = Ambiguous [FullMove] | Invalid
+newtype FullMove = Full (Move Square)
 
-data Description = Description {
-        source :: Square,
-        destination :: Square, 
-        moveType :: MoveType
-    } deriving (Show)
+instance Qualifier Square where
+    qualifies = (==)
+    
 
-instance MoveDescription.MoveDescription Description where
-    destination = FullMove.destination
-    moveType = FullMove.moveType
-    possibleSource desc sq = sq == (source desc)
+-- Make Move an instance of Qualifier when applicable.
+-- This allows us to filter out non-qualifying moves by
+-- mv `qualifier` src
+instance (Qualifier a) => Qualifier (Move a) where
+    qualifies mv = qualifies (mv ^. source)
 
-type FullMove = Move Description
 
-fullMove :: MoveDescription.MoveDescription desc => Move desc -> Square -> FullMove
-fullMove mv src =
-    let desc = Description { source = src,
-                             FullMove.destination = MoveDescription.destination mv, 
-                             FullMove.moveType = MoveDescription.moveType mv }
-    in
-    case mv of
-        PawnMove d promo -> PawnMove desc promo
-        OfficerMove ot d -> OfficerMove ot desc
+-- promote a qualifying move to a full, when possible
+promote :: (Qualifier src) => Move src -> Square -> Maybe FullMove
+promote mv sq = do
+    sqr <- qualify mv sq
+    return $ Full $ source .~ sqr $ mv
 
-fullSource :: FullMove -> Square
-fullSource mv = source $ description mv
