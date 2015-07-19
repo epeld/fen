@@ -14,3 +14,11 @@ class Qualifier src where
 instance (Qualifier a) => Qualifier (Maybe a) where
     qualifies Nothing _ = False
     qualifies (Just x) sq = qualifies x sq
+
+-- Return b if b qualifies as an a
+qualify :: (Qualifier src) => src -> Square -> Maybe Square
+qualify a b = if qualifies a b then Just b else Nothing
+
+-- Return a if b qualifies as an a
+qualifier :: (Qualifier src) => src -> Square -> Maybe src
+qualifier a b = qualify a b >> Just a
