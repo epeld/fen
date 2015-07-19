@@ -1,16 +1,17 @@
 module Move where
-import Square
-import Piece
-
 import Prelude ()
 import Data.Eq
 import Data.Maybe
 import Text.Show
 
-data Move desc = 
-    PawnMove {
-        description :: desc,
-        promotion :: Maybe OfficerType } | 
-    OfficerMove {
-        officerType :: OfficerType,
-        description :: desc }
+import Square
+import Piece
+import MoveType
+
+
+data Move src = 
+    PawnMove { description :: Description src, promotion :: Maybe OfficerType } | 
+    OfficerMove { description :: Description src, officerType :: OfficerType }
+
+
+data Description src = Description { source :: src, destination :: Square, moveType :: MoveType }
