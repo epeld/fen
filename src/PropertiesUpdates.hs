@@ -55,14 +55,15 @@ castlingRights :: UpdateReader UpdateFn
 castlingRights = do
     mv <- moveR
     let rights = Map.fromList $
-            [(square' "a1", [Castling White Queenside]),
-             (square' "h1", [Castling White Kingside]),
-             (square' "a8", [Castling Black Queenside]),
-             (square' "h8", [Castling Black Kingside]),
-             (square' "e1", [Castling White Kingside, Castling White Queenside]),
-             (square' "e8", [Castling Black Kingside, Castling Black Queenside])]
+            [(sqr "a1", [Castling White Queenside]),
+             (sqr "h1", [Castling White Kingside]),
+             (sqr "a8", [Castling Black Queenside]),
+             (sqr "h8", [Castling Black Kingside]),
+             (sqr "e1", [Castling White Kingside, Castling White Queenside]),
+             (sqr "e8", [Castling Black Kingside, Castling Black Queenside])]
+        sqr = Square.unsafe
         lost = Set.fromList $ mconcat $ mapMaybe (flip lookup rights) [FullMove.fullSource mv, destination mv]
-    return $ \p -> p { Position.castlingRights = Position.castlingRights p `Set.difference` lost }
+    return $ \p -> p { Position.castlingRights = Position.castlingRights p `Set.difference` lost}
 
 
 -- "En passant target square in algebraic notation. If there's no en passant target square, this is '-'. 
