@@ -9,6 +9,7 @@ import Square
 import Piece
 import MoveType
 import MoveDescription as Description
+import MoveQualifier as Qualifier
 
 
 data Move src = 

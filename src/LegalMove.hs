@@ -1,34 +1,12 @@
--- Module for determining legal moves.
--- Figure out all the legal moves that can be made, given a partially specified move and a position
 module LegalMove where
-import Prelude ()
-import Data.Eq
-import Data.Bool
-import Data.Maybe
-import Data.Monoid
-import Data.Function
-import Data.List (filter)
-import Control.Applicative
-import Control.Monad.Plus
-import Control.Monad.Reader
-import Text.Show
 
-import MoveDescription
-import qualified PartialDescription as Partial
-import Square
-import MoveType
-import PositionReader
-import FullMove
-import Candidates
-import UpdatedPosition
-import qualified LegalPosition as LP
-import Move
+-- TODO check that we can e.g capture on a square or move somewhere, and if not return error?
 
 
 -- Figure out all the legal moves that can be made, given a partially specified move and a position
-fullMoves :: MoveDescription desc => Move desc -> PReader [FullMove]
+fullMoves :: Qualifier src => Move src -> PReader [FullMove]
 fullMoves mv = do
-    cands <- candidates (description mv)
+    cands <- candidates mv
     let mvs = fullMove mv <$> cands
     filterM isLegal mvs
 

@@ -1,5 +1,4 @@
-module SquareOffsets where
-import Prelude ()
+module SquareOffsets (offset) where
 import Directions
 import Square
 

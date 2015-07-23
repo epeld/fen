@@ -37,7 +37,7 @@ hasPiece pc sq = do
 behind :: Square -> PReader (Maybe Square)
 behind sq = do
     color <- turn
-    return $ Movement.behind color sq
+    return $ PawnMovement.behind sq color
 
 --
 -- Accessors

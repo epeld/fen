@@ -1,15 +1,10 @@
 module Directions where
-import Prelude (Enum)
-import Data.Maybe
-import Data.Functor
-import Data.Function
-import Data.List
-import Data.Int
-import Data.Eq
-import Text.Show
-
 import Square (Square, Offset)
 import Piece
+
+-- Return a new square by giving it a starting square and a relative direction
+relative :: Square -> Direction -> Maybe Square
+relative sq d = sq `add` offset d
 
 data KnightsJump = OneOClock | TwoOClock | FourOClock | FiveOClock |
                    SevenOClock | EightOClock | TenOClock | ElevenOClock
