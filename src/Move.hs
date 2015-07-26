@@ -22,8 +22,17 @@ makeLenses ''Move
 source :: Lens (Move a) (Move b) a b
 source = description . Description.source
 
+
 destination :: Simple Lens (Move src) Square
 destination = description . Description.destination
 
+
 moveType :: Simple Lens (Move src) MoveType
 moveType = description . Description.moveType
+
+
+pieceType :: Getter (Move src) PieceType
+pieceType = to $ \ mv ->
+    case mv of
+        PawnMove {} -> Pawn
+        OfficerMove {} -> Officer (_officerType mv)
