@@ -66,8 +66,11 @@ castlingRights = do
 --  This is recorded regardless of whether there is a pawn in position to make an en passant capture"
 passantSquare :: UpdateReader Update
 passantSquare = do
-    psq <- newPassantSquare
-    return $ passant .~ psq
+    (Full mv, p) <- ask
+    return $
+        case mv of
+            PawnMove _ _ -> passant .~ behind (mv ^. destination) (p ^. turn)
+            _ -> id
 
 
 newTurn :: UpdateReader Update
@@ -94,12 +97,3 @@ castlingRightsMap = Map.map Set.fromList $ Map.mapKeys Square.unsafe $ Map.fromL
         ("h8", [Castling Black Kingside]),
         ("e1", [Castling White Kingside, Castling White Queenside]),
         ("e8", [Castling Black Kingside, Castling Black Queenside])]
-
-
-newPassantSquare :: UpdateReader (Maybe Square)
-newPassantSquare = do
-    (Full mv, p) <- ask
-    return $
-        case mv of
-            PawnMove _ _ -> behind (mv ^. destination) (p ^. turn)
-            _ -> Nothing
