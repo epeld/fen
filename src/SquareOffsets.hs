@@ -1,6 +1,10 @@
-module SquareOffsets (offset) where
+module SquareOffsets (offset, relative) where
 import Directions
 import Square
+
+-- Return a new square by giving it a starting square and a relative direction
+relative :: Square -> Direction -> Maybe Square
+relative sq d = sq `add` offset d
 
 offset :: Direction -> Offset
 offset (Straight s) = soffset s

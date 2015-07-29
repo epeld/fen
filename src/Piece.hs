@@ -1,11 +1,6 @@
+{-# LANGUAGE TemplateHaskell #-}
 module Piece where
-import Prelude (Enum, toEnum, fromEnum, pred, succ, Bounded, maxBound, minBound, enumFrom)
-import Data.Eq
-import Data.Ord
-import Data.Int
-import Data.Function
-import Text.Show
-
+import Control.Lens
 
 instance Enum PieceType where
     toEnum 0 = Pawn
@@ -26,7 +21,7 @@ data PieceType = Pawn | Officer OfficerType
 data OfficerType = Bishop | Knight | Rook | Queen | King
                    deriving (Show, Eq, Ord, Enum)
 
-data Piece = Piece { pieceType :: PieceType, color :: Color } deriving (Show, Eq, Ord)
+data Piece = Piece { _pieceType :: PieceType, _color :: Color } deriving (Show, Eq, Ord)
 
 data Color = White | Black deriving (Show, Eq, Enum, Ord)
 
@@ -35,3 +30,5 @@ otherColor Black = White
 
 firstRank White = 2
 firstRank Black = 7
+
+makeLenses ''Piece

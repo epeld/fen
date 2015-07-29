@@ -1,24 +1,16 @@
 module BoardUpdates where
-import Prelude (undefined)
-import Data.Eq
-import Data.Function
-import Data.Map
-import Data.Maybe
-import Data.Bool
-import Text.Show
-import Data.List ((++))
+import qualified Data.Map as Map
 import Control.Monad
 import Control.Monad.Reader
+import Control.Lens
 
 import ListUtils
-import MoveDescription
 import Square
 import Piece
 import qualified MoveType
 import qualified Position
 import qualified Move
-import Position (Position)
-import PositionReader
+import Position 
 import FullMove
 import UpdateFunctions
 
@@ -71,5 +63,6 @@ passantedPawn _ = return Nothing
 
 
 -- Util funtion: delete the piece at the indicated square, or do nothing if passed Nothing
-deleteMaybe :: Maybe Square -> Position.Board -> Position.Board
-deleteMaybe = maybe id delete
+deleteMaybe :: Maybe Square -> Position.PieceMap -> Position.PieceMap
+deleteMaybe Nothing = id
+deleteMaybe (Just sq) = \ p -> p & board . at sq .~ Nothing

@@ -8,4 +8,4 @@ import MoveType
 
 movementFn :: MoveType -> Piece -> MovementFn
 movementFn mt (Piece Pawn color) = PawnMovement.movementFn mt color
-movementFn _ (Officer ot _) = OfficerMovement.movementFn ot
+movementFn _ (Piece (Officer ot) _) = OfficerMovement.movementFn ot

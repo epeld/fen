@@ -11,7 +11,7 @@ movementFn :: OfficerType -> MovementFn
 movementFn ot = rangeFn ot (directions ot)
 
 
-rangeFn :: RangeFn
+rangeFn :: OfficerType -> RangeFn
 rangeFn King = shortRange
 rangeFn Knight = shortRange
 rangeFn _ = longRange

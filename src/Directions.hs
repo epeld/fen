@@ -1,10 +1,7 @@
 module Directions where
-import Square (Square, Offset)
+import Square (Square, Offset, add)
 import Piece
 
--- Return a new square by giving it a starting square and a relative direction
-relative :: Square -> Direction -> Maybe Square
-relative sq d = sq `add` offset d
 
 data KnightsJump = OneOClock | TwoOClock | FourOClock | FiveOClock |
                    SevenOClock | EightOClock | TenOClock | ElevenOClock

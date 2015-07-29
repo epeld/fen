@@ -1,19 +1,8 @@
 module Square where
-import Prelude ((+), (-), error, succ)
-import Data.Ord
-import Data.Eq
-import Data.Int
-import Data.Maybe
-import Data.List
-import Data.Bool
-import Data.Function
-import Data.Char
-import Data.String
-import Data.Tuple
 import Control.Monad
 import Control.Applicative
-
-import Text.Show
+import Data.List
+import Data.Char
 
 newtype Square = Square (Int, Int) deriving (Show, Eq, Ord)
 

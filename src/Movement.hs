@@ -10,6 +10,7 @@ import SquareOffsets
 type RangeFn = [Direction] -> MovementFn
 type MovementFn = Square -> [[Square]]
 
+
 longRange :: RangeFn
 longRange = sequence . fmap squares
     where

@@ -1,7 +1,10 @@
 module PawnMovement where
+import Control.Applicative
+
+import Square
 import Piece
-import Color
 import Directions
+import SquareOffsets
 import Movement
 import MoveType
 

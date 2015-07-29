@@ -1,24 +1,12 @@
 module UpdateFunctions where
-import Prelude (undefined)
-import Data.Eq
-import Data.Function
-import Data.Map
-import Data.Maybe
-import Data.Bool
-import Text.Show
-import Data.List ((++))
 import Control.Monad
 import Control.Monad.Reader
 
 import ListUtils
-import MoveDescription
-import qualified PartialDescription as Partial
 import Square
 import Piece
 import MoveType
-import qualified Position
-import Position (Position)
-import PositionReader
+import Position
 import FullMove
 
 -- Represents the information needed to create a new position from an old
@@ -38,4 +26,4 @@ moveR :: UpdateReader FullMove
 moveR = asks move
 
 whoseMoveR :: UpdateReader Color
-whoseMoveR = Position.turn `liftM` originalPositionR
+whoseMoveR = Position._turn `liftM` originalPositionR
