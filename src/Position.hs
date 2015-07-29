@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Position where
-import Data.Map as Map
+import qualified Data.Map as Map
 import qualified Data.Set as Set
 import Control.Lens
 
@@ -8,20 +8,37 @@ import MoveType
 import Piece
 import Square
 import Castling
+import PositionProperties as Properties
 
 
-type PieceMap = Map Square Piece
+type PieceMap = Map.Map Square Piece
 
 
 data Position = Position {
     _board :: PieceMap,
-    _turn :: Color,
-    _passant :: Maybe Square,
-    _fullMoveCount :: Int,
-    _halfMoveCount :: Int,
-    _castlingRights :: Set.Set CastlingRight
+    _properties :: Properties
     } deriving (Show)
 makeLenses ''Position
+
+
+turn :: Simple Lens Position Color
+turn = properties . Properties.turn
+
+
+passant :: Simple Lens Position (Maybe Square)
+passant = properties . Properties.passant
+
+
+fullMoveCount :: Simple Lens Position Int
+fullMoveCount = properties . Properties.fullMoveCount
+
+
+halfMoveCount :: Simple Lens Position Int
+halfMoveCount = properties . Properties.halfMoveCount
+
+
+castlingRights :: Simple Lens Position (Set.Set CastlingRight)
+castlingRights = properties . Properties.castlingRights
 
 
 movePiece :: Square -> Square -> Position -> Position
@@ -42,7 +59,7 @@ lastRank Black = 8
 
 
 friendlyColor :: Simple Lens Position Color
-friendlyColor = turn
+friendlyColor = Position.turn
 
 enemyColor :: Getter Position Color
-enemyColor = turn . to otherColor
+enemyColor = Position.turn . to otherColor
