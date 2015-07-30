@@ -13,9 +13,11 @@ import PositionProperties as Properties
 
 type PieceMap = Map.Map Square Piece
 
+type Board = PieceMap
+
 
 data Position = Position {
-    _board :: PieceMap,
+    _board :: Board,
     _properties :: Properties
     } deriving (Show)
 makeLenses ''Position
@@ -39,14 +41,6 @@ halfMoveCount = properties . Properties.halfMoveCount
 
 castlingRights :: Simple Lens Position (Set.Set CastlingRight)
 castlingRights = properties . Properties.castlingRights
-
-
-movePiece :: Square -> Square -> Position -> Position
-movePiece src dst p = p & board %~ movePiece'
-    where
-    movePiece' b =
-        b & at src .~ Nothing 
-          & at dst .~ (b ^. at dst)
 
 
 filterPieces :: Position -> Piece -> PieceMap
