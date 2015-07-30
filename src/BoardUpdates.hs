@@ -1,68 +1,70 @@
 module BoardUpdates where
 import qualified Data.Map as Map
+import Control.Applicative
 import Control.Monad
 import Control.Monad.Reader
 import Control.Lens
+import Data.Maybe
 
 import ListUtils
 import Square
 import Piece
-import qualified MoveType
-import qualified Position
-import qualified Move
-import Position 
+import MoveType
+import Position
+import Move
 import FullMove
-import UpdateFunctions
 
--- The board stack contains all updateFns that will update the position's pieces
-boardStack :: UpdateReader [UpdateFn]
-boardStack = sequence [movePiece, passant, promotion]
+type Update = Board -> Board
+type UpdateReader = Reader (FullMove, Board)
 
 
-movePiece :: UpdateReader UpdateFn
+-- TODO this looks exaclty the same in PropertiesUpdates. move
+board :: UpdateReader Board
+board = do
+    (_, b) <- ask
+    compose <$> updates <*> pure b
+
+
+updates :: UpdateReader [Update]
+updates = sequence [movePiece, BoardUpdates.passant, BoardUpdates.promotion]
+
+
+movePiece :: UpdateReader Update
 movePiece = do
-    mv <- asks move
-    let src = source $ Move.description mv
-    return $ Position.movePiece src (destination mv)
+    (Full mv, b) <- ask
+
+    let src = mv ^. source
+        dst = mv ^. destination
+
+    return $ (at src .~ Nothing) . (at dst .~ (b ^. at src))
 
 
-passant :: UpdateReader UpdateFn
+passant :: UpdateReader Update
 passant = do
-    mv <- moveR
-    orig <- originalPositionR
-    let msq = runReader (passantedPawn mv) orig
-    return $ \p -> p { Position.board = deleteMaybe msq (Position.board p) }
+    (Full mv, b) <- ask
+
+    -- Passant is a pawn capture on an empty square
+    let isPassant = isPawnMove mv && isCapture mv && Nothing == (b ^. at (mv ^. destination))
+
+    return $ if isPassant then deletePassant (Full mv) else id
         
 
-promotion :: UpdateReader UpdateFn
+promotion :: UpdateReader Update
 promotion = do
-    color <- whoseMoveR
-    mv <- moveR
-    return $ case mv of
-        (Move.PawnMove desc (Just officer)) -> 
-            let dst = destination mv
-                piece = Piece (Officer officer) color
-             in \p -> p { Position.board = insert dst piece (Position.board p) }
+    (Full mv, b) <- ask
 
-        _ -> id
+    return $ case join (mv ^? Move.promotion) of
+        Nothing -> id
+        Just ot -> at (mv ^. destination) %~ (mapped . Piece.pieceType .~ Officer ot)
 
 
-
--- Util function:
--- Returns the square of the pawn that was taken en passant
-passantedPawn :: FullMove -> PReader (Maybe Square)
-passantedPawn mv@(Move.PawnMove (Description _ dst mt) _) = do
-    ep <- asks Position.passant 
-    color <- turn
-    if ep == Just dst && mt == MoveType.Captures
-       then behind dst
-       else return Nothing
-
-passantedPawn _ = return Nothing
+deletePassant :: FullMove -> Update
+deletePassant mv = case passantSquare mv of
+    Nothing -> id
+    Just sq -> Map.delete sq
 
 
-
--- Util funtion: delete the piece at the indicated square, or do nothing if passed Nothing
-deleteMaybe :: Maybe Square -> Position.PieceMap -> Position.PieceMap
-deleteMaybe Nothing = id
-deleteMaybe (Just sq) = \ p -> p & board . at sq .~ Nothing
+passantSquare :: FullMove -> Maybe Square
+passantSquare (Full mv) = add (mv ^. source) (off & _2 .~ 0) -- only x-component!
+    where
+    off = (mv ^. destination) `diff` (mv ^. source)
