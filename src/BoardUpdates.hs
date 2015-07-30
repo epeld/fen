@@ -39,7 +39,7 @@ passant = do
     -- Passant is a pawn capture on an empty square
     let isPassant = isPawnMove mv && isCapture mv && Nothing == (b ^. at (mv ^. destination))
 
-    return $ if isPassant then deletePassant (Full mv) else id
+    return $ if isPassant then deletePassantedPawn (Full mv) else id
         
 
 promotion :: UpdateReader Update
@@ -51,8 +51,9 @@ promotion = do
         Just ot -> at (mv ^. destination) %~ (mapped . Piece.pieceType .~ Officer ot)
 
 
-deletePassant :: FullMove -> Update
-deletePassant mv = case passantSquare mv of
+-- Note: we don't actually check that a pawn is deleted, but if the rules are followed it should be
+deletePassantedPawn :: FullMove -> Update
+deletePassantedPawn mv = case passantSquare mv of
     Nothing -> id
     Just sq -> Map.delete sq
 
