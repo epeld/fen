@@ -36,3 +36,10 @@ pieceType = to $ \ mv ->
     case mv of
         PawnMove {} -> Pawn
         OfficerMove {} -> Officer (_officerType mv)
+
+
+isCapture mv = Captures == mv ^. Move.moveType
+
+
+isPawnMove (PawnMove _ _) = True
+isPawnMove _ = False
