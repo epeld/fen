@@ -21,15 +21,8 @@ type Update = Properties -> Properties
 type UpdateReader = Reader (FullMove, Properties)
 
 
--- Update properties using the information supplied in the FullMove
-properties :: UpdateReader Properties
-properties = do
-    (_, p) <- ask
-    compose <$> updates <*> pure p
-    
-
-updates :: UpdateReader [Update]
-updates = sequence [fullMove, halfMove, PropertiesUpdates.castlingRights, passantSquare]
+updates :: [UpdateReader Update]
+updates = [fullMove, halfMove, PropertiesUpdates.castlingRights, passantSquare]
 
 
 fullMove :: UpdateReader Update

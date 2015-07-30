@@ -18,15 +18,8 @@ type Update = Board -> Board
 type UpdateReader = Reader (FullMove, Board)
 
 
--- TODO this looks exaclty the same in PropertiesUpdates. move
-board :: UpdateReader Board
-board = do
-    (_, b) <- ask
-    compose <$> updates <*> pure b
-
-
-updates :: UpdateReader [Update]
-updates = sequence [movePiece, BoardUpdates.passant, BoardUpdates.promotion]
+updates :: [UpdateReader Update]
+updates = [movePiece, BoardUpdates.passant, BoardUpdates.promotion]
 
 
 movePiece :: UpdateReader Update
