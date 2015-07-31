@@ -1,82 +1,46 @@
 module LegalMove where
 import Control.Lens
-import Data.List.NonEmpty
+import Control.Applicative
 import Control.Monad.Trans.Except
+import Data.Maybe
 
+import Move
+import PartialMove
 import FullMove
+import MoveVerification as Verification
+import Position
+import LegalPosition
+import PositionUpdates
+import Candidates
+import MoveType
+import Piece
 
 
-data Error = NoCandidate | Ambiguous [FullMove] | InvalidMoveType MoveType derviving (Show, Eq)
-
-
-type LegalityFunction a = Position -> PartialMove -> Except (NonEmpty Error) a
-type Verifier = LegalityFunction  ()
-
-
-fullMove :: LegalityFunction FullMove
-fullMove mv = do
-    mvs <- fullMoves mv
+fullMove :: Position -> PartialMove -> Except [Verification.Error] FullMove
+fullMove p mv = do
+    mvs <- fullMoves p mv
     disambiguate mvs
 
 
--- Figure out all the legal moves that can be made, given a partially specified move and a position
-fullMoves :: LegalityFunction [FullMove]
+-- Like `fullMove` but will not disambiguate
+fullMoves :: Position -> PartialMove -> Except [Verification.Error] [FullMove]
 fullMoves p mv = do
     verifyMoveType p mv
-
-    let legal = isLegal p
-        mvs = promote mv <$> cands
-        cands = candidates p (mv ^. moveType) (mv ^. destination) (piece p mv)
-
-    return (filter legal mvs)
+    return (legalCandidates p mv)
 
 
-piece :: LegalityFunction Piece
-piece = Piece (mv ^. pieceType) (p ^. turn)
+legalCandidates :: Position -> PartialMove -> [FullMove]
+legalCandidates p mv = LegalMove.legalize p `mapMaybe` moveCandidates p mv
 
 
-verifyMoveType :: Verifier
-verifyMoveType p mv = 
-    case mv ^. moveType of
-        Captures -> verifyStandardCapture p mv <|> verifyPassantCapture p mv
-        Moves -> verifyNoCapture p mv
+moveCandidates :: Position -> PartialMove -> [FullMove]
+moveCandidates p (Partial mv) = promote mv `mapMaybe` cands
+    where
+    cands = candidates p (mv ^. moveType) (mv ^. destination) pc
+    pc = Piece (mv ^. Move.pieceType) (p ^. turn)
 
 
-verifyStandardCapture :: Verifier
-verifyStandardCapture p mv =
-   if p ^. board . at (mv ^. destination) . color == Just (p ^. turn . to otherColor)
-   then pass
-   else throwE (InvalidMoveType Captures)
-
-
-verifyPassantCapture :: Verifier
-verifyPassantCapture p mv =
-    if p ^. board . at (mv ^. destination) == Nothing &&
-       p ^. passant == Just (mv ^. destination) &&
-       mv ^. moveType == Captures &&
-       mv ^. pieceType == Pawn
-    then pass
-    else throwE (InvalidMoveType Captures)
-
-
-verifyNoCapture :: Verifier
-verifyNoCapture p mv =
-    if p ^. board . at (mv ^. destination) == Nothing
-    then pass
-    else throwE (InvalidMoveType Moves)
-
-
-isLegal :: Position -> FullMove -> Bool
-isLegal p mv = [] == LegalPosition.error p'
-    where 
-    p' = after mv p
-
-
-disambiguate :: [FullMove] -> Except (NonEmpty Error) FullMove
-disambiguate [] = Left NoCandidate
-disambiguate [mv] = Right mv
-disambiguate mvs = Left $ Ambiguous mvs
-
-
--- Helper to hide the ugliness of NOT throwing an exception in a verifier
-pass = return ()
+legalize :: Position -> FullMove -> Maybe FullMove
+legalize p mv = do
+    LegalPosition.legalize (after p mv)
+    return mv

@@ -14,6 +14,12 @@ data Error = MissingPromotion Square | KingCapturable Square
              deriving (Show, Eq)
 
 
+legalize :: Position -> Maybe Position
+legalize = partial isLegal
+    where
+    isLegal = null . errors
+
+
 errors :: Position -> [Error]
 errors p = map KingCapturable (kingAttackers p) ++ map MissingPromotion (missingPromotions p)
     
@@ -31,5 +37,6 @@ missingPromotions p = partial isLastRank `mapMaybe` friendlyPawnSquares
     isLastRank sq = rank sq == lastRank (p ^. turn)
     friendlyPawnSquares = filterSquares p friendlyPawn
     friendlyPawn = Piece Pawn (p ^. friendlyColor)
+
 
 filterSquares p pred = Map.keys $ filterPieces p pred

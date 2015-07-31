@@ -6,7 +6,7 @@ import Square
 import Move
 import MoveQualifier
 
-newtype FullMove = Full (Move Square)
+newtype FullMove = Full (Move Square) deriving (Show, Eq)
 
 instance Qualifier Square where
     qualifies = (==)
