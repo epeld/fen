@@ -34,8 +34,7 @@ You start with something like a `PartialMove`, where
 ```
 'Partial' is intended to mean 'lacking information that uniquely identifies the move'.
 ```
-You can then use the `FullMove` or `LegalMove` to promote your moves. That is, by supplying more information.
-
+You can then use the `LegalMove`-module to promote your moves, i.e, by supplying more information.
 The `LegalMove`-module can take any type of (partially specified) move and calculate all the legal moves that said move *could* represent.
 
 Note that, currently castling moves cannot be processed (Work in Progress).
@@ -45,11 +44,11 @@ If this requirement is not satisfied, there will be an error: "Ambiguous move. C
 
 Modules of importance:
 - All Move-modules: `Move`, `PartialMove`, `FullMove`, `LegalMove`
-- `UpdatedPosition` produces a new position, given a legal move
+- The `*Updates` (e.g `PositionUpdates`) represent how to update a `Position`, `Board` or `Properties` after performing a move
 - To parse moves out of strings, see `PgnParse`.
 
 # TODOs
-- Define data type that supports both normal moves and castling
+- Define data type that supports both normal moves and castling (e.g ExtendedMove)
 - Write PGN move parsing functionality (test)
 - Write main.hs (parse command line args, display errors in a user-friendly way etc)
 - Support loading entire .pgn-files and parsing out all the moves and resulting positions
