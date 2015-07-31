@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell, StandaloneDeriving #-}
 module Move where
 import Data.Eq
 import Data.Maybe
@@ -17,6 +17,9 @@ data Move src =
     OfficerMove { _description :: Description src, _officerType :: OfficerType }
 
 makeLenses ''Move
+
+deriving instance Show src => Show (Move src)
+deriving instance Eq src => Eq (Move src)
 
 
 source :: Lens (Move a) (Move b) a b
