@@ -25,9 +25,8 @@ standardMove = do
 
 
 pawnMove :: Parser PartialMove
-pawnMove = Move.PawnMove <$> desc <*> optionMaybe promotion
+pawnMove = Move.PawnMove <$> choice [long, short] <*> optionMaybe promotion
     where
-    desc = choice [long, short]
     
     -- E.g "exd4"
     long = do
@@ -49,10 +48,8 @@ pawnMove = Move.PawnMove <$> desc <*> optionMaybe promotion
 
 
 officerMove :: Parser PartialMove
-officerMove = Move.OfficerMove <$> officer <*> desc
+officerMove = Move.OfficerMove <$> officer <*> choice [long, short]
     where
-    desc = choice [long, short]
-
 
     -- E.g Ndxc3
     long = do
