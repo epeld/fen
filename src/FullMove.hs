@@ -6,15 +6,12 @@ import Square
 import Move
 import MoveQualifier
 
-newtype FullMove = Full (Move Square) deriving (Show, Eq)
+type FullMove = Move Square
 
-instance Qualifier Square where
-    qualifies = (==)
-    
 
 -- promote a qualifying move to a full, when possible
 promote :: (Qualifier src) => Move src -> Square -> Maybe FullMove
 promote mv sq = do
     sqr <- qualify mv sq
-    return $ Full $ source .~ sqr $ mv
+    return $ source .~ sqr $ mv
 

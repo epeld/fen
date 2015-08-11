@@ -37,7 +37,7 @@ fullMove = do
 --  This is used to determine if a draw can be claimed under the fifty-move rule."
 halfMove :: UpdateReader Update
 halfMove = do
-    (Full mv, _) <- ask
+    (mv, _) <- ask
     return $ case mv of
         PawnMove _ _ -> halfMoveCount .~ 0
 
@@ -59,7 +59,7 @@ castlingRights = do
 --  This is recorded regardless of whether there is a pawn in position to make an en passant capture"
 passantSquare :: UpdateReader Update
 passantSquare = do
-    (Full mv, p) <- ask
+    (mv, p) <- ask
     return $
         case mv of
             PawnMove _ _ -> passant .~ behind (mv ^. destination) (p ^. turn)
@@ -71,7 +71,7 @@ newTurn = return $ turn %~ otherColor
 
 
 lostCastlingRights :: FullMove -> Set.Set CastlingRight
-lostCastlingRights (Full mv) = 
+lostCastlingRights mv = 
     case foldMap (`Map.lookup` castlingRightsMap) sqs of
         Nothing -> Set.empty
         Just s -> s

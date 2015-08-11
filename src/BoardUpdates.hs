@@ -24,7 +24,7 @@ updates = [movePiece, BoardUpdates.passant, BoardUpdates.promotion]
 
 movePiece :: UpdateReader Update
 movePiece = do
-    (Full mv, b) <- ask
+    (mv, b) <- ask
 
     let src = mv ^. source
         dst = mv ^. destination
@@ -34,17 +34,17 @@ movePiece = do
 
 passant :: UpdateReader Update
 passant = do
-    (Full mv, b) <- ask
+    (mv, b) <- ask
 
     -- Passant is a pawn capture on an empty square
     let isPassant = isPawnMove mv && isCapture mv && Nothing == (b ^. at (mv ^. destination))
 
-    return $ if isPassant then deletePassantedPawn (Full mv) else id
+    return $ if isPassant then deletePassantedPawn mv else id
         
 
 promotion :: UpdateReader Update
 promotion = do
-    (Full mv, b) <- ask
+    (mv, b) <- ask
 
     return $ case join (mv ^? Move.promotion) of
         Nothing -> id
@@ -59,6 +59,6 @@ deletePassantedPawn mv = case passantSquare mv of
 
 
 passantSquare :: FullMove -> Maybe Square
-passantSquare (Full mv) = add (mv ^. source) (off & _2 .~ 0) -- only x-component!
+passantSquare mv = add (mv ^. source) (off & _2 .~ 0) -- only x-component!
     where
     off = (mv ^. destination) `diff` (mv ^. source)
