@@ -4,12 +4,11 @@
 module ParserUtils where
 import Text.Parsec
 
-import Square
+import Parsable
+import Square (Square, square', ranks, files)
 import MoveType
 
-import PartialDescription as Partial
-
-type Parser r = forall s. forall m. Stream s m Char => ParsecT s () m r
+import qualified PartialMove as Partial
 
 
 square :: Parser Square
@@ -33,13 +32,13 @@ moveType :: Parser MoveType
 moveType = choose [Captures, Moves]
 
 
-rankPartial :: Parser PartialSquare
+rankPartial :: Parser Partial.PartialSquare
 rankPartial = fmap Partial.File file
 
 
-filePartial :: Parser PartialSquare
+filePartial :: Parser Partial.PartialSquare
 filePartial = fmap Partial.Rank rank
 
 
-squarePartial :: Parser PartialSquare
-squarePartial = Partial.Whole <$> square
+squarePartial :: Parser Partial.PartialSquare
+squarePartial = fmap Partial.Whole square

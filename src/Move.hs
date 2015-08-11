@@ -18,6 +18,14 @@ data Move src =
 
 makeLenses ''Move
 
+
+-- Make Move an instance of Qualifier when applicable.
+-- This allows us to filter out non-qualifying moves by
+-- mv `qualifier` src
+instance (Qualifier a) => Qualifier (Move a) where
+    qualifies mv = qualifies (mv ^. Move.source)
+
+
 deriving instance Show src => Show (Move src)
 deriving instance Eq src => Eq (Move src)
 

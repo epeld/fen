@@ -1,5 +1,6 @@
 {-#LANGUAGE NoMonomorphismRestriction #-}
 {-#LANGUAGE RankNTypes #-}
+{-#LANGUAGE FlexibleContexts #-}
 module PgnParse where
 import Control.Applicative ((<$>), (<*>))
 import Control.Monad
@@ -9,10 +10,13 @@ import Data.Char
 
 import ParserUtils
 import Parsable
+import Move (Move(..))
+import PartialMove (PartialMove)
 import MoveType
 import Piece
-import PartialMove
+import MoveDescription (Description(..))
 import PgnMove
+import Castling
 
 
 move = standardMove <|> castlingMove
@@ -23,7 +27,7 @@ standardMove = fmap Right (pawnMove <|> officerMove)
 
 
 pawnMove :: Parser PartialMove
-pawnMove = Move.PawnMove <$> choice [long, short] <*> optionMaybe promotion
+pawnMove = PawnMove <$> choice [long, short] <*> optionMaybe promotion
     where
     
     -- E.g "exd4"
@@ -31,13 +35,13 @@ pawnMove = Move.PawnMove <$> choice [long, short] <*> optionMaybe promotion
         src <- filePartial <|> squarePartial
         mt <- moveType
         dst <- square
-        return $ Partial.Description dst mt (Just src)
+        return $ Description (Just src) dst mt 
 
 
     --  E.g "e4"
     short = do
         dst <- square
-        return $ Partial.Description dst Moves Nothing
+        return $ Description Nothing dst Moves
 
 
     promotion = do
@@ -46,7 +50,7 @@ pawnMove = Move.PawnMove <$> choice [long, short] <*> optionMaybe promotion
 
 
 officerMove :: Parser PartialMove
-officerMove = Move.OfficerMove <$> officer <*> choice [long, short]
+officerMove = OfficerMove <$> choice [long, short] <*> officer
     where
 
     -- E.g Ndxc3
@@ -54,17 +58,20 @@ officerMove = Move.OfficerMove <$> officer <*> choice [long, short]
         src <- source 
         mt <- moveType
         dst <- square
-        return $ Partial.Description dst mt (Just src)
+        return $ Description (Just src) dst mt 
 
 
     -- E.g Nxc3
     short = do
         mt <- moveType
         dst <- square
-        return $ Partial.Description dst mt Nothing
+        return $ Description Nothing dst mt
 
 
     source = choice [rankPartial, filePartial, squarePartial]
+
+
+    officer = choose [Bishop .. King]
 
 
 castlingMove :: Parser PgnMove

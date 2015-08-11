@@ -4,9 +4,10 @@ import Control.Lens
 
 import Move
 import MoveQualifier
+import MoveDescription
 import Square
 
-newtype PartialMove = Partial (Move (Maybe PartialSquare))
+type PartialMove = Move (Maybe PartialSquare)
 
 
 instance Qualifier PartialSquare where

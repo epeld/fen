@@ -1,9 +1,16 @@
+{-#LANGUAGE NoMonomorphismRestriction #-}
+{-#LANGUAGE RankNTypes #-}
+{-#LANGUAGE FlexibleContexts #-}
 module Parsable where
 import Control.Monad
 import Text.Parsec
 
-import ParserUtils
 import Castling
+import MoveType
+import Piece
+
+
+type Parser r = forall s. forall m. Stream s m Char => ParsecT s () m r
 
 
 class Parsable p where
@@ -12,11 +19,11 @@ class Parsable p where
 
 -- Tries the parsers in order until one succeeds
 choose :: Parsable p => [p] -> Parser p
-choose = choice (fmap parse p)
+choose ps = choice (fmap Parsable.parse ps)
 
 
-parse :: Parsable p => Parser p
-parse = do
+parse :: Parsable p => p -> Parser p
+parse p = do
     string (rep p)
     return p
 
