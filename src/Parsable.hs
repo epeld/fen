@@ -10,8 +10,9 @@ class Parsable p where
     rep :: p -> String
 
 
-anyOf :: Parsable p => [p] -> Parser p
-anyOf = choice (fmap parse p)
+-- Tries the parsers in order until one succeeds
+choose :: Parsable p => [p] -> Parser p
+choose = choice (fmap parse p)
 
 
 parse :: Parsable p => Parser p
@@ -31,3 +32,16 @@ instance Parsable OfficerType where
     rep Knight = "N"
     rep Queen = "Q"
     rep King = "K"
+
+
+instance Parsable MoveType where
+    rep Moves = ""
+    rep Captures = "x"
+
+
+instance Parsable Char where
+    rep c = [c]
+
+
+instance Parsable Int where
+    rep i = show i

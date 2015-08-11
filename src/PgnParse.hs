@@ -19,9 +19,7 @@ move = standardMove <|> castlingMove
 
 
 standardMove :: Parser PgnMove
-standardMove = do
-    mv <- choice [pawnMove, officerMove]
-    return (Right mv)
+standardMove = fmap Right (pawnMove <|> officerMove)
 
 
 pawnMove :: Parser PartialMove
@@ -30,7 +28,7 @@ pawnMove = Move.PawnMove <$> choice [long, short] <*> optionMaybe promotion
     
     -- E.g "exd4"
     long = do
-        src <- choice [filePartial, squarePartial]
+        src <- filePartial <|> squarePartial
         mt <- moveType
         dst <- square
         return $ Partial.Description dst mt (Just src)
@@ -44,7 +42,7 @@ pawnMove = Move.PawnMove <$> choice [long, short] <*> optionMaybe promotion
 
     promotion = do
         char '='
-        Parsable.anyOf [Bishop .. Queen]
+        choose [Bishop .. Queen]
 
 
 officerMove :: Parser PartialMove
@@ -70,8 +68,8 @@ officerMove = Move.OfficerMove <$> officer <*> choice [long, short]
 
 
 castlingMove :: Parser PgnMove
-castlingMove = Left `fmap` castlingSide
+castlingMove = fmap Left castlingSide
     
 
 castlingSide :: Parser Side
-castlingSide = Parsable.anyOf [Queenside, Kingside]
+castlingSide = choose [Queenside, Kingside]

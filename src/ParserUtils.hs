@@ -2,49 +2,44 @@
 {-#LANGUAGE RankNTypes #-}
 {-#LANGUAGE FlexibleContexts #-}
 module ParserUtils where
-import Control.Applicative ((<$>), (<*>))
-import Control.Monad
-
 import Text.Parsec
-import Data.Char
 
-import ParserUtils
+import Square
 import MoveType
-import Piece
-import PartialMove
-import qualified Square
 
-import qualified PartialDescription as Partial
+import PartialDescription as Partial
 
 type Parser r = forall s. forall m. Stream s m Char => ParsecT s () m r
 
-moveType :: Parser MoveType
-moveType = Moves `option` captures
-    where
-    captures = do
-        char 'x'
-        return Captures
 
-
-rankPartial :: Parser Partial.PartialSquare
-rankPartial = Partial.File <$> file
-
-
-filePartial :: Parser Partial.PartialSquare
-filePartial = Partial.Rank <$> rank
-
-
-squarePartial :: Parser Partial.PartialSquare
-squarePartial = Partial.Whole <$> square
-
-
-square :: Parser Square.Square
-square = fromJust <$> liftM2 Square.square' file rank
+square :: Parser Square
+square = do
+    f <- file
+    r <- rank
+    case square' f r of
+        Just sq -> return sq
+        Nothing -> error "Internal error: square parsing" -- Should never happen
 
 
 file :: Parser Char
-file = oneOf "abcdefgh"
+file = choose files
 
 
 rank :: Parser Int
-rank = digitToInt <$> oneOf "12345678"
+rank = choose ranks
+
+
+moveType :: Parser MoveType
+moveType = choose [Captures, Moves]
+
+
+rankPartial :: Parser PartialSquare
+rankPartial = fmap Partial.File file
+
+
+filePartial :: Parser PartialSquare
+filePartial = fmap Partial.Rank rank
+
+
+squarePartial :: Parser PartialSquare
+squarePartial = Partial.Whole <$> square
