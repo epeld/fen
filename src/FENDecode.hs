@@ -127,8 +127,9 @@ row s = do
 
 piece :: Char -> Either Error Piece
 piece c = case Piece <$> pt c <*> color c of
-    Nothing -> Left (InvalidPieceCharacter c)
-    Just p -> p
+        Nothing -> Left (InvalidPieceCharacter c)
+        Just p -> p
+
     where
 
     pt c = lookup (toLower c) [ ('p', Pawn)
