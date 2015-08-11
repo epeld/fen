@@ -34,7 +34,7 @@ legalCandidates p mv = LegalMove.legalize p `mapMaybe` moveCandidates p mv
 
 
 moveCandidates :: Position -> PartialMove -> [FullMove]
-moveCandidates p (Partial mv) = promote mv `mapMaybe` cands
+moveCandidates p mv = promote mv `mapMaybe` cands
     where
     cands = candidates p (mv ^. moveType) (mv ^. destination) pc
     pc = Piece (mv ^. Move.pieceType) (p ^. turn)

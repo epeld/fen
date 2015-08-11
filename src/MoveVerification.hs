@@ -20,10 +20,7 @@ disambiguate mvs = throwE [Ambiguous mvs]
 
 
 verifyMoveType :: Position -> PartialMove -> Except [Error] ()
-verifyMoveType p (Partial mv) = 
-
-    verify (mv ^. moveType)
-
+verifyMoveType p mv = verify (mv ^. moveType)
     where
 
     verify Captures = verifyStandardCapture <|> verifyPassantCapture 
