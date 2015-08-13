@@ -1,20 +1,18 @@
 module FENEncode where
-import Prelude (String)
-
-import Data.Function
-import Data.Functor
-import Data.Maybe
-import Data.Monoid
-import Data.Map
-import Data.List.Split
-import qualified Data.Set as Set
-import Data.List (unwords, concatMap, group, replicate, length, head, sort, intersperse)
+import Control.Lens
 import Control.Applicative
-import Control.Arrow
+
+import qualified Data.Set as Set
+import qualified Data.Map as Map
+import qualified Data.List.NonEmpty as NonEmpty
+import Data.List.NonEmpty (NonEmpty(..))
+import Data.List.Split
+import Data.List
 import Data.Char
 import Text.Show
 
-import Position
+import qualified Position
+import Position (Position)
 import Square
 import Piece
 import Castling
@@ -34,74 +32,86 @@ And then after 2. Nf3:
 rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2
 -}
 
-encode :: Position -> String
-encode = separated " " [encodeBoard. board, encodeProperties]
+fen :: Position -> String
+fen = separated [Position.board `views` board, properties]
 
-encodeBoard :: Board -> String
-encodeBoard b = mconcat $ intersperse "/" encodedRows
+
+board :: Position.Board -> String
+board = concat . intersperse "/" . rows 
     where   
-    encodedRows = encodeRow <$> chunksOf 8 fenSquares <*> pure b
+    rows b = fmap (`rle` b) (chunksOf 8 fenSquares)
 
-encodeRow :: [Square] -> Board -> String
-encodeRow sqs b =
-    let pcs = fmap (flip lookup b) sqs
-        enc (i, Nothing) = [intToDigit i]
-        enc (i, Just p) = replicate i (encodePiece p)
-        histo = length &&& head -- group guarantees head is safe
-    in concatMap (enc. histo) (group pcs)
 
+properties :: Position -> String
+properties = separated [turn, castlingRights, passant, halfMove, fullMove]
+    where
+    halfMove = Position.halfMoveCount `views` show
+    fullMove = Position.fullMoveCount `views` show
+
+
+-- Run-length encode the contents of the given sequence of squares
+rle :: [Square] -> Position.Board -> String
+rle sqs b = concatMap enc groups
+    where
+    groups = NonEmpty.group (fmap contentOf sqs)
+
+    enc grp = case grp of
+        Nothing :| _ -> show (NonEmpty.length grp)
+        Just p :| _ -> NonEmpty.toList grp & mapped .~ piece p
+
+    contentOf sq = b ^. at sq
+
+
+-- An enumeration of all the chess squares in the order they appear in the FEN string
 fenSquares :: [Square]
-fenSquares = let sq a b = Square (b, a) in sq <$> [8,7..1] <*> [1..8]
+fenSquares = do
+    r <- reverse [1 .. 8]
+    f <- [1 .. 8]
+    return $ Square (f, r) 
+    
 
-encodeProperties :: Position -> String
-encodeProperties = separated " " [encodeTurn, encodeCastlingRights, encodePassant, encodeHalfMove, encodeFullMove]
+turn :: Position -> String
+turn = color . view Position.turn
+    where
+    color White = "w"
+    color Black = "b"
 
-separated :: String -> [Position -> String] -> Position -> String
-separated space parsers = mconcat (intersperse (const space) parsers)
 
-
-encodeTurn :: Position -> String
-encodeTurn p = s (turn p)
-    where s White = "w"
-          s Black = "b"
-
-encodeCastlingRights :: Position -> String
-encodeCastlingRights = e. sort. fmap encodeRight. Set.toList. castlingRights
+castlingRights :: Position -> String
+castlingRights p = nonEmpty (rightsString p)
     where 
-          e "" = "-"
-          e x = x
-          encodeRight cr@(Castling clr side) = cased clr (encodeSide side)
-          encodeSide Kingside = 'k'
-          encodeSide Queenside = 'q'
+    nonEmpty "" = "-"
+    nonEmpty x = x
 
-encodePassant :: Position -> String
-encodePassant p = s (passant p)
-    where s Nothing = "-"
-          s (Just sq) = Square.string sq
+    rightsString = fmap enc . Set.toDescList . view Position.castlingRights
 
-encodeFullMove :: Position -> String
-encodeFullMove p = show (fullMoveCount p)
-
-encodeHalfMove :: Position -> String
-encodeHalfMove p = show (halfMoveCount p)
+    enc (Castling White Kingside) = 'K'
+    enc (Castling White Queenside) = 'Q'
+    enc (Castling Black Kingside) = 'k'
+    enc (Castling Black Queenside) = 'q'
 
 
+passant :: Position -> String
+passant p = case p ^. Position.passant of
+    Nothing -> "-"
+    Just sq -> Square.string sq
 
 
-encodePiece :: Piece -> Char
-encodePiece (Piece pt c) = cased c (encodePieceType pt)
+piece :: Piece -> Char
+piece (Piece pt c) = cased c (pieceType pt)
+    where
+    cased White = toUpper
+    cased Black = toLower
 
-type CaseFn = Char -> Char
+    pieceType Pawn = 'p'
+    pieceType (Officer ot) = enc ot
+        where
+        enc Bishop = 'b'
+        enc Rook = 'r'
+        enc Knight = 'n'
+        enc King = 'k'
+        enc Queen = 'q'
 
-cased :: Color -> CaseFn
-cased White = toUpper
-cased Black = toLower
 
-encodePieceType :: PieceType -> Char
-encodePieceType Pawn = 'p'
-encodePieceType (Officer ot) = enc ot
-    where   enc Bishop = 'b'
-            enc Rook = 'r'
-            enc Knight = 'n'
-            enc King = 'k'
-            enc Queen = 'q'
+separated :: [Position -> String] -> Position -> String
+separated parsers = unwords . sequence parsers
