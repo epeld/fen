@@ -5,12 +5,15 @@ import qualified Data.Map as Map
 import Control.Monad
 import Control.Applicative
 import Text.Read
+import Data.Char
 
-import Position
+import qualified Position
+import Position (Position(..), Board)
+import PositionProperties (Properties(..))
 import Piece
 import Castling
 import Square
-import FENEncode
+import FENEncode (fenSquares)
 
 -- 
 -- rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
@@ -32,17 +35,23 @@ fen s = parts (words s)
 
 
 parts :: [String] -> Either Error Position
-parts [b, t, c, p, h, f] = do
-    brd <- board b
+parts (x : xs) = liftM2 Position (board x) (properties xs)
+parts ps = invalidNumberOfComponents ps
+
+
+properties :: [String] -> Either Error Properties
+properties [b, t, c, p, h, f] = do
     trn <- turn t
     pss <- passant p
     fll <- moveCount f
     hlf <- moveCount h
     crs <- castlingRights c
-    return $ Position brd trn pss fll hlf crs
+    return (Properties trn pss fll hlf crs)
 
-parts ps = Left $ InvalidNumberOfComponents (length ps)
+properties ps = invalidNumberOfComponents ps
 
+invalidNumberOfComponents :: [a] -> Either Error b
+invalidNumberOfComponents ps = Left $ InvalidNumberOfComponents (length ps)
 
 castlingRights :: String -> Either Error (Set.Set CastlingRight)
 castlingRights s = do
@@ -68,9 +77,9 @@ moveCount s = case readMaybe s of
 
 passant :: String -> Either Error (Maybe Square)
 passant "-" = Right Nothing
-passant sq = case Square.square sq of
-    Nothing -> Left $ InvalidPassant sq
-    Just x -> Right x
+passant s = case Square.square s of
+    Nothing -> Left $ InvalidPassant s
+    sq@(Just x) -> Right sq
 
 
 turn :: String -> Either Error Color
@@ -89,16 +98,12 @@ board s = do
             rows = wordsBy (== '/') r
 
 
-        fromMaybeList = Map.mapMaybe id . Map.fromList
-
-
     rs <- splitRows s
     pcs <- mapM row rs
 
-
-    let assocs = fenSquares `zip` pcs
+    let b = fromMaybeList (fenSquares `zip` concat pcs)
     
-    return (fromMaybeList assocs)
+    return b
     
 
 
@@ -128,7 +133,7 @@ row s = do
 piece :: Char -> Either Error Piece
 piece c = case Piece <$> pt c <*> color c of
         Nothing -> Left (InvalidPieceCharacter c)
-        Just p -> p
+        Just p -> Right p
 
     where
 
@@ -142,3 +147,7 @@ piece c = case Piece <$> pt c <*> color c of
 
     color c = lookup (isUpper c, isLower c) [ ((True, False), White)
                                             , ((False, True), Black) ]
+
+
+fromMaybeList :: Ord a => [(a, Maybe b)] -> Map.Map a b
+fromMaybeList = Map.mapMaybe id . Map.fromList
