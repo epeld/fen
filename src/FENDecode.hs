@@ -50,8 +50,10 @@ properties [b, t, c, p, h, f] = do
 
 properties ps = invalidNumberOfComponents ps
 
+
 invalidNumberOfComponents :: [a] -> Either Error b
 invalidNumberOfComponents ps = Left $ InvalidNumberOfComponents (length ps)
+
 
 castlingRights :: String -> Either Error (Set.Set CastlingRight)
 castlingRights s = do
