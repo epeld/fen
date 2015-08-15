@@ -9,8 +9,10 @@ import PgnParse
 import TestUtils
 
 
-test = hspec $
+test = hspec $ do
+
     let parse p = runParser p () "test case"
+
     describe "PGN Parsing" $ do
         describe "Pawn Moves" $ do
             withInput "e4" pawnMove $ \r ->
