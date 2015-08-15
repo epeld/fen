@@ -19,6 +19,7 @@ import PgnMove
 import Castling
 
 
+move :: Parser PgnMove
 move = standardMove <|> castlingMove
 
 
