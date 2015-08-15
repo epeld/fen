@@ -41,7 +41,7 @@ test = hspec $ do
             withInput "b6xa7" pawnMove $ \mv -> do
                 it "has destination a7" $ mv ^. destination `shouldBe` unsafe "a7"
                 it "is a capture" $ mv ^. moveType `shouldBe` Captures
-                it "has b6-square as source" $ mv ^. source `shouldBe` Just (Whole $ unsafe "b6")
+                it "has b6-square as source" $ mv ^. source `shouldBe` wholeSquare "b6"
                 it "has no promotion" $ join (mv ^? promotion) `shouldBe` Nothing
 
             withInput "bxa8=N" pawnMove $ \mv -> do
@@ -56,8 +56,16 @@ test = hspec $ do
                 it "is a capture" $ mv ^. moveType `shouldBe` Captures
                 it "has no source" $ mv ^. source `shouldBe` Nothing
 
+            withInput "Bf3xe2" officerMove $ \mv -> do
+                it "has destination e2" $ mv ^. destination `shouldBe` unsafe "e2"
+                it "is a capture" $ mv ^. moveType `shouldBe` Captures
+                it "has f3 as source" $ mv ^. source `shouldBe` wholeSquare "f3"
+
 withInput :: Show a => String -> Parser a -> (a -> Spec) -> Spec
 withInput s p f = 
     describe label $ withRight (runParser p () label s) f
     where
     label = "Input: " ++ s
+
+
+wholeSquare = fmap Whole . Square.square
