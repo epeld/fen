@@ -33,11 +33,11 @@ moveType = choose [Captures, Moves]
 
 
 rankPartial :: Parser Partial.PartialSquare
-rankPartial = fmap Partial.File file
+rankPartial = fmap Partial.Rank rank
 
 
 filePartial :: Parser Partial.PartialSquare
-filePartial = fmap Partial.Rank rank
+filePartial = fmap Partial.File file 
 
 
 squarePartial :: Parser Partial.PartialSquare

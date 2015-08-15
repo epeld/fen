@@ -12,7 +12,7 @@ type PartialMove = Move (Maybe PartialSquare)
 
 data PartialSquare = Rank { _rank :: Int } | 
                      File { _file :: Char } | 
-                     Whole { _square :: Square } deriving Show
+                     Whole { _square :: Square } deriving (Show, Eq)
 
 
 instance Qualifier PartialSquare where

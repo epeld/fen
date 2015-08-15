@@ -19,7 +19,10 @@ class Parsable p where
 
 -- Tries the parsers in order until one succeeds
 choose :: Parsable p => [p] -> Parser p
-choose ps = choice (fmap Parsable.parse ps)
+choose ps = tryChoices (fmap Parsable.parse ps)
+
+
+tryChoices ps = choice (fmap try ps) -- Add 'try' so that each new parser starts from the beginning!
 
 
 parse :: Parsable p => p -> Parser p

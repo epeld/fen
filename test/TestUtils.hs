@@ -5,8 +5,7 @@ import Test.Hspec
 import Control.Monad.Reader
 import Data.Maybe
 
-import PositionReader
-import FENDecode
+import FENDecode as Decode
 import Position
 
 test :: IO ()
@@ -32,13 +31,13 @@ withInitialPosition = withPosition initialFEN
 withPosition :: String -> (Position -> Spec) -> Spec
 withPosition fen f =
     let label = "position " ++ fen
-        spc = decode fen `withRight` f
+        spc = Decode.fen fen `withRight` f
     in label `describe` spc
 
 
 withRight :: (Show a, Show b) => Either a b -> (b -> Spec) -> Spec
 withRight x f = do
-    it "is valid" (assertRight x)
+    it "should be Right" (assertRight x)
     withRight' x f
 
 withRight' :: Monad m => Either a b -> (b -> m ()) -> m ()
