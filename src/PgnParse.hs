@@ -51,7 +51,7 @@ pawnMove = PawnMove <$> tryChoices [long, short] <*> optionMaybe promotion
 
 
 officerMove :: Parser PartialMove
-officerMove = OfficerMove <$> tryChoices [long, short] <*> officer
+officerMove = flip OfficerMove <$> officer <*> tryChoices [long, short]
     where
 
     -- E.g Ndxc3
@@ -69,7 +69,7 @@ officerMove = OfficerMove <$> tryChoices [long, short] <*> officer
         return $ Description Nothing dst mt
 
 
-    source = choice [rankPartial, filePartial, squarePartial]
+    source = tryChoices [squarePartial, rankPartial, filePartial]
 
 
     officer = choose [Bishop .. King]
