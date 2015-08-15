@@ -42,12 +42,19 @@ test = hspec $ do
                 it "has destination a7" $ mv ^. destination `shouldBe` unsafe "a7"
                 it "is a capture" $ mv ^. moveType `shouldBe` Captures
                 it "has b6-square as source" $ mv ^. source `shouldBe` Just (Whole $ unsafe "b6")
+                it "has no promotion" $ join (mv ^? promotion) `shouldBe` Nothing
 
             withInput "bxa8=N" pawnMove $ \mv -> do
                 it "has destination a8" $ mv ^. destination `shouldBe` unsafe "a8"
                 it "is a capture" $ mv ^. moveType `shouldBe` Captures
                 it "has b-file as source" $ mv ^. source `shouldBe` Just (File 'b')
                 it "promotes to knight" $ join (mv ^? promotion) `shouldBe` Just Knight
+
+        describe "Officer Moves" $ do
+            withInput "Bxf3" officerMove $ \mv -> do
+                it "has destination f3" $ mv ^. destination `shouldBe` unsafe "f3"
+                it "is a capture" $ mv ^. moveType `shouldBe` Captures
+                it "has no source" $ mv ^. source `shouldBe` Nothing
 
 withInput :: Show a => String -> Parser a -> (a -> Spec) -> Spec
 withInput s p f = 
