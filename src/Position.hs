@@ -19,7 +19,7 @@ type Board = PieceMap
 data Position = Position {
     _board :: Board,
     _properties :: Properties
-    } deriving (Show)
+    } deriving (Show, Eq)
 makeLenses ''Position
 
 
