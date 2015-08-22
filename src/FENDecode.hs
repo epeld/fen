@@ -13,7 +13,7 @@ import PositionProperties (Properties(..))
 import Piece
 import Castling
 import Square
-import FENEncode (fenSquares)
+import FENEncode (fenSquares, FENString)
 
 -- 
 -- rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
@@ -28,9 +28,11 @@ data Error = InvalidNumberOfComponents Int |
              InvalidCastlingRight Char
              deriving (Show, Eq)
 
+
 initialFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
-fen :: String -> Either Error Position
+
+fen :: FENString -> Either Error Position
 fen s = parts (words s)
 
 
